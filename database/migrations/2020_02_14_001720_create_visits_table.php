@@ -18,7 +18,7 @@ class CreateVisitsTable extends Migration
             $table->string('client_name');
             $table->string('complaint');
             $table->string('price');
-            $table->timestamp('date');
+            $table->string('date');
             $table->string('duration');
             $table->bigInteger('client_id')->unsigned();
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
