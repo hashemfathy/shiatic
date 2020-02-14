@@ -13,7 +13,6 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
-        \DB::statement('SET FOREIGN_KEY_CHECKS=0');
         \DB::table('users')->truncate();
         // factory(User::class)->create();
         $users = [
@@ -23,6 +22,5 @@ class UsersTableSeeder extends Seeder
         foreach ($users as $user) {
             User::create($user);
         }
-        \DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 }
