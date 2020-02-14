@@ -1,0 +1,35 @@
+<?php
+
+namespace DummyNamespace;
+use App\DummyModel;
+use Illuminate\Http\Request;
+use Spatie\QueryBuilder\QueryBuilder;
+
+
+class DummyClass 
+{
+    public $dummyModel;
+
+    public function __construct(DummyModel $model)
+    {
+        $this->model = $model;
+    }
+
+    public function create(Request $request, array $attributes, array $outside_request_attributes = []) 
+    {
+        return $this->model->safeRecord($request, $attributes, $outside_request_attributes);
+    }
+
+    public function update(Request $request, DummyModel $model, array $attributes, array $outside_request_attributes = []) 
+    {
+        return $model->safeRecord($request, $attributes, $outside_request_attributes);
+    }
+
+     public function fetchRecords()
+    {
+        return QueryBuilder::for($this->model->query())
+            ->defaultSort('-id')
+            ->allowedFilters([])
+            ->allowedSorts([]);
+    }
+}
