@@ -33,7 +33,7 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapAdminApiRoutes()
     {
-        Route::domain(config('app.admin_url'))
+        Route::domain(config('app.app_url'))
             ->middleware(['web', 'admin.auth.check'])
             ->namespace($this->admin_namespace)
             ->prefix('api')
@@ -43,7 +43,7 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapAdminWebRoutes()
     {
-        Route::domain(config('app.admin_url'))
+        Route::domain(config('app.app_url'))
             ->middleware(['web', 'admin.auth.check'])
             ->namespace($this->admin_namespace)
             ->name('admin.web.')
@@ -52,7 +52,7 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapAdminAuthRoutes()
     {
-        Route::domain(config('app.admin_url'))
+        Route::domain(config('app.app_url'))
             ->middleware('web')
             ->namespace($this->admin_namespace)
             ->name('auth.')
