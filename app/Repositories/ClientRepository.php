@@ -23,10 +23,7 @@ class ClientRepository
             'name' => $request->name,
             'gender' => $request->gender,
             'phone' => $request->phone,
-            'code' => $request->code,
-            'blood' => $request->blood,
-            'age' => $request->age,
-            'weight' => $request->weight,
+            'code' => $request->code
         ]);
     }
 
@@ -36,10 +33,7 @@ class ClientRepository
             'name' => $request->name,
             'gender' => $request->gender,
             'phone' => $request->phone,
-            'code' => $request->code,
-            'blood' => $request->blood,
-            'age' => $request->age,
-            'weight' => $request->weight,
+            'code' => $request->code
         ]);
         return $model;
     }

@@ -28,9 +28,6 @@ class UpdateClientRequest extends FormRequest
             'gender' => 'required',
             'phone' => 'required|unique:clients,phone,' . $this->id,
             'code' => 'required|unique:clients,code,' . $this->id,
-            'blood' => 'nullable',
-            'age' => 'nullable',
-            'weight' => 'nullable',
         ];
     }
 }

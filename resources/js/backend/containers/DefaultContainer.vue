@@ -81,7 +81,6 @@ import {
   AsideToggler,
   Footer as TheFooter
 } from "@coreui/vue";
-import Dashboard from "../views/Dashboard";
 import { SidebarNav } from "../views/sidebar";
 import { Breadcrumb } from "../views/breadcrumb";
 import DefaultAside from "./DefaultAside";
@@ -105,7 +104,6 @@ export default {
     DefaultHeaderDropdownNotif,
     DefaultHeaderDropdownTasks,
     DefaultHeaderDropdownAccnt,
-    Dashboard,
     SidebarNav,
     SidebarForm,
     SidebarFooter,

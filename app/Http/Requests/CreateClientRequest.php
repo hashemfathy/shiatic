@@ -28,9 +28,6 @@ class CreateClientRequest extends FormRequest
             'gender' => 'required',
             'phone' => 'required|unique:clients,phone',
             'code' => 'required|unique:clients,code',
-            'blood' => 'nullable',
-            'age' => 'nullable',
-            'weight' => 'nullable',
         ];
     }
 }

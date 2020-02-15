@@ -19,13 +19,13 @@ class BaseClientService
     public function create(Request $request)
     {
         return $this->repository->create($request, [
-            'name', 'gender', 'phone', 'code', 'blood', 'age', 'weight'
+            'name', 'gender', 'phone', 'code'
         ]);
     }
     public function update(Request $request, Client $client)
     {
         return $this->repository->update($request, $client, [
-            'name', 'gender', 'phone', 'code', 'blood', 'age', 'weight'
+            'name', 'gender', 'phone', 'code'
         ]);
     }
     public function fetchRecords()

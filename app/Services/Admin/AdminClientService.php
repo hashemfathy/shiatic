@@ -29,22 +29,7 @@ class AdminClientService extends BaseClientService
                 'field' => 'code',
                 'type' => 'integer',
                 'label' => 'Code'
-            ],
-            [
-                'field' => 'blood',
-                'type' => 'text',
-                'label' => 'Blood'
-            ],
-            [
-                'field' => 'age',
-                'type' => 'integer',
-                'label' => 'Age'
-            ],
-            [
-                'field' => 'weight',
-                'type' => 'integer',
-                'label' => 'Weight'
-            ],
+            ]
         ];
     }
 

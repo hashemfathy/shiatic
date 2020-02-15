@@ -19,9 +19,6 @@ class CreateClientsTable extends Migration
             $table->string('gender');
             $table->string('phone')->unique();
             $table->string('code')->unique();
-            $table->string('blood')->nullable();
-            $table->bigInteger('age')->nullable();
-            $table->integer('weight')->nullable();
             $table->timestamps();
         });
     }

@@ -23,6 +23,11 @@ export default {
       icon: 'icon-star',
       children: [
         {
+          name: 'Add Visit',
+          url: '/clients',
+          icon: 'icon-star'
+        },
+        {
           name: 'List',
           url: '/visits',
           icon: 'icon-star'

@@ -47,53 +47,10 @@
           <span class="text-danger">{{ errors.first('code') }}</span>
         </div>
         <div class="form-group">
-          <label for="blood">Blood</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="form.blood"
-            id="blood"
-            name="blood"
-            aria-describedby="emailHelp"
-            placeholder="Enter Blood"
-            v-validate
-          />
-          <span class="text-danger">{{ errors.first('blood') }}</span>
-        </div>
-        <div class="form-group">
-          <label for="age">Age</label>
-          <input
-            type="number"
-            class="form-control"
-            v-model="form.age"
-            id="age"
-            name="age"
-            aria-describedby="emailHelp"
-            placeholder="Enter age"
-            v-validate
-          />
-          <span class="text-danger">{{ errors.first('age') }}</span>
-        </div>
-        <div class="form-group">
           <label for="exampleFormControlSelect1">Select Gender</label>
           <select class="form-control" id="exampleFormControlSelect1" v-model="form.gender">
             <option v-for="(gender,i) in genders" :value="gender" :key="i">{{gender}}</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label for="weight">Weight</label>
-          <input
-            type="number"
-            class="form-control"
-            v-model="form.weight"
-            id="weight"
-            name="weight"
-            aria-describedby="emailHelp"
-            placeholder="Enter weight"
-            weight="weight"
-            v-validate
-          />
-          <span class="text-danger">{{ errors.first('weight') }}</span>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>
@@ -113,10 +70,7 @@ export default {
         name: "",
         phone: "",
         code: "",
-        blood: "",
-        age: "",
-        gender: "",
-        weight: ""
+        gender: ""
       }
     };
   },

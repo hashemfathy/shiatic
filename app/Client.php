@@ -12,7 +12,7 @@ class Client extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'gender', 'phone', 'code', 'blood', 'age', 'weight'
+        'name', 'gender', 'phone', 'code'
     ];
     /**
      *  define one to many relation Visit model

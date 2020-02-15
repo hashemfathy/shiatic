@@ -27,29 +27,9 @@
             </label>
           </div>
           <div class="col-sm-6">
-            <label for="blood">
-              Blood:
-              <b>{{client.blood}}</b>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-4">
-            <label for="age">
-              Age:
-              <b>{{client.age}}</b>
-            </label>
-          </div>
-          <div class="col-sm-4">
             <label for="gender">
               Gender:
               <b>{{client.gender}}</b>
-            </label>
-          </div>
-          <div class="col-sm-4">
-            <label for="weight">
-              Weight:
-              <b>{{client.weight}}</b>
             </label>
           </div>
         </div>
