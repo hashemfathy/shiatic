@@ -13,7 +13,7 @@ class Visit extends Model
      * @var array
      */
     protected $fillable = [
-        'client_name', 'complaint', 'price', 'date', 'duration', 'client_id'
+        'client_name', 'complaint', 'price', 'date', 'hour', 'duration', 'client_id'
     ];
     /**
      *  define one to many relation Visit model

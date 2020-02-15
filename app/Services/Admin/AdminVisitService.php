@@ -27,8 +27,13 @@ class AdminVisitService extends BaseVisitService
             ],
             [
                 'field' => 'date',
-                'type' => 'datetime-local',
+                'type' => 'date',
                 'label' => 'Date'
+            ],
+            [
+                'field' => 'hour',
+                'type' => 'text',
+                'label' => 'Hour'
             ],
             [
                 'field' => 'duration',

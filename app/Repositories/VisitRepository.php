@@ -25,6 +25,7 @@ class VisitRepository
             'complaint' => $request->complaint,
             'price' => $request->price,
             'date' => $request->date,
+            'hour' => $request->hour,
             'duration' => $request->duration,
             'client_id' => $request->client_id
         ]);
@@ -37,6 +38,7 @@ class VisitRepository
             'complaint' => $request->complaint,
             'price' => $request->price,
             'date' => $request->date,
+            'hour' => $request->hour,
             'duration' => $request->duration,
             'client_id' => $request->client_id
         ]);

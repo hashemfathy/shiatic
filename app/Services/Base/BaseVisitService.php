@@ -19,13 +19,13 @@ class BaseVisitService
     public function create(Request $request)
     {
         return $this->repository->create($request, [
-            'client_name', 'complaint', 'price', 'date', 'duration', 'client_id'
+            'client_name', 'complaint', 'price', 'date', 'hour', 'duration', 'client_id'
         ]);
     }
     public function update(Request $request, Visit $visit)
     {
         return $this->repository->update($request, $visit, [
-            'client_name', 'complaint', 'price', 'date', 'duration', 'client_id'
+            'client_name', 'complaint', 'price', 'date', 'hour', 'duration', 'client_id'
         ]);
     }
     public function fetchRecords()

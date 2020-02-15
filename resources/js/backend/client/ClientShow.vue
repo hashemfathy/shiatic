@@ -101,7 +101,7 @@
       <span class="text-danger">{{ errors.first('visit_price') }}</span>
       <br />
       <input
-        type="datetime-local"
+        type="date"
         class="form-control"
         id="date"
         aria-describedby="emailHelp"
@@ -110,6 +110,17 @@
         v-model="form.date"
       />
       <span class="text-danger">{{ errors.first('visit_date') }}</span>
+      <br />
+      <input
+        type="text"
+        class="form-control"
+        id="hour"
+        aria-describedby="emailHelp"
+        placeholder="Enter hour"
+        name="visit_hour"
+        v-model="form.hour"
+      />
+      <span class="text-danger">{{ errors.first('visit_hour') }}</span>
       <br />
       <input
         type="text"
@@ -139,6 +150,7 @@ export default {
         complaint: "",
         price: "",
         date: "",
+        hour: "",
         duration: "",
         client_id: this.client.id
       },
@@ -184,6 +196,14 @@ export default {
           field: "date",
           html: true,
           sortable: true,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+        {
+          label: "Hour",
+          field: "hour",
+          html: true,
+          sortable: false,
           tdClass: "text-center",
           thClass: "text-center"
         },

@@ -35,7 +35,7 @@
         <div class="form-group">
           <label for="date">Date</label>
           <input
-            type="datetime-local"
+            type="date"
             class="form-control"
             v-model="form.date"
             id="date"
@@ -44,6 +44,19 @@
             placeholder="Enter date"
           />
           <span class="text-danger">{{ errors.first('date') }}</span>
+        </div>
+        <div class="form-group">
+          <label for="hour">Hour</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="form.hour"
+            id="hour"
+            name="hour"
+            aria-describedby="emailHelp"
+            placeholder="Enter hour"
+          />
+          <span class="text-danger">{{ errors.first('hour') }}</span>
         </div>
         <div class="form-group">
           <label for="duration">Duration</label>
@@ -77,6 +90,7 @@ export default {
         complaint: "",
         price: "",
         date: "",
+        hour: "",
         duration: "",
         client_id: this.visit.client_id
       }

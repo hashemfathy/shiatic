@@ -20,6 +20,7 @@ class BaseVisitIndexResource extends JsonResource
             'complaint' => $this->complaint,
             'price' => $this->price,
             'date' => $this->date,
+            'hour' => $this->hour,
             'duration' => $this->duration,
             'client_id' => $this->client_id,
         ];

@@ -107,6 +107,14 @@ export default {
           thClass: "text-center"
         },
         {
+          label: "Hour",
+          field: "hour",
+          html: true,
+          sortable: false,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+        {
           label: "Duration",
           field: "duration",
           html: true,

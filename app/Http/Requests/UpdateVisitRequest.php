@@ -28,6 +28,7 @@ class UpdateVisitRequest extends FormRequest
             'complaint' => 'required',
             'price' => 'required',
             'date' => 'required',
+            'hour' => 'required',
             'duration' => 'required',
             'client_id' => 'required'
         ];
