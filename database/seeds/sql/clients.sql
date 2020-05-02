@@ -1,4 +1,4 @@
-INSERT INTO clients ('id', 'name', 'gender', 'phone', 'code', 'created_at', 'updated_at') VALUES
+INSERT INTO `clients` (`id`, `name`, `gender`, `phone`, `code`, `created_at`, `updated_at`) VALUES
 (1, 'محمد دسوقي', 'male', '01062262006', '1149', '2020-02-15 23:31:09', '2020-03-21 15:34:05'),
 (2, 'محمد طارق', 'male', '01018991130', '1150', '2020-02-15 23:31:57', '2020-03-21 15:31:10'),
 (3, 'محمد علي', 'male', '01229271417', '1151', '2020-03-21 13:53:54', '2020-03-21 15:29:16'),

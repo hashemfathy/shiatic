@@ -95,6 +95,7 @@ export default {
                 ...this.form
               })
               .then(() => {
+                console.log(res);
                 Toast.fire({
                   position: "top-end",
                   icon: "success",
@@ -103,9 +104,9 @@ export default {
                   showConfirmButton: false,
                   timer: 1500
                 });
-                return (window.location.href = `/clients/${res.data.data.id}`);
+                return (window.location.href = `/clients/${this.client.id}`);
               })
-              .catch(error => this.addServerSideValidationErrors(error));
+              .catch(error => console.log(error));
           } else {
             axios
               .post(`/clients`, {
