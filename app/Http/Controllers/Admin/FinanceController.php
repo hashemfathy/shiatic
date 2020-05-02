@@ -28,10 +28,17 @@ class FinanceController extends Controller
      */
     public function index()
     {
+        $todayVisitsIncome = 0;
+        $monthVisitsIncome = 0;
+        foreach (Visit::whereDate('date', '=', date("Y-m-d"))->get() as $visit) {
+            $todayVisitsIncome += $visit->price;
+        }
+        foreach (Visit::whereMonth('date', '=', Carbon::now()->month)->whereYear('date', '=', Carbon::now()->year)->get() as $visit) {
+            $monthVisitsIncome += $visit->price;
+        }
         $income = [
-            'todayVisitsIncome' => Visit::whereDate('date', '=', date("Y-m-d"))->select(DB::raw('sum(cast(price as double precision))'))->get(),
-            'monthVisitsIncome' => Visit::whereMonth('date', '=', Carbon::now()->month)->whereYear('date', '=', Carbon::now()->year)->select(DB::raw('sum(cast(price as double precision))'))->get(),
-
+            'todayVisitsIncome' => $todayVisitsIncome,
+            'monthVisitsIncome' => $monthVisitsIncome
         ];
         return view('backend.pages.finance.index', compact('income'));
     }
