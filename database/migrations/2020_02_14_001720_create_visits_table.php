@@ -17,7 +17,7 @@ class CreateVisitsTable extends Migration
             $table->bigIncrements('id');
             $table->string('client_name');
             $table->string('complaint');
-            $table->string('price');
+            $table->integer('price');
             $table->string('date');
             $table->string('hour');
             $table->string('duration');

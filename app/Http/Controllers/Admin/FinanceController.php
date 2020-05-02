@@ -33,10 +33,9 @@ class FinanceController extends Controller
             'monthVisitsIncome' => Visit::whereMonth('date', '=', Carbon::now()->month)->whereYear('date', '=', Carbon::now()->year)->sum('price'),
 
         ];
-        $total =  DB::table('visits')
-            ->whereDate('date', '=', date("Y-m-d"))->sum('price');
+        // $total =  Visit::whereDate('date', '=', date("Y-m-d"))->select(DB::raw('sum(cast(price as double precision))'))->get();
 
-        return $total;
-        // return view('backend.pages.finance.index', compact('income'));
+        // return $total[0];
+        return view('backend.pages.finance.index', compact('income'));
     }
 }
