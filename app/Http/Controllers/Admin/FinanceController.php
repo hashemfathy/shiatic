@@ -30,11 +30,13 @@ class FinanceController extends Controller
     {
         $todayVisitsIncome = 0;
         $monthVisitsIncome = 0;
-        foreach (Visit::whereDate('date', '=', date("Y-m-d"))->get() as $visit) {
+        foreach (Visit::all()->where("date", '=', date("Y-m-d")) as $visit) {
             $todayVisitsIncome += $visit->price;
         }
-        foreach (Visit::whereMonth('date', '=', Carbon::now()->month)->whereYear('date', '=', Carbon::now()->year)->get() as $visit) {
-            $monthVisitsIncome += $visit->price;
+        foreach (Visit::all() as $visit) {
+            if (date("m", strtotime($visit->date)) == Carbon::now()->month && date("Y", strtotime($visit->date)) == Carbon::now()->year) {
+                $monthVisitsIncome += $visit->price;
+            }
         }
         $income = [
             'todayVisitsIncome' => $todayVisitsIncome,
