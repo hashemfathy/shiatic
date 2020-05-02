@@ -85,6 +85,20 @@ export default {
           thClass: "text-center"
         },
         {
+          label: "Specialist",
+          field: "specialist.name",
+          filterOptions: {
+            enabled: true, // enable filter for this column
+            placeholder: "Search", // placeholder for filter input
+            filterDropdownItems: [], // dropdown (with selected values) instead of text input
+            filterFn: this.columnFilterFn, //custom filter function that
+            trigger: "enter" //only trigger on enter not on keyup
+          },
+          sortable: true,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+        {
           label: "Price",
           field: "price",
           html: true,

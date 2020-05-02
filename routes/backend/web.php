@@ -14,6 +14,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('visits/today/json', 'VisitController@getTodayJson');
     Route::get('visits/today', 'VisitController@indexToday');
     Route::resource('visits', 'VisitController');
+    Route::get('finance', 'FinanceController@index');
 });
 
 // Route::get('users', function (Request $request) {

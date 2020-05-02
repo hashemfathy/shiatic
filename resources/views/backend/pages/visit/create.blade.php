@@ -12,6 +12,6 @@ Clients
 </style>
 @section('content')
 <default-container>
-    <client-form />
+    <client-form :specialists="{{json_encode($specialists)}}" />
 </default-container>
 @endsection

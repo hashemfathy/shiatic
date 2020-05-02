@@ -27,7 +27,8 @@ class VisitRepository
             'date' => $request->date,
             'hour' => $request->hour,
             'duration' => $request->duration,
-            'client_id' => $request->client_id
+            'client_id' => $request->client_id,
+            'specialist_id' => $request->specialist_id,
         ]);
     }
 
@@ -40,7 +41,8 @@ class VisitRepository
             'date' => $request->date,
             'hour' => $request->hour,
             'duration' => $request->duration,
-            'client_id' => $request->client_id
+            'client_id' => $request->client_id,
+            'specialist_id' => $request->specialist_id,
         ]);
         return $model;
     }
@@ -49,14 +51,14 @@ class VisitRepository
     {
         return QueryBuilder::for($this->model->query())
             ->defaultSort('-id')
-            ->allowedFilters(['client_name', 'date', 'complaint'])
+            ->allowedFilters(['client_name', 'date', 'complaint', 'specialist.name', 'specialist.id'])
             ->allowedSorts(['date', 'complaint']);
     }
     public function fetchTodayRecords()
     {
         return QueryBuilder::for($this->model->query())->whereDate('date', '=', date("Y-m-d"))
             ->defaultSort('date')
-            ->allowedFilters(['client_name', 'date', 'complaint'])
+            ->allowedFilters(['client_name', 'date', 'complaint', 'specialist.name', 'specialist.id'])
             ->allowedSorts(['date', 'complaint']);
     }
     public function sync(Visit $visit, string $method, array $ids)

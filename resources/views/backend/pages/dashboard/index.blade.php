@@ -157,7 +157,50 @@ Dashboard
                 </div>
             </div>
         </div>
-
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile">
+                <div class="wrapper">
+                    <div class="header">Total Visits</div>
+                    <div class="banner-img">
+                        <img src="/images/shiatic-logo-small.png" alt="Image 1">
+                    </div>
+                    <div class="dates">
+                        <div class="start">
+                            <strong>Total</strong> {{$visitsCount['totalVisitsCount']}}
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <div>
+                            <strong>C.ahmed adel</strong> {{$visitsCount['ahmedAdelVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Hany</strong> {{$visitsCount['hanyVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Hussien</strong> {{$visitsCount['HussienVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Ezzat</strong> {{$visitsCount['ezzatVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Omar</strong> {{$visitsCount['omarVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Nariman</strong> {{$visitsCount['narimanVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Alaa</strong> {{$visitsCount['alaaVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Yara</strong> {{$visitsCount['yaraVisitsCount']}}
+                        </div>
+                        <div>
+                            <strong>Unselected</strong> {{$visitsCount['unselectedVisitsCount']}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </default-container>
 @endsection

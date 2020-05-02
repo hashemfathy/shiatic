@@ -39,6 +39,11 @@ export default {
         },
       ]
     },
+    {
+      name: 'Finance',
+      url: '/finance',
+      icon: 'icon-star',
+    },
     // {
     //   title: true,
     //   name: 'Theme',

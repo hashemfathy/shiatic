@@ -7,6 +7,7 @@ use App\Http\Requests\CreateVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
 use App\Http\Resources\Admin\AdminVisitIndexResource;
 use App\Services\Admin\AdminVisitService;
+use App\Specialist;
 use App\Visit;
 use Illuminate\Http\Request;
 
@@ -50,7 +51,8 @@ class VisitController extends Controller
      */
     public function create()
     {
-        return view('backend.pages.Visit.create');
+        $specialists = Specialist::all();
+        return view('backend.pages.Visit.create', compact('specialists'));
     }
 
     /**
@@ -86,7 +88,8 @@ class VisitController extends Controller
      */
     public function edit(Visit $visit)
     {
-        return view('backend.pages.visit.edit', compact('visit'));
+        $specialists = Specialist::all();
+        return view('backend.pages.visit.edit', compact('visit', 'specialists'));
     }
 
     /**

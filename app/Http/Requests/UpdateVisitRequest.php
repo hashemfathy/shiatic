@@ -30,7 +30,8 @@ class UpdateVisitRequest extends FormRequest
             'date' => 'required',
             'hour' => 'required',
             'duration' => 'required',
-            'client_id' => 'required'
+            'client_id' => 'required',
+            'specialist_id' => 'required',
         ];
     }
 }

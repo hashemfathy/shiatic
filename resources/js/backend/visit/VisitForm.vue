@@ -19,6 +19,24 @@
           <span class="text-danger">{{ errors.first('complaint') }}</span>
         </div>
         <div class="form-group">
+          <label for="exampleFormControlSelect2">Select specialist</label>
+          <select
+            class="form-control"
+            id="exampleFormControlSelect2"
+            name="specialist"
+            v-model="form.specialist_id"
+            v-validate="'required'"
+          >
+            <option
+              v-for="(specialist,i) in specialists"
+              :value="specialist.id"
+              :key="i"
+            >{{specialist.name}}</option>
+          </select>
+        </div>
+        <span class="text-danger">{{ errors.first('specialist') }}</span>
+        <br />
+        <div class="form-group">
           <label for="price">Price</label>
           <input
             type="number"
@@ -81,7 +99,6 @@
 import { errorsMixin } from "../mixins/errorsMixin";
 export default {
   mixins: [errorsMixin],
-
   components: {},
   data() {
     return {
@@ -92,6 +109,7 @@ export default {
         date: "",
         hour: "",
         duration: "",
+        specialist_id: "",
         client_id: this.visit.client_id
       }
     };
@@ -100,6 +118,9 @@ export default {
     visit: {
       required: false,
       type: Object
+    },
+    specialists: {
+      required: true
     }
   },
   mounted() {

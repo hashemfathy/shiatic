@@ -13,14 +13,20 @@ class Visit extends Model
      * @var array
      */
     protected $fillable = [
-        'client_name', 'complaint', 'price', 'date', 'hour', 'duration', 'client_id'
+        'client_name', 'complaint', 'price', 'date', 'hour', 'duration', 'client_id', 'specialist_id'
     ];
     /**
-     *  define one to many relation Visit model
      * @return HasMany
      */
     public function client()
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+    /**
+     * @return HasMany
+     */
+    public function specialist()
+    {
+        return $this->belongsTo(Specialist::class, 'specialist_id');
     }
 }

@@ -75,7 +75,7 @@
         </vue-good-table>
       </div>
     </div>
-    <b-modal id="modal-center" @ok="ok" centered title="Add new visit">
+    <b-modal id="modal-center" @ok="submit" centered title="Add new visit">
       <input
         type="text"
         class="form-control"
@@ -87,6 +87,24 @@
         v-validate="'required'"
       />
       <span class="text-danger">{{ errors.first('visit_complaint') }}</span>
+      <br />
+      <div class="form-group">
+        <label for="exampleFormControlSelect2">Select specialist</label>
+        <select
+          class="form-control"
+          id="exampleFormControlSelect2"
+          name="specialist"
+          v-model="form.specialist_id"
+          v-validate="'required'"
+        >
+          <option
+            v-for="(specialist,i) in specialists"
+            :value="specialist.id"
+            :key="i"
+          >{{specialist.name}}</option>
+        </select>
+      </div>
+      <span class="text-danger">{{ errors.first('specialist') }}</span>
       <br />
       <input
         type="number"
@@ -152,6 +170,7 @@ export default {
         date: "",
         hour: "",
         duration: "",
+        specialist_id: "",
         client_id: this.client.id
       },
       columns: [
@@ -159,7 +178,7 @@ export default {
           label: "Client",
           field: "client_name",
           filterOptions: {
-            enabled: true, // enable filter for this column
+            enabled: false, // enable filter for this column
             placeholder: "Search", // placeholder for filter input
             filterDropdownItems: [], // dropdown (with selected values) instead of text input
             filterFn: this.columnFilterFn, //custom filter function that
@@ -173,13 +192,27 @@ export default {
           label: "Complaint",
           field: "complaint",
           filterOptions: {
-            enabled: true, // enable filter for this column
+            enabled: false, // enable filter for this column
             placeholder: "Search", // placeholder for filter input
             filterDropdownItems: [], // dropdown (with selected values) instead of text input
             filterFn: this.columnFilterFn, //custom filter function that
             trigger: "enter" //only trigger on enter not on keyup
           },
           sortable: true,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+        {
+          label: "Specialist",
+          field: "specialist.name",
+          filterOptions: {
+            enabled: false, // enable filter for this column
+            placeholder: "Search", // placeholder for filter input
+            filterDropdownItems: [], // dropdown (with selected values) instead of text input
+            filterFn: this.columnFilterFn, //custom filter function that
+            trigger: "enter" //only trigger on enter not on keyup
+          },
+          sortable: false,
           tdClass: "text-center",
           thClass: "text-center"
         },
@@ -230,6 +263,9 @@ export default {
     client: {
       required: false,
       type: Object
+    },
+    specialists: {
+      required: true
     }
   },
   mounted() {
@@ -238,8 +274,11 @@ export default {
     );
   },
   methods: {
-    ok() {
+    submit() {
       this.$validator.validateAll().then(res => {
+        if (!res) {
+          return;
+        }
         if (res) {
           axios
             .post(`/visits`, {

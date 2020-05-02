@@ -8,6 +8,7 @@ use App\Http\Requests\CreateClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Http\Resources\Admin\AdminClientIndexResource;
 use App\Services\Admin\AdminClientService;
+use App\Specialist;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -66,7 +67,8 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        return view('backend.pages.client.show', compact('client'));
+        $specialists = Specialist::all();
+        return view('backend.pages.client.show', compact('client', 'specialists'));
     }
 
     /**

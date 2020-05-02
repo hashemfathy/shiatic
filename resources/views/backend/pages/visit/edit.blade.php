@@ -12,6 +12,6 @@ Visit
 </style>
 @section('content')
 <default-container>
-    <visit-form :visit="{{json_encode($visit)}}" />
+    <visit-form :specialists="{{json_encode($specialists)}}" :visit="{{json_encode($visit)}}" />
 </default-container>
 @endsection

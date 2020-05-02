@@ -12,6 +12,6 @@
 </style>
 @section('content')
 <default-container>
-    <client-show :client="{{json_encode($client)}}" />
+    <client-show :specialists="{{json_encode($specialists)}}" :client="{{json_encode($client)}}" />
 </default-container>
 @endsection
