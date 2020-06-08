@@ -4,6 +4,8 @@ use App\Http\Resources\Admin\CategoryCollection;
 use App\Models\User;
 use App\Http\Resources\UserResource;
 use App\Models\Category;
+use App\Visit;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 Route::group(['middleware' => 'auth'], function () {
@@ -20,9 +22,11 @@ Route::group(['middleware' => 'auth'], function () {
 // Route::get('users', function (Request $request) {
 //     return UserResource::collection(User::all());
 // });
-// Route::get('categories-list', function () {
-//     return CategoryCollection::collection(Category::parent()->with('withAllChildren')->get());
-// });
+Route::get('test', function () {
+    return DB::table('visits')
+        ->whereRaw("extract(month from date)", "=", Carbon::now()->month)
+        ->get();
+});
 // Route::get('tags/all', function () {
 //     return  DB::table('tags')->select('title as text')->get();
 // });
