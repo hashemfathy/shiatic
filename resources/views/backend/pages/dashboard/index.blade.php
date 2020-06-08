@@ -201,7 +201,7 @@ Dashboard
                 </div>
             </div>
         </div>
-        <!-- <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
                     <div class="header">Total Month Visits</div>
@@ -210,41 +210,41 @@ Dashboard
                     </div>
                     <div class="dates">
                         <div class="start">
-                            <strong>Total</strong> {{$visitsCount['totalVisitsCount']}}
+                            <strong>Total</strong> {{$monthVisitsCount['totalVisitsCount']}}
                         </div>
                     </div>
                     <div class="stats">
                         <div>
-                            <strong>C.ahmed adel</strong> {{$visitsCount['ahmedAdelVisitsCount']}}
+                            <strong>C.ahmed adel</strong> {{$monthVisitsCount['ahmedAdelVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Hany</strong> {{$visitsCount['hanyVisitsCount']}}
+                            <strong>Hany</strong> {{$monthVisitsCount['hanyVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Hussien</strong> {{$visitsCount['HussienVisitsCount']}}
+                            <strong>Hussien</strong> {{$monthVisitsCount['HussienVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Ezzat</strong> {{$visitsCount['ezzatVisitsCount']}}
+                            <strong>Ezzat</strong> {{$monthVisitsCount['ezzatVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Omar</strong> {{$visitsCount['omarVisitsCount']}}
+                            <strong>Omar</strong> {{$monthVisitsCount['omarVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Nariman</strong> {{$visitsCount['narimanVisitsCount']}}
+                            <strong>Nariman</strong> {{$monthVisitsCount['narimanVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Alaa</strong> {{$visitsCount['alaaVisitsCount']}}
+                            <strong>Alaa</strong> {{$monthVisitsCount['alaaVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Yara</strong> {{$visitsCount['yaraVisitsCount']}}
+                            <strong>Yara</strong> {{$monthVisitsCount['yaraVisitsCount']}}
                         </div>
                         <div>
-                            <strong>Unselected</strong> {{$visitsCount['unselectedVisitsCount']}}
+                            <strong>Unselected</strong> {{$monthVisitsCount['unselectedVisitsCount']}}
                         </div>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
     </div>
 </default-container>
 @endsection
