@@ -23,7 +23,8 @@ class ClientRepository
             'name' => $request->name,
             'gender' => $request->gender,
             'phone' => $request->phone,
-            'code' => $request->code
+            'code' => $request->code,
+            'called' => $request->called
         ]);
     }
 
@@ -33,7 +34,8 @@ class ClientRepository
             'name' => $request->name,
             'gender' => $request->gender,
             'phone' => $request->phone,
-            'code' => $request->code
+            'code' => $request->code,
+            'called' => $request->called
         ]);
         return $model;
     }
@@ -43,7 +45,7 @@ class ClientRepository
         return QueryBuilder::for($this->model->query())
             ->defaultSort('-id')
             ->allowedFilters(['name', 'code'])
-            ->allowedSorts(['name', 'gender']);
+            ->allowedSorts(['name', 'gender', 'called']);
     }
     public function sync(Client $client, string $method, array $ids)
     {

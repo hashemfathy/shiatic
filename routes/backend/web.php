@@ -10,6 +10,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index');
     Route::get('clients/json', 'ClientController@getJson');
     Route::resource('clients', 'ClientController');
+    Route::put('clients/toggle-status/{client}', 'ClientController@toggleStatus');
     Route::get('visits/json', 'VisitController@getJson');
     Route::get('visits/today/json', 'VisitController@getTodayJson');
     Route::get('visits/today', 'VisitController@indexToday');

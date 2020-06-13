@@ -1,5 +1,5 @@
 <template>
-  <nav class="sidebar-nav">
+  <nav style="background-color:black" class="sidebar-nav">
     <VuePerfectScrollbar class="scroll-area" :settings="psSettings" @ps-scroll-y="scrollHandle">
       <ul class="nav">
         <template v-for="(item, index) in navItems">

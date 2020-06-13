@@ -19,13 +19,13 @@ class BaseClientService
     public function create(Request $request)
     {
         return $this->repository->create($request, [
-            'name', 'gender', 'phone', 'code'
+            'name', 'gender', 'phone', 'code', 'called'
         ]);
     }
     public function update(Request $request, Client $client)
     {
         return $this->repository->update($request, $client, [
-            'name', 'gender', 'phone', 'code'
+            'name', 'gender', 'phone', 'code', 'called'
         ]);
     }
     public function fetchRecords()
@@ -47,5 +47,12 @@ class BaseClientService
     public function sync(Client $client, $method, $ids)
     {
         return $this->repository->sync($client, $method, $ids);
+    }
+
+    public function toggleStatus(Client $client)
+    {
+        $client->called = !$client->called;
+        $client->update();
+        return $client;
     }
 }

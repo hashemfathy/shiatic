@@ -23,7 +23,15 @@
         styleClass="table table-hover table-bordered vgt-table bordered "
       >
         <template slot="table-row" slot-scope="props">
-          <span v-if="props.column.field == 'buttons'">
+          <span v-if="props.column.field == 'called'">
+            <toggle-button
+              :key="props.row.id"
+              color="#30cb30fa"
+              @change="toggleStatus(`clients/toggle-status/${props.row.id}`)"
+              :value="Boolean(props.row.called)"
+            />
+          </span>
+          <span v-else-if="props.column.field == 'buttons'">
             <a class="text-primary" title="show" :href="`/clients/${props.row.id}`">
               <span class="pcoded-micon">
                 <i class="fa fa-eye"></i>
@@ -50,9 +58,10 @@ import queryString from "query-string";
 import { vueGoodTable } from "../mixins/vueGoodTable";
 import { vueGoodTableActions } from "../mixins/vueGoodTableActions";
 import { errorsMixin } from "../mixins/errorsMixin";
+import { toggleButton } from "../mixins/toggleButton";
 
 export default {
-  mixins: [vueGoodTable(), vueGoodTableActions({}), errorsMixin],
+  mixins: [vueGoodTable(), vueGoodTableActions({}), errorsMixin, toggleButton],
   props: {},
   data() {
     return {
@@ -98,6 +107,14 @@ export default {
           field: "phone",
           html: true,
           sortable: false,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+        {
+          label: "Called ?",
+          field: "called",
+          html: true,
+          sortable: true,
           tdClass: "text-center",
           thClass: "text-center"
         },

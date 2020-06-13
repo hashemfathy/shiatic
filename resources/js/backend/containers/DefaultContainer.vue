@@ -13,26 +13,7 @@
         />
       </b-link>
       <SidebarToggler class="d-md-down-none" display="lg" />
-      <b-navbar-nav class="d-md-down-none">
-        <b-nav-item class="px-3" to="/dashboard">Dashboard</b-nav-item>
-        <b-nav-item class="px-3" to="/users" exact>Users</b-nav-item>
-        <b-nav-item class="px-3">Settings</b-nav-item>
-      </b-navbar-nav>
-      <b-navbar-nav class="ml-auto">
-        <b-nav-item class="d-md-down-none">
-          <DefaultHeaderDropdownNotif />
-        </b-nav-item>
-        <b-nav-item class="d-md-down-none">
-          <DefaultHeaderDropdownTasks />
-        </b-nav-item>
-        <b-nav-item class="d-md-down-none">
-          <DefaultHeaderDropdownMssgs />
-        </b-nav-item>
-        <b-nav-item class="d-md-down-none">
-          <DefaultHeaderDropdown />
-        </b-nav-item>
-        <DefaultHeaderDropdownAccnt />
-      </b-navbar-nav>
+      <b-navbar-nav class="ml-auto"></b-navbar-nav>
       <AsideToggler class="d-none d-lg-block" />
       <AsideToggler class="d-lg-none" mobile />
     </AppHeader>
@@ -57,12 +38,9 @@
     <TheFooter>
       <!--footer-->
       <div>
-        <p>Hashem</p>
         <span class="ml-1">&copy; {{ new Date().getFullYear() }}</span>
       </div>
-      <div class="ml-auto">
-        <span class="mr-1">👌</span>
-      </div>
+      <div class="ml-auto"></div>
     </TheFooter>
   </div>
 </template>

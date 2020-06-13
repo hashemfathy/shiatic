@@ -97,6 +97,10 @@ class ClientController extends Controller
         ], 200);
     }
 
+    public function toggleStatus(Client $client)
+    {
+        return $this->adminClientService->toggleStatus($client);
+    }
     /**
      * Remove the specified resource from storage.
      *
