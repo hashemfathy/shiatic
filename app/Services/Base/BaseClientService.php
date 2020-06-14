@@ -19,7 +19,7 @@ class BaseClientService
     public function create(Request $request)
     {
         return $this->repository->create($request, [
-            'name', 'gender', 'phone', 'code', 'called'
+            'name', 'gender', 'phone', 'code'
         ]);
     }
     public function update(Request $request, Client $client)

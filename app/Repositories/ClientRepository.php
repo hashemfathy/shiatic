@@ -24,7 +24,7 @@ class ClientRepository
             'gender' => $request->gender,
             'phone' => $request->phone,
             'code' => $request->code,
-            'called' => $request->called
+            'called' => false
         ]);
     }
 
