@@ -276,7 +276,7 @@ Dashboard
             </div>
         </b-col>
     </b-row>
-    <!-- <b-row>
+    <b-row>
         <b-col style="flex: 0 0 50%;max-width: 50%;">
             <b-card header="Visits">
                 <div class="chart-wrapper">
@@ -284,6 +284,6 @@ Dashboard
                 </div>
             </b-card>
         </b-col>
-    </b-row> -->
+    </b-row>
 </default-container>
 @endsection
