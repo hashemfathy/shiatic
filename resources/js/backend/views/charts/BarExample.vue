@@ -29,7 +29,7 @@ export default {
         ],
         datasets: [
           {
-            label: "Year visits",
+            label: "visits",
             backgroundColor: "#f87979",
             data: [
               this.statics.janVisits,
