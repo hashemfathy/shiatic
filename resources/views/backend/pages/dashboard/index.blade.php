@@ -133,118 +133,157 @@ Dashboard
 </style>
 @section('content')
 <default-container>
-    <div class="row">
-        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-            <div class="tile">
-                <div class="wrapper">
-                    <div class="header">Clients</div>
-                    <div class="banner-img">
-                        <img src="/images/shiatic-logo-small.png" alt="Image 1">
+    <b-row>
+        <b-col style="flex: 0 0 100%;max-width: 100%;">
+            <div class="brand-card">
+                <div class="brand-card-header bg-facebook">
+                    <h4>Clients</h4>
+                    <div class="chart-wrapper">
                     </div>
-                    <div class="dates">
-                        <div class="start">
-                            <strong>Total</strong> {{$totalClientCount}}
-                        </div>
+                </div>
+                <div class="brand-card-body">
+                    <div>
+                        <div class="text-value">{{$totalClientCount}}</div>
+                        <div class="text-uppercase text-muted small">Total</div>
                     </div>
-                    <div class="stats">
-                        <div>
-                            <strong>Male</strong> {{$maleClientCount}}
-                        </div>
-                        <div>
-                            <strong>Female</strong> {{$femaleClientCount}}
-                        </div>
+                    <div>
+                        <div class="text-value">{{$maleClientCount}}</div>
+                        <div class="text-uppercase text-muted small">Male</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$femaleClientCount}}</div>
+                        <div class="text-uppercase text-muted small">Female</div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-            <div class="tile">
-                <div class="wrapper">
-                    <div class="header">Total Visits</div>
-                    <div class="banner-img">
-                        <img src="/images/shiatic-logo-small.png" alt="Image 1">
+        </b-col>
+        <b-col style="flex: 0 0 100%;max-width: 100%;" sm="6" lg="3">
+            <div class="brand-card">
+                <div class="brand-card-header bg-twitter">
+                    <h4>Total Visits</h4>
+                    <div class="chart-wrapper">
                     </div>
-                    <div class="dates">
-                        <div class="start">
-                            <strong>Total</strong> {{$visitsCount['totalVisitsCount']}}
-                        </div>
+                </div>
+                <div class="brand-card-body">
+                    <div>
+                        <div class="text-value">{{$visitsCount['totalVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Total</div>
                     </div>
-                    <div class="stats">
-                        <div>
-                            <strong>C.ahmed adel</strong> {{$visitsCount['ahmedAdelVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Hany</strong> {{$visitsCount['hanyVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Hussien</strong> {{$visitsCount['HussienVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Ezzat</strong> {{$visitsCount['ezzatVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Omar</strong> {{$visitsCount['omarVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Nariman</strong> {{$visitsCount['narimanVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Alaa</strong> {{$visitsCount['alaaVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Yara</strong> {{$visitsCount['yaraVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Unselected</strong> {{$visitsCount['unselectedVisitsCount']}}
-                        </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['ahmedAdelVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">C.ahmed adel</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['hanyVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Hany</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['HussienVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Hussien</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['ezzatVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Ezzat</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['omarVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Omar</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['baherVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Baher</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['mohamedAdelVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Mohamed adel</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['narimanVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Nariman</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['alaaVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Alaa</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['yaraVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Yara</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$visitsCount['unselectedVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Unselected</div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-            <div class="tile">
-                <div class="wrapper">
-                    <div class="header">Total Month Visits</div>
-                    <div class="banner-img">
-                        <img src="/images/shiatic-logo-small.png" alt="Image 1">
+        </b-col>
+        <b-col style="flex: 0 0 100%;max-width: 100%;" sm="6" lg="3">
+            <div class="brand-card">
+                <div class="brand-card-header bg-google-plus">
+                    <h4>Total Month Visits</h4>
+                    <div class="chart-wrapper">
                     </div>
-                    <div class="dates">
-                        <div class="start">
-                            <strong>Total</strong> {{$monthVisitsCount['totalVisitsCount']}}
-                        </div>
+                </div>
+                <div class="brand-card-body">
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['totalVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Total</div>
                     </div>
-                    <div class="stats">
-                        <div>
-                            <strong>C.ahmed adel</strong> {{$monthVisitsCount['ahmedAdelVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Hany</strong> {{$monthVisitsCount['hanyVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Hussien</strong> {{$monthVisitsCount['HussienVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Ezzat</strong> {{$monthVisitsCount['ezzatVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Omar</strong> {{$monthVisitsCount['omarVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Nariman</strong> {{$monthVisitsCount['narimanVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Alaa</strong> {{$monthVisitsCount['alaaVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Yara</strong> {{$monthVisitsCount['yaraVisitsCount']}}
-                        </div>
-                        <div>
-                            <strong>Unselected</strong> {{$monthVisitsCount['unselectedVisitsCount']}}
-                        </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['ahmedAdelVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">C.ahmed adel</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['hanyVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Hany</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['HussienVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Hussien</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['ezzatVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Ezzat</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['omarVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Omar</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['baherVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Baher</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['mohamedAdelVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Mohamed adel</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['narimanVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Nariman</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['alaaVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Alaa</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['yaraVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Yara</div>
+                    </div>
+                    <div>
+                        <div class="text-value">{{$monthVisitsCount['unselectedVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Unselected</div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </b-col>
+    </b-row>
+    <b-row>
+        <b-col style="flex: 0 0 50%;max-width: 50%;">
+            <b-card header="Visits">
+                <div class="chart-wrapper">
+                    <bar-example :statics="{{json_encode($statics)}}" chartId="chart-bar-01" />
+                </div>
+            </b-card>
+        </b-col>
+    </b-row>
 </default-container>
 @endsection
