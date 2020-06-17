@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index');
     Route::get('/test', function () {
-        return Visit::all()->where("date_trunc('month', date)", "=", Carbon::now()->month);
+        return Visit::all()->where("date_trunc('year', date)", "=", Carbon::now()->year);
     });
     // collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 03 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "))
     Route::get('clients/json', 'ClientController@getJson');
