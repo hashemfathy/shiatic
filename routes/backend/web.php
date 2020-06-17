@@ -4,12 +4,14 @@ use App\Http\Resources\Admin\CategoryCollection;
 use App\Models\User;
 use App\Http\Resources\UserResource;
 use App\Models\Category;
+use App\Visit;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index');
     Route::get('/test', function () {
-        return collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 2 "));
+        return DB::table('visits')->whereMonth('date', Carbon::now()->month);
     });
     // collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 03 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "))
     Route::get('clients/json', 'ClientController@getJson');
