@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index');
+    Route::get('/test', function () {
+        return collect(DB::select("SELECT * FROM visits WHERE id= 2 "));
+    });
     Route::get('clients/json', 'ClientController@getJson');
     Route::resource('clients', 'ClientController');
     Route::put('clients/toggle-status/{client}', 'ClientController@toggleStatus');
