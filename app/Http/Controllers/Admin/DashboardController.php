@@ -16,8 +16,7 @@ class DashboardController extends Controller
     $totalClientCount = Client::all()->count();
     $maleClientCount = Client::where('gender', 'male')->count();
     $femaleClientCount = Client::where('gender', 'female')->count();
-    $monthVisits = collect(DB::select("SELECT * FROM visits WHERE date >= LAST_DAY(CURRENT_DATE) + INTERVAL 1 DAY - INTERVAL 1 MONTH
-    AND date < LAST_DAY(CURRENT_DATE) + INTERVAL 1 DAY"));
+    $monthVisits = [];
     $janVisits = collect(DB::select("SELECT * FROM visits WHERE EXTRACT(MONTH FROM date) = 01 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "));
     $febVisits = collect(DB::select("SELECT * FROM visits WHERE EXTRACT(MONTH FROM date) = 02 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "));
     $marVisits = collect(DB::select("SELECT * FROM visits WHERE EXTRACT(MONTH FROM date) = 03 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "));
@@ -45,11 +44,11 @@ class DashboardController extends Controller
       'baherVisitsCount' => Visit::where('specialist_id', 11)->count(),
       'unselectedVisitsCount' => Visit::where('specialist_id', 1)->count(),
     ];
-    // foreach (Visit::all() as $visit) {
-    //   if (date("m", strtotime($visit->date)) == Carbon::now()->month && date("Y", strtotime($visit->date)) == Carbon::now()->year) {
-    //     array_push($monthVisits, $visit);
-    //   }
-    // }
+    foreach (Visit::all() as $visit) {
+      if (date("m", strtotime($visit->date)) == Carbon::now()->month && date("Y", strtotime($visit->date)) == Carbon::now()->year) {
+        array_push($monthVisits, $visit);
+      }
+    }
     // foreach (Visit::all() as $visit) {
     //   if (date("m", strtotime($visit->date)) == 1 && date("Y", strtotime($visit->date)) == Carbon::now()->year) {
     //     array_push($janVisits, $visit);
@@ -111,18 +110,18 @@ class DashboardController extends Controller
     //   }
     // }
     $monthVisitsCount = [
-      'totalVisitsCount' => $monthVisits->count(),
-      'ahmedAdelVisitsCount' => $monthVisits->where('specialist_id', 2)->count(),
-      'hanyVisitsCount' => $monthVisits->where('specialist_id', 5)->count(),
-      'HussienVisitsCount' => $monthVisits->where('specialist_id', 3)->count(),
-      'ezzatVisitsCount' => $monthVisits->where('specialist_id', 4)->count(),
-      'omarVisitsCount' => $monthVisits->where('specialist_id', 6)->count(),
-      'narimanVisitsCount' => $monthVisits->where('specialist_id', 7)->count(),
-      'alaaVisitsCount' => $monthVisits->where('specialist_id', 9)->count(),
-      'yaraVisitsCount' => $monthVisits->where('specialist_id', 8)->count(),
-      'mohamedAdelVisitsCount' => $monthVisits->where('specialist_id', 10)->count(),
-      'baherVisitsCount' => $monthVisits->where('specialist_id', 11)->count(),
-      'unselectedVisitsCount' => $monthVisits->where('specialist_id', 1)->count(),
+      'totalVisitsCount' => collect($monthVisits)->count(),
+      'ahmedAdelVisitsCount' => collect($monthVisits)->where('specialist_id', 2)->count(),
+      'hanyVisitsCount' => collect($monthVisits)->where('specialist_id', 5)->count(),
+      'HussienVisitsCount' => collect($monthVisits)->where('specialist_id', 3)->count(),
+      'ezzatVisitsCount' => collect($monthVisits)->where('specialist_id', 4)->count(),
+      'omarVisitsCount' => collect($monthVisits)->where('specialist_id', 6)->count(),
+      'narimanVisitsCount' => collect($monthVisits)->where('specialist_id', 7)->count(),
+      'alaaVisitsCount' => collect($monthVisits)->where('specialist_id', 9)->count(),
+      'yaraVisitsCount' => collect($monthVisits)->where('specialist_id', 8)->count(),
+      'mohamedAdelVisitsCount' => collect($monthVisits)->where('specialist_id', 10)->count(),
+      'baherVisitsCount' => collect($monthVisits)->where('specialist_id', 11)->count(),
+      'unselectedVisitsCount' => collect($monthVisits)->where('specialist_id', 1)->count(),
     ];
     $statics = [
       'janVisits' => $janVisits->count(),
