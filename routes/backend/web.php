@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\DB;
 Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index');
     Route::get('/test', function () {
-        return collect(DB::select("SELECT * FROM visits WHERE date >= '2020-01-01 00:00:00' 
-        AND  date <  '2021-01-01 00:00:00' "));
+        return collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 2 "));
     });
+    // collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 03 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "))
     Route::get('clients/json', 'ClientController@getJson');
     Route::resource('clients', 'ClientController');
     Route::put('clients/toggle-status/{client}', 'ClientController@toggleStatus');
