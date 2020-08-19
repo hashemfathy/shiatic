@@ -13,9 +13,9 @@ class UpdateClientsTableAddCodeNumColumn extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('clients', 'code_num')) {
+        if (!Schema::hasColumn('clients', 'code')) {
             Schema::table('clients', function (Blueprint $table) {
-                $table->integer('code_num')->virtualAs('code');
+                $table->integer('code')->virtualAs('code');
             });
         }
     }
@@ -27,9 +27,9 @@ class UpdateClientsTableAddCodeNumColumn extends Migration
      */
     public function down()
     {
-        if (Schema::hasColumn('clients', 'code_num')) {
+        if (Schema::hasColumn('clients', 'code')) {
             Schema::table('clients', function (Blueprint $table) {
-                $table->dropColumn('code_num');
+                $table->dropColumn('code');
             });
         }
     }

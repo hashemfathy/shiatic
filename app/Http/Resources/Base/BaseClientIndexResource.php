@@ -20,7 +20,7 @@ class BaseClientIndexResource extends JsonResource
             'gender' => $this->gender,
             'phone' => $this->phone,
             'called' => $this->called,
-            'code_num' => $this->code_num,
+            'code' => $this->code,
             'visits' => $this->visits,
 
         ];

@@ -82,7 +82,7 @@ export default {
         },
         {
           label: "Code",
-          field: "code_num",
+          field: "code",
           filterOptions: {
             enabled: true, // enable filter for this column
             placeholder: "Search", // placeholder for filter input
