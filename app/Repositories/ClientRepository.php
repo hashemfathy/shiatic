@@ -43,7 +43,7 @@ class ClientRepository
     public function fetchRecords()
     {
         return QueryBuilder::for($this->model->query())
-            ->defaultSort('-id')
+            ->defaultSort('-code')
             ->allowedFilters(['name', 'code'])
             ->allowedSorts(['name', 'gender', 'called']);
     }
