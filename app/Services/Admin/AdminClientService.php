@@ -26,7 +26,7 @@ class AdminClientService extends BaseClientService
                 'label' => 'Phone'
             ],
             [
-                'field' => 'code',
+                'field' => 'code_num',
                 'type' => 'integer',
                 'label' => 'Code'
             ],

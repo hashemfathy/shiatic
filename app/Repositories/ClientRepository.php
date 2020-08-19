@@ -43,8 +43,8 @@ class ClientRepository
     public function fetchRecords()
     {
         return QueryBuilder::for($this->model->query())
-            ->defaultSort('-code')
-            ->allowedFilters(['name', 'code'])
+            ->defaultSort('-code_num')
+            ->allowedFilters(['name', 'code_num'])
             ->allowedSorts(['name', 'gender', 'called']);
     }
     public function sync(Client $client, string $method, array $ids)
