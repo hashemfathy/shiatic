@@ -175,20 +175,6 @@ export default {
       },
       columns: [
         {
-          label: "Client",
-          field: "client_name",
-          filterOptions: {
-            enabled: false, // enable filter for this column
-            placeholder: "Search", // placeholder for filter input
-            filterDropdownItems: [], // dropdown (with selected values) instead of text input
-            filterFn: this.columnFilterFn, //custom filter function that
-            trigger: "enter" //only trigger on enter not on keyup
-          },
-          sortable: false,
-          tdClass: "text-center",
-          thClass: "text-center"
-        },
-        {
           label: "Complaint",
           field: "complaint",
           filterOptions: {
@@ -270,7 +256,7 @@ export default {
   },
   mounted() {
     this.loadItems(
-      `/visits/json?filter[client_name]=${this.client.name}&page=1&per_page=20`
+      `/visits/json?filter[client_id]=${this.client.id}&page=1&per_page=20`
     );
   },
   methods: {

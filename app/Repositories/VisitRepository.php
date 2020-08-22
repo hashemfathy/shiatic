@@ -51,7 +51,7 @@ class VisitRepository
     {
         return QueryBuilder::for($this->model->query())
             ->defaultSort('-id')
-            ->allowedFilters(['client_name', 'date', 'complaint', 'specialist.name', 'specialist.id'])
+            ->allowedFilters(['client_name', 'date', 'complaint', 'specialist.name', 'specialist.id', 'client_id'])
             ->allowedSorts(['date', 'complaint']);
     }
     public function fetchTodayRecords()
