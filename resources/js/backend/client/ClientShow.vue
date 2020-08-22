@@ -256,7 +256,7 @@ export default {
   },
   mounted() {
     this.loadItems(
-      `/visits/json?filter[client_id]=${this.client.id}&page=1&per_page=20`
+      `/visits/json?filter[client]=${this.client.id}&page=1&per_page=20`
     );
   },
   methods: {
