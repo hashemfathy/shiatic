@@ -146,6 +146,7 @@ Finance
                 </div>
             </div>
         </div>
+        @if(Auth::user()->is_admin == 1)
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
@@ -158,6 +159,7 @@ Finance
                 </div>
             </div>
         </div>
+        @endif
     </div>
 </default-container>
 @endsection
