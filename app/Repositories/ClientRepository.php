@@ -44,7 +44,7 @@ class ClientRepository
     {
         return QueryBuilder::for($this->model->query())
             ->defaultSort('-code')
-            ->allowedFilters(['name', 'code'])
+            ->allowedFilters(['name', 'code', 'phone'])
             ->allowedSorts(['name', 'gender', 'called']);
     }
     public function sync(Client $client, string $method, array $ids)

@@ -106,6 +106,13 @@ export default {
           label: "Phone",
           field: "phone",
           html: true,
+          filterOptions: {
+            enabled: true, // enable filter for this column
+            placeholder: "Search", // placeholder for filter input
+            filterDropdownItems: [], // dropdown (with selected values) instead of text input
+            filterFn: this.columnFilterFn, //custom filter function that
+            trigger: "enter" //only trigger on enter not on keyup
+          },
           sortable: false,
           tdClass: "text-center",
           thClass: "text-center"
