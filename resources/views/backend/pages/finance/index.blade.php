@@ -132,6 +132,9 @@ Finance
     }
 </style>
 @section('content')
+@php
+$monthOutgoings_items = $income['monthOutgoings_items'];
+@endphp
 <default-container>
     <div class="row">
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
@@ -146,7 +149,33 @@ Finance
                 </div>
             </div>
         </div>
-        @if(Auth::user()->is_admin == 1)
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile">
+                <div class="wrapper">
+                    <div class="header">Today Outgoing</div>
+                    <div class="dates">
+                        <div class="start">
+                            <strong>Total</strong> {{$income['todayOutgoings']}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile">
+                <div class="wrapper">
+                    <div class="header">Today Pure Income</div>
+                    <div class="dates">
+                        <div class="start">
+                            <strong>Total</strong> {{$income['todayPureIncome']}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if(Auth::user()->is_admin == 1)
+    <div class="row">
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
@@ -159,7 +188,47 @@ Finance
                 </div>
             </div>
         </div>
-        @endif
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile">
+                <div class="wrapper">
+                    <div class="header">Month Outgoings</div>
+                    <div class="dates">
+                        <div class="start">
+                            <strong>Total</strong> {{$income['monthOutgoings']}}
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="color: black;" scope="col">item</th>
+                                <th style="color: black;" scope="col">value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($monthOutgoings_items as $monthOutgoings_item)
+                            <tr>
+                                <th style="color: black;" scope="row">{{$monthOutgoings_item->name}}</th>
+                                <td style="color: black;">{{$monthOutgoings_item->value}}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+            <div class="tile">
+                <div class="wrapper">
+                    <div class="header">Month Pure Income</div>
+                    <div class="dates">
+                        <div class="start">
+                            <strong>Total</strong> {{$income['monthVisitsIncome']-$income['monthOutgoings']}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    @endif
 </default-container>
 @endsection

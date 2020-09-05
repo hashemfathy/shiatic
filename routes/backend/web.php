@@ -18,7 +18,12 @@ Route::group(['middleware' => 'auth'], function () {
     // collect(DB::select("SELECT * FROM visits WHERE date_part('month', date) = 03 AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE) "))
     Route::get('clients/json', 'ClientController@getJson');
     Route::resource('clients', 'ClientController');
+    Route::get('expenses/json', 'ExpensesController@getJson');
+    Route::get('expenses/jsonToday', 'ExpensesController@getJsonToday');
+    Route::resource('expenses', 'ExpensesController');
     Route::put('clients/toggle-status/{client}', 'ClientController@toggleStatus');
+    Route::get('payment-items/json', 'PaymentItemController@getJson');
+    Route::resource('payment-items', 'PaymentItemController');
     Route::get('visits/json', 'VisitController@getJson');
     Route::get('visits/today/json', 'VisitController@getTodayJson');
     Route::get('visits/today', 'VisitController@indexToday');

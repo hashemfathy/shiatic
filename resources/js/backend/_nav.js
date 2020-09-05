@@ -43,6 +43,23 @@ export default {
       name: 'Finance',
       url: '/finance',
       icon: 'icon-star',
+      children: [
+        {
+          name: 'statistics',
+          url: '/finance',
+          icon: 'icon-star'
+        },
+        {
+          name: 'Add payment item',
+          url: '/payment-items',
+          icon: 'icon-star'
+        },
+        {
+          name: 'Expenses',
+          url: '/expenses',
+          icon: 'icon-star'
+        },
+      ]
     },
     // {
     //   title: true,

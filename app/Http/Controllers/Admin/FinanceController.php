@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
 use App\Http\Resources\Admin\AdminVisitIndexResource;
+use App\PaymentItem;
+use App\PaymentValue;
 use App\Services\Admin\AdminVisitService;
 use App\Specialist;
 use App\Visit;
@@ -38,9 +40,21 @@ class FinanceController extends Controller
                 $monthVisitsIncome += $visit->price;
             }
         }
+        $todayOutgoings = PaymentValue::whereDate('created_at', Carbon::today())->sum('value');
+        $todayPureIncome = $todayVisitsIncome - $todayOutgoings;
+        $monthOutgoings = PaymentValue::whereMonth('created_at', '=', date('m'))->whereYear('created_at', '=', date('Y'))->sum('value');
+        $monthOutgoings_items = DB::table('payment_values')
+            ->whereMonth('created_at', '=', date('m'))
+            ->whereYear('created_at', '=', date('Y'))
+            ->select(DB::raw('SUM(value) as value'), 'name')
+            ->groupBy('name')->get();
         $income = [
             'todayVisitsIncome' => $todayVisitsIncome,
-            'monthVisitsIncome' => $monthVisitsIncome
+            'todayOutgoings' => $todayOutgoings,
+            'todayPureIncome' => $todayPureIncome,
+            'monthVisitsIncome' => $monthVisitsIncome,
+            'monthOutgoings' => $monthOutgoings,
+            'monthOutgoings_items' => $monthOutgoings_items,
         ];
         return view('backend.pages.finance.index', compact('income'));
     }
