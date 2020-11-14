@@ -7,6 +7,9 @@ export default {
   props: {
     statics: {
       required: true
+    },
+    title: {
+      required: true
     }
   },
   mounted() {
@@ -29,21 +32,21 @@ export default {
         ],
         datasets: [
           {
-            label: "visits",
+            label: this.title,
             backgroundColor: "#f87979",
             data: [
-              this.statics.janVisits,
-              this.statics.febVisits,
-              this.statics.marVisits,
-              this.statics.aprVisits,
-              this.statics.mayVisits,
-              this.statics.junVisits,
-              this.statics.julVisits,
-              this.statics.augVisits,
-              this.statics.sepVisits,
-              this.statics.octVisits,
-              this.statics.novVisits,
-              this.statics.decVisits
+              this.statics.jan,
+              this.statics.feb,
+              this.statics.mar,
+              this.statics.apr,
+              this.statics.may,
+              this.statics.jun,
+              this.statics.jul,
+              this.statics.aug,
+              this.statics.sep,
+              this.statics.oct,
+              this.statics.nov,
+              this.statics.dec
             ]
           }
         ]

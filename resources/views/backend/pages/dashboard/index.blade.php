@@ -280,7 +280,14 @@ Dashboard
         <b-col style="flex: 0 0 50%;max-width: 50%;">
             <b-card header="Visits">
                 <div class="chart-wrapper">
-                    <bar-example :statics="{{json_encode($statics)}}" chartId="chart-bar-01" />
+                    <bar-example :statics="{{json_encode($statics)}}" title="Visits" chartId="chart-bar-01" />
+                </div>
+            </b-card>
+        </b-col>
+        <b-col style="flex: 0 0 50%;max-width: 50%;">
+            <b-card header="New Clients">
+                <div class="chart-wrapper">
+                    <bar-example :statics="{{json_encode($new_clients)}}" title="New Clients" chartId="chart-bar-01" />
                 </div>
             </b-card>
         </b-col>

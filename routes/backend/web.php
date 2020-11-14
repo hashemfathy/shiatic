@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 Route::group(['middleware' => 'auth'], function () {
-    Route::get('', 'DashboardController@index')->name('index');
+    Route::get('', 'DashboardController@index')->name('index')->middleware('admin');
     Route::get('/test', function () {
         return DB::select("SELECT *
         FROM visits 

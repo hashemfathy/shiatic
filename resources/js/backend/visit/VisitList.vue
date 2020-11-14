@@ -34,6 +34,9 @@
               </span>
             </a>
           </span>
+          <span style="color:green" v-else-if="props.column.field == 'new_client'">
+                <i v-if="props.row.new_client==true" class="fa fa-check"></i>
+          </span>
           <span v-else>{{props.formattedRow[props.column.field]}}</span>
         </template>
         <div slot="emptystate">No Data</div>
@@ -132,6 +135,13 @@ export default {
           label: "Duration",
           field: "duration",
           html: true,
+          sortable: false,
+          tdClass: "text-center",
+          thClass: "text-center"
+        },
+          {
+          label: "New Client",
+          field: "new_client",
           sortable: false,
           tdClass: "text-center",
           thClass: "text-center"

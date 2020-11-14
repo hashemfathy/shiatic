@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
@@ -12,7 +13,7 @@ class Client extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'gender', 'phone', 'code', 'called'
+        'name', 'gender', 'phone', 'code', 'called', 'new_client'
     ];
     /**
      *  define one to many relation Visit model
@@ -21,5 +22,10 @@ class Client extends Model
     public function visits()
     {
         return $this->hasMany(Visit::class);
+    }
+    public function getNewClientAttribute()
+    {
+        return
+            $this->created_at->format('m') == Carbon::now()->month;
     }
 }

@@ -29,6 +29,18 @@ class DashboardController extends Controller
     $octVisits = [];
     $novVisits = [];
     $decVisits = [];
+    $janNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',1)->count();
+    $febNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',2)->count();
+    $marNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',3)->count();
+    $aprNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',4)->count();
+    $mayNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',5)->count();
+    $junNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',6)->count();
+    $julNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',7)->count();
+    $augNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',8)->count();
+    $sepNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',9)->count();
+    $octNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',10)->count();
+    $novNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',11)->count();
+    $decNewClients = Client::whereYear('created_at',Carbon::now()->year)->whereMonth('created_at',12)->count();
     // ------
     $visitsCount = [
       'totalVisitsCount' => Visit::all()->count(),
@@ -124,19 +136,34 @@ class DashboardController extends Controller
       'unselectedVisitsCount' => collect($monthVisits)->where('specialist_id', 1)->count(),
     ];
     $statics = [
-      'janVisits' => collect($janVisits)->count(),
-      'febVisits' => collect($febVisits)->count(),
-      'marVisits' => collect($marVisits)->count(),
-      'aprVisits' => collect($aprVisits)->count(),
-      'mayVisits' => collect($mayVisits)->count(),
-      'junVisits' => collect($junVisits)->count(),
-      'julVisits' => collect($julVisits)->count(),
-      'augVisits' => collect($augVisits)->count(),
-      'sepVisits' => collect($sepVisits)->count(),
-      'octVisits' => collect($octVisits)->count(),
-      'novVisits' => collect($novVisits)->count(),
-      'decVisits' => collect($decVisits)->count(),
+      'jan' => collect($janVisits)->count(),
+      'feb' => collect($febVisits)->count(),
+      'mar' => collect($marVisits)->count(),
+      'apr' => collect($aprVisits)->count(),
+      'may' => collect($mayVisits)->count(),
+      'jun' => collect($junVisits)->count(),
+      'jul' => collect($julVisits)->count(),
+      'aug' => collect($augVisits)->count(),
+      'sep' => collect($sepVisits)->count(),
+      'oct' => collect($octVisits)->count(),
+      'nov' => collect($novVisits)->count(),
+      'dec' => collect($decVisits)->count(),
     ];
-    return view('backend.pages.dashboard.index', compact('totalClientCount', 'maleClientCount', 'femaleClientCount', 'visitsCount', 'monthVisitsCount', 'statics'));
+    $new_clients = [
+      'jan' => $janNewClients,
+      'feb' => $febNewClients,
+      'mar' => $marNewClients,
+      'apr' => $aprNewClients,
+      'may' => $mayNewClients,
+      'jun' => $junNewClients,
+      'jul' => $julNewClients,
+      'aug' => $augNewClients,
+      'sep' => $sepNewClients,
+      'oct' => $octNewClients,
+      'nov' => $novNewClients,
+      'dec' => $decNewClients,
+    ];
+    return view('backend.pages.dashboard.index',
+     compact('totalClientCount', 'maleClientCount', 'femaleClientCount', 'visitsCount', 'monthVisitsCount', 'statics','new_clients'));
   }
 }
