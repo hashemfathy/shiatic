@@ -132,9 +132,7 @@ Finance
     }
 </style>
 @section('content')
-@php
-$monthOutgoings_items = $income['monthOutgoings_items'];
-@endphp
+
 <default-container>
     <div class="row">
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
@@ -175,14 +173,15 @@ $monthOutgoings_items = $income['monthOutgoings_items'];
         </div>
     </div>
     @if(Auth::user()->is_admin == 1)
+    @foreach($income['statistics'] as $statistic)
     <div class="row">
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
-                    <div class="header">Month Income</div>
+                    <div class="header">{{$statistic['name_income']}}</div>
                     <div class="dates">
                         <div class="start">
-                            <strong>Total</strong> {{$income['monthVisitsIncome']}}
+                            <strong>Total</strong> {{$statistic['visitsIncome']}}
                         </div>
                     </div>
                 </div>
@@ -191,10 +190,10 @@ $monthOutgoings_items = $income['monthOutgoings_items'];
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
-                    <div class="header">Month Outgoings</div>
+                    <div class="header">{{$statistic['name_outgoing']}}</div>
                     <div class="dates">
                         <div class="start">
-                            <strong>Total</strong> {{$income['monthOutgoings']}}
+                            <strong>Total</strong> {{$statistic['outgoings']}}
                         </div>
                     </div>
                     <table class="table">
@@ -205,10 +204,13 @@ $monthOutgoings_items = $income['monthOutgoings_items'];
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($monthOutgoings_items as $monthOutgoings_item)
+                            @php
+                            $outgoings_items = $statistic['outgoings_items'];
+                            @endphp
+                            @foreach($outgoings_items as $Outgoings_item)
                             <tr>
-                                <th style="color: black;" scope="row">{{$monthOutgoings_item->name}}</th>
-                                <td style="color: black;">{{$monthOutgoings_item->value}}</td>
+                                <th style="color: black;" scope="row">{{$Outgoings_item->name}}</th>
+                                <td style="color: black;">{{$Outgoings_item->value}}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -219,16 +221,17 @@ $monthOutgoings_items = $income['monthOutgoings_items'];
         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
             <div class="tile">
                 <div class="wrapper">
-                    <div class="header">Month Pure Income</div>
+                    <div class="header">{{$statistic['name_pure']}}</div>
                     <div class="dates">
                         <div class="start">
-                            <strong>Total</strong> {{$income['monthVisitsIncome']-$income['monthOutgoings']}}
+                            <strong>Total</strong> {{$statistic['pure_income']}}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    @endforeach
     @endif
 </default-container>
 @endsection
