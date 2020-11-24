@@ -178,12 +178,12 @@ Dashboard
                         <div class="text-uppercase text-muted small">Hany</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$visitsCount['HussienVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Hussien</div>
+                        <div class="text-value">{{$visitsCount['ElbannaVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Elbanna</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$visitsCount['moatazVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Moataz</div>
+                        <div class="text-value">{{$visitsCount['saadVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">saad</div>
                     </div>
                     <div>
                         <div class="text-value">{{$visitsCount['salemVisitsCount']}}</div>
@@ -198,16 +198,16 @@ Dashboard
                         <div class="text-uppercase text-muted small">Fo'ad</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$visitsCount['alaaVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Alaa</div>
+                        <div class="text-value">{{$visitsCount['baherVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">baher</div>
                     </div>
                     <div>
                         <div class="text-value">{{$visitsCount['mohamedAdelVisitsCount']}}</div>
                         <div class="text-uppercase text-muted small">Mohamed adel</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$visitsCount['omarKamalVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Omar Kamal</div>
+                        <div class="text-value">{{$visitsCount['belalVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">belal</div>
                     </div>
                     <div>
                         <div class="text-value">{{$visitsCount['unselectedVisitsCount']}}</div>
@@ -237,12 +237,12 @@ Dashboard
                         <div class="text-uppercase text-muted small">Hany</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$monthVisitsCount['HussienVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Hussien</div>
+                        <div class="text-value">{{$monthVisitsCount['ElbannaVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">Elbanna</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$monthVisitsCount['moatazVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Moataz</div>
+                        <div class="text-value">{{$monthVisitsCount['saadVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">saad</div>
                     </div>
                     <div>
                         <div class="text-value">{{$monthVisitsCount['salemVisitsCount']}}</div>
@@ -257,16 +257,16 @@ Dashboard
                         <div class="text-uppercase text-muted small">Fo'ad</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$monthVisitsCount['alaaVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Alaa</div>
+                        <div class="text-value">{{$monthVisitsCount['baherVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">baher</div>
                     </div>
                     <div>
                         <div class="text-value">{{$monthVisitsCount['mohamedAdelVisitsCount']}}</div>
                         <div class="text-uppercase text-muted small">Mohamed adel</div>
                     </div>
                     <div>
-                        <div class="text-value">{{$monthVisitsCount['omarKamalVisitsCount']}}</div>
-                        <div class="text-uppercase text-muted small">Omar Kamal</div>
+                        <div class="text-value">{{$monthVisitsCount['belalVisitsCount']}}</div>
+                        <div class="text-uppercase text-muted small">belal</div>
                     </div>
                     <div>
                         <div class="text-value">{{$monthVisitsCount['unselectedVisitsCount']}}</div>
