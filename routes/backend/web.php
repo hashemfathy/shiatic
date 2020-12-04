@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Visit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('', 'DashboardController@index')->name('index')->middleware('admin');
@@ -31,9 +33,26 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('finance', 'FinanceController@index');
 });
 
-// Route::get('users', function (Request $request) {
-//     return UserResource::collection(User::all());
-// });
+Route::get('whatsapp/send', function (Request $request) {
+    $url = "https://messages-sandbox.nexmo.com/v0.1/messages";
+    $params = ["to" => ["type" => "whatsapp", "number" => '201069597435'],
+        "from" => ["type" => "whatsapp", "number" => "14157386170"],
+        "message" => [
+            "content" => [
+                "type" => "text",
+                "text" => "Your Today Pure Income is 300 EGP"
+            ]
+        ]
+    ];
+    $headers = ["Authorization" => "Basic " . base64_encode(env('NEXMO_API_KEY') . ":" . env('NEXMO_API_SECRET'))];
+
+    $client = new \GuzzleHttp\Client();
+    $response = $client->request('POST', $url, ["headers" => $headers, "json" => $params]);
+    $data = $response->getBody();
+    \Log::Info($data);
+
+    return view('thanks');
+});
 // Route::get('categories-list', function () {
 //     return CategoryCollection::collection(Category::parent()->with('withAllChildren')->get());
 // });
