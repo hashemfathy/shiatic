@@ -1214,7 +1214,7 @@ class RequestResource extends Resource
                 $crackingDuration = 6;
             } else {
                 $crackingPrice = count($crackingRegions) * 150;
-                $crackingDuration = count($crackingRegions) * 2;
+                $crackingDuration = count($crackingRegions) * 2 ;
             }
         }
 

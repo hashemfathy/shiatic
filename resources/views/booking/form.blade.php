@@ -1751,7 +1751,7 @@
                 const feedbackDiv = document.getElementById('time_validation_feedback');
                 const submitBtn = document.querySelector('button[type="submit"]');
 
-                document.getElementById('appointment_time').value = timeVal;
+                document.getElementById('appointment_time').value = timeVal ;
 
                 if (!dateVal || !timeVal) {
                     if (feedbackDiv) {
