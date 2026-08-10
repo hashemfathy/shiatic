@@ -1211,10 +1211,10 @@ class RequestResource extends Resource
         if ($crackingActive) {
             if ($crackingType === 'whole_body') {
                 $crackingPrice = 350;
-                $crackingDuration = 30;
+                $crackingDuration = 6;
             } else {
                 $crackingPrice = count($crackingRegions) * 150;
-                $crackingDuration = count($crackingRegions) * 15;
+                $crackingDuration = count($crackingRegions) * 2;
             }
         }
 
@@ -1223,7 +1223,6 @@ class RequestResource extends Resource
         $hijamaDuration = 0;
         $hijamaActive = ($bookingType === 'وقائية') && ($hijamaType !== 'none');
         if ($hijamaActive) {
-            $hijamaDuration = 30;
             $resolvedHijamaRegions = [];
             if ($hijamaType === 'whole_back') {
                 $resolvedHijamaRegions = [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37];
@@ -1278,6 +1277,8 @@ class RequestResource extends Resource
                 elseif ($reps === 39) { $regionCups = $hijamaStyle === 'intensive' ? 2 : 1; }
                 $totalCups += $regionCups;
             }
+
+            $hijamaDuration = 10 + $totalCups;
 
             $cupPrice = 45;
             if ($totalCups > 20) {

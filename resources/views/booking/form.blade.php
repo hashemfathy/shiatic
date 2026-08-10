@@ -1514,13 +1514,13 @@
 
                     if (crackingChoice === 'whole_body') {
                         crackingPrice = 350;
-                        crackingDuration = 30;
+                        crackingDuration = 6;
                         document.getElementById(`cracking_price_desc-${index}`).innerText = 'تقويم الجسم كامل';
                         document.getElementById(`cracking_price_value-${index}`).innerText = '350.00 ج.م';
                     } else if (crackingChoice === 'regions') {
                         const rCount = att.selectedCrackingRegions.size;
                         crackingPrice = rCount * 150;
-                        crackingDuration = rCount * 15;
+                        crackingDuration = rCount * 2;
                         document.getElementById(`cracking_price_desc-${index}`).innerText = `تقويم مناطق مخصصة (${rCount})`;
                         document.getElementById(`cracking_price_value-${index}`).innerText = crackingPrice.toFixed(2) + ' ج.م';
                     } else {
@@ -1535,7 +1535,6 @@
                     const hijamaChoice = document.querySelector(`input[name="attendees[${index}][hijama_type]"]:checked`).value;
 
                     if (hijamaChoice !== 'none') {
-                        hijamaDuration = 30;
                         const hijamaStyle = document.querySelector(`input[name="attendees[${index}][hijama_style]"]:checked`).value;
 
                         att.selectedHijamaRegions.forEach(rNum => {
@@ -1583,6 +1582,8 @@
                             totalCups += regionCups;
                         });
 
+                        hijamaDuration = 10 + totalCups;
+
                         let cupPrice = 45;
                         if (totalCups > 20) { cupPrice = 35; }
                         else if (totalCups >= 16) { cupPrice = 37; }
@@ -1606,17 +1607,18 @@
 
                     const attendeeTotalPrice = massagePrice + crackingPrice + hijamaPrice;
                     const attendeeTotalDuration = massageDuration + crackingDuration + hijamaDuration;
+                    const attendeeVisibleDuration = massageDuration + hijamaDuration;
 
                     att.price = attendeeTotalPrice;
                     att.duration = attendeeTotalDuration;
 
                     // Update attendee summary block values
                     document.getElementById(`attendee_total_price_val-${index}`).innerText = attendeeTotalPrice.toFixed(2);
-                    document.getElementById(`attendee_total_duration_val-${index}`).innerText = attendeeTotalDuration.toFixed(1);
+                    document.getElementById(`attendee_total_duration_val-${index}`).innerText = attendeeVisibleDuration.toFixed(1);
 
                     grandTotalSessionsPrice += attendeeTotalPrice;
-                    if (attendeeTotalDuration > globalMaxGroupDuration) {
-                        globalMaxGroupDuration = attendeeTotalDuration;
+                    if (attendeeVisibleDuration > globalMaxGroupDuration) {
+                        globalMaxGroupDuration = attendeeVisibleDuration;
                     }
                 });
 
