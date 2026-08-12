@@ -67,3 +67,15 @@ Route::post('/artisan-panel/run', function () {
     }
 });
 
+Route::get('/sitemap.xml', function () {
+    return response()->view('sitemap', [
+        'urls' => [
+            url('/'),
+            route('booking.index'),
+            route('booking.form'),
+            url('/new-client'),
+        ]
+    ])->header('Content-Type', 'text/xml');
+});
+
+

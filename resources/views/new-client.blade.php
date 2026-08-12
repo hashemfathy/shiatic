@@ -1,8 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>New Client Form</title>
+    
+    <!-- Primary SEO Metadata -->
+    <title>تسجيل عميل جديد | Shiatic New Client Intake</title>
+    <meta name="description" content="استمارة قبول مريض جديد لمركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك). يرجى ملء البيانات الشخصية وتفاصيل الإصابة للتسجيل.">
+    <meta name="keywords" content="استمارة مريض جديد, شياتك, كيروبراكتيك مصر, عرق النسا, علاج الفقرات, مساج علاجي">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url('/new-client') }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url('/new-client') }}">
+    <meta property="og:title" content="تسجيل عميل جديد | Shiatic New Client Intake">
+    <meta property="og:description" content="استمارة قبول مريض جديد لمركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك).">
+    <meta property="og:image" content="{{ asset('images/R.jpg') }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url('/new-client') }}">
+    <meta name="twitter:title" content="تسجيل عميل جديد | Shiatic New Client Intake">
+    <meta name="twitter:description" content="استمارة قبول مريض جديد لمركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك).">
+    <meta name="twitter:image" content="{{ asset('images/R.jpg') }}">
 
     <link rel="stylesheet" 
         href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
@@ -13,8 +33,8 @@
 
     <div class="max-w-2xl mx-auto mt-10 bg-white p-10 rounded-2xl shadow-lg">
 
-        <h1 class="text-2xl font-semibold mb-6 text-gray-800">
-            استمارة قبول مريض
+        <h1 class="text-2xl font-semibold mb-6 text-gray-800" id="new-client-title">
+            استمارة قبول مريض جديد
         </h1>
 
         @if(session('success'))
@@ -31,8 +51,8 @@
                 function field($label, $name, $type = "text") {
                     return '
                         <div class="mb-6">
-                            <label class="block text-gray-700 text-sm mb-2 font-medium">'.$label.' *</label>
-                            <input type="'.$type.'" name="'.$name.'" required
+                            <label class="block text-gray-700 text-sm mb-2 font-medium" for="input-'.$name.'">'.$label.' *</label>
+                            <input type="'.$type.'" id="input-'.$name.'" name="'.$name.'" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg 
                                 focus:ring-2 focus:ring-blue-500"
                             >
@@ -45,17 +65,18 @@
             {!! field("رقم الهاتف", "phone") !!}
             {!! field("السن", "age", "number") !!}
              <div class="mb-6">
-                <label class="block text-gray-700 text-sm mb-2 font-medium">تاريخ الميلاد *</label>
+                <label class="block text-gray-700 text-sm mb-2 font-medium" for="input-date_of_birth">تاريخ الميلاد *</label>
                 <input 
                     type="date" 
+                    id="input-date_of_birth"
                     name="date_of_birth" 
                     required
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
             </div>
             <div class="mb-6">
-                <label class="block text-gray-700 text-sm mb-2 font-medium">الجنس*</label>
-                <select name="gender" required 
+                <label class="block text-gray-700 text-sm mb-2 font-medium" for="select-gender">الجنس*</label>
+                <select name="gender" id="select-gender" required 
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="" disabled selected>Select</option>
                     <option value="male">ذكر</option>
@@ -115,8 +136,8 @@
             </div>-->
 
             <div class="mb-6">
-                <label class="block text-gray-700 text-sm mb-2 font-medium">توجد اي عمليات سابقة ؟ (خاصة بالاصابة او غيرها) *</label>
-                <select name="is_previous_surgery" required 
+                <label class="block text-gray-700 text-sm mb-2 font-medium" for="select-is_previous_surgery">توجد اي عمليات سابقة ؟ (خاصة بالاصابة او غيرها) *</label>
+                <select name="is_previous_surgery" id="select-is_previous_surgery" required 
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="" disabled selected>Select</option>
                     <option value="نعم">نعم</option>
@@ -127,6 +148,7 @@
             <!-- Submit -->
             <button 
                 type="submit" 
+                id="btn-submit-client-form"
                 class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                 Submit
             </button>

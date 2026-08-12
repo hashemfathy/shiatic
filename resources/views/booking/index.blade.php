@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حجز السيشن - Shiatic</title>
+    
+    <!-- Primary SEO Metadata -->
+    <title>الخدمات وحجوزات الجلسات | Shiatic Booking & Services</title>
+    <meta name="description" content="تعرف على الخدمات العلاجية والوقائية والرياضية التي يقدمها مركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك). احجز موعد جلستك العلاجية الآن بسهولة.">
+    <meta name="keywords" content="حجز جلسة كيروبراكتيك, خدمات شياتك, مساج علاجي مصر, تقويم العمود الفقري, عرق النسا, علاج الظهر">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ route('booking.index') }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ route('booking.index') }}">
+    <meta property="og:title" content="الخدمات وحجوزات الجلسات | Shiatic Booking & Services">
+    <meta property="og:description" content="تعرف على الخدمات العلاجية والوقائية والرياضية التي يقدمها مركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك). احجز موعد جلستك العلاجية الآن بسهولة.">
+    <meta property="og:image" content="{{ asset('images/R.jpg') }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ route('booking.index') }}">
+    <meta name="twitter:title" content="الخدمات وحجوزات الجلسات | Shiatic Booking & Services">
+    <meta name="twitter:description" content="تعرف على الخدمات العلاجية والوقائية والرياضية التي يقدمها مركز شياتك (Shiatic) لتقويم العمود الفقري (الكايروبراكتيك). احجز موعد جلستك العلاجية الآن بسهولة.">
+    <meta name="twitter:image" content="{{ asset('images/R.jpg') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -138,23 +159,23 @@
 </head>
 <body>
     <div class="glass-container">
-        <h1>الخدمات والحجوزات</h1>
+        <h1 id="booking-services-title">الخدمات والحجوزات وعلاج آلام العمود الفقري</h1>
         
         <!-- Section 1 -->
-        <div class="section-card" onclick="alert('مركز شياتك هو مركز متخصص في العلاج اليدوي وتقويم العمود الفقري (الكايروبراكتيك) والمساج العلاجي والرياضي والوقائي.')">
+        <div class="section-card" id="card-booking-info" onclick="alert('مركز شياتك هو مركز متخصص في العلاج اليدوي وتقويم العمود الفقري (الكايروبراكتيك) والمساج العلاجي والرياضي والوقائي.')">
             <div class="icon-box">ℹ️</div>
             <h2>عن المركز وجلساتنا</h2>
             <p>تعرف على رؤيتنا، الخدمات التي نقدمها، والتقنيات الحديثة المستخدمة لراحتكم وعلاجكم.</p>
         </div>
 
         <!-- Section 2 -->
-        <a href="{{ route('booking.form') }}" class="section-card">
+        <a href="{{ route('booking.form') }}" class="section-card" id="card-booking-form">
             <div class="icon-box">🗹</div>
             <h2>حجز سيشن</h2>
             <p>ابدأ بحجز سيشن الآن. أدخل بياناتك الشخصية واختر الباقة والتقنيات المناسبة لك.</p>
         </a>
 
-        <a href="/" class="btn-back">← العودة للرئيسية</a>
+        <a href="/" class="btn-back" id="link-back-home">← العودة للرئيسية</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

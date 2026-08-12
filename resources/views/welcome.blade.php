@@ -1,9 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shiatic - Chiropractic Care & Massage</title>
+    
+    <!-- Primary SEO Metadata -->
+    <title>مركز شياتك للكايروبراكتيك وتقويم العمود الفقري | Shiatic Center</title>
+    <meta name="description" content="مركز شياتك (Shiatic) هو مركزك المتخصص في الكايروبراكتيك، تقويم العمود الفقري، والمساج العلاجي والرياضي في مصر. احجز جلستك العلاجية الآن للتخلص من آلام الظهر والمفاصل مع أفضل المتخصصين.">
+    <meta name="keywords" content="شياتك, Shiatic, كايروبراكتيك مصر, تقويم العمود الفقري, مساج علاجي, علاج عرق النسا, علاج آلام الظهر, علاج آلام المفاصل, علاج طبيعي, دكتور كايروبراكتيك مصر, مساج رياضي">
+    <meta name="author" content="Shiatic Center">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url('/') }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:title" content="مركز شياتك للكايروبراكتيك وتقويم العمود الفقري | Shiatic Center">
+    <meta property="og:description" content="مركز شياتك المتخصص في الكايروبراكتيك، تقويم العمود الفقري، والمساج العلاجي والرياضي في مصر. احجز جلستك العلاجية الآن للتخلص من آلام الظهر والمفاصل.">
+    <meta property="og:image" content="{{ asset('images/R.jpg') }}">
+    <meta property="og:site_name" content="شياتك Shiatic">
+    <meta property="og:locale" content="ar_EG">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url('/') }}">
+    <meta name="twitter:title" content="مركز شياتك للكايروبراكتيك وتقويم العمود الفقري | Shiatic Center">
+    <meta name="twitter:description" content="مركز شياتك المتخصص في الكايروبراكتيك، تقويم العمود الفقري، والمساج العلاجي والرياضي في مصر. احجز جلستك العلاجية الآن للتخلص من آلام الظهر والمفاصل.">
+    <meta name="twitter:image" content="{{ asset('images/R.jpg') }}">
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalClinic",
+      "name": "شياتك - Shiatic",
+      "alternateName": "Shiatic Chiropractic & Spine Care",
+      "description": "مركز شياتك المتخصص في الكايروبراكتيك وتقويم العمود الفقري والمساج العلاجي والرياضي في مصر.",
+      "url": "{{ url('/') }}",
+      "logo": "{{ asset('images/R.jpg') }}",
+      "image": "{{ asset('images/R.jpg') }}",
+      "telephone": "01064344092",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Cairo",
+        "addressCountry": "EG"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "opens": "09:00",
+          "closes": "23:00"
+        }
+      ],
+      "medicalSpecialty": "Chiropractic",
+      "availableService": [
+        {
+          "@type": "MedicalTherapy",
+          "name": "تقويم العمود الفقري - Chiropractic Adjustment"
+        },
+        {
+          "@type": "MedicalTherapy",
+          "name": "المساج العلاجي - Therapeutic Massage"
+        },
+        {
+          "@type": "MedicalTherapy",
+          "name": "الحجامة - Hijama / Cupping Therapy"
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -284,24 +360,24 @@
     </style>
 </head>
 <body>
-    <a href="{{ url('admin') }}" class="login-link">تسجيل دخول المشرف</a>
+    <a href="{{ url('admin') }}" class="login-link" id="link-admin-login">تسجيل دخول المشرف</a>
     
     <section class="hero">
         <div class="glass-container text-center">
-            <a href="{{ url('/') }}" class="navbar-brand-custom">Shiatic</a>
+            <h1 class="m-0"><a href="{{ url('/') }}" class="navbar-brand-custom">Shiatic</a></h1>
             <div class="tagline">Spine tune & Touch the moon</div>
             <div class="service-tag">Chiropractic & Spine Therapy</div>
             
             <div class="nav-grid">
                 <!-- Book Session -->
-                <a href="{{ route('booking.form') }}" class="nav-card nav-card-primary">
+                <a href="{{ route('booking.form') }}" class="nav-card nav-card-primary" id="link-book-session">
                     <div class="nav-card-icon"><i class="fas fa-check-square"></i></div>
                     <h3>حجز سيشن جديدة</h3>
                     <p>احجز موعد جلستك العلاجية أو الوقائية الآن بسهولة</p>
                 </a>
 
                 <!-- New Client -->
-               <!-- <a href="{{ url('new-client') }}" class="nav-card">
+               <!-- <a href="{{ url('new-client') }}" class="nav-card" id="link-new-client">
                     <div class="nav-card-icon">👤</div>
                     <h3>عميل جديد</h3>
                     <p>قم بتسجيل بياناتك لأول مرة في المركز</p>
@@ -311,7 +387,7 @@
                 </a>-->
 
                 <!-- Rate Us -->
-                <a href="#" class="nav-card">
+                <a href="#" class="nav-card" id="link-rate-us">
                     <div class="nav-card-icon">⭐</div>
                     <h3>تقييم المركز</h3>
                     <p>شاركنا رأيك وتجربتك لمساعدتنا على التطور</p>

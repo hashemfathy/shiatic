@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حجز سيشن جديدة - Shiatic</title>
+    
+    <!-- Primary SEO Metadata -->
+    <title>حجز سيشن جديدة - تقويم العمود الفقري | Shiatic Clinic Booking</title>
+    <meta name="description" content="قم بحجز موعد جلستك العلاجية أو الوقائية أو الرياضية الآن في مركز شياتك (Shiatic). أدخل بياناتك الشخصية واختر الباقة المناسبة والمنطقة المستهدفة لعلاج آلام الظهر والفقرات.">
+    <meta name="keywords" content="حجز موعد كيروبراكتيك, نموذج حجز شياتك, عرق النسا, علاج الفقرات, مساج علاجي">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ route('booking.form') }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ route('booking.form') }}">
+    <meta property="og:title" content="حجز سيشن جديدة - تقويم العمود الفقري | Shiatic Clinic Booking">
+    <meta property="og:description" content="قم بحجز موعد جلستك العلاجية أو الوقائية أو الرياضية الآن في مركز شياتك (Shiatic).">
+    <meta property="og:image" content="{{ asset('images/R.jpg') }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ route('booking.form') }}">
+    <meta name="twitter:title" content="حجز سيشن جديدة - تقويم العمود الفقري | Shiatic Clinic Booking">
+    <meta name="twitter:description" content="قم بحجز موعد جلستك العلاجية أو الوقائية أو الرياضية الآن في مركز شياتك (Shiatic).">
+    <meta name="twitter:image" content="{{ asset('images/R.jpg') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">

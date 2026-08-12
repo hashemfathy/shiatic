@@ -1,2 +1,5 @@
 User-agent: *
 Disallow:
+
+Sitemap: https://shiatic.com/sitemap.xml
+Sitemap: http://shiatic.test/sitemap.xml
