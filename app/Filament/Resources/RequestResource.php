@@ -439,6 +439,8 @@ class RequestResource extends Resource
                     'total_price',
                     'total_duration',
                     'user_agreement',
+                    'coupon_code',
+                    'coupon_discount',
                     'created_at',
                 ]); 
             })
@@ -512,7 +514,23 @@ class RequestResource extends Resource
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('السعر الإجمالي')
                     ->money("EGP")
-                    ->description(fn ($record) => $record->is_urgent ? 'يشمل رسوم مستعجل' : null)
+                    ->description(function ($record) {
+                        $desc = [];
+                        if ($record->is_urgent) {
+                            $desc[] = 'يشمل رسوم مستعجل';
+                        }
+                        if ($record->coupon_code) {
+                            $desc[] = "🎟️ كوبون خصم ({$record->coupon_code}) بقيمة -{$record->coupon_discount} EGP";
+                        }
+                        return implode(' | ', $desc) ?: null;
+                    })
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('coupon_code')
+                    ->label('الكوبون المطبق')
+                    ->badge()
+                    ->color('success')
+                    ->formatStateUsing(fn ($state, $record) => $state ? "🎟️ {$state} (-{$record->coupon_discount} EGP)" : null)
+                    ->placeholder('لا يوجد')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_duration')
                     ->label('المدة (دقيقة)')
@@ -702,6 +720,82 @@ class RequestResource extends Resource
                                             ->readOnly()
                                             ->prefix('EGP')
                                             ->reactive(),
+                                        Forms\Components\TextInput::make('coupon_code')
+                                            ->label('كود كوبون الخصم')
+                                            ->placeholder('أدخل كود الكوبون إن وجد')
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                $code = trim($state);
+                                                if (!$code) {
+                                                    $set('coupon_discount', 0);
+                                                    
+                                                    // Recalculate totals
+                                                    $total = (float)($get('total_price') ?? 0);
+                                                    $discount = (float)($get('discount_percentage') ?? 0);
+                                                    $final = $total - ($total * ($discount / 100));
+                                                    $set('price', max(0, round($final, 2)));
+                                                    
+                                                    $paid = (float)($get('paid') ?? 0);
+                                                    if ($paid > $final) {
+                                                        $set('due_to', round($paid - $final, 2));
+                                                        $set('due_from', 0);
+                                                    } else {
+                                                        $set('due_from', round($final - $paid, 2));
+                                                        $set('due_to', 0);
+                                                    }
+                                                    return;
+                                                }
+
+                                                $coupon = \App\Models\Coupon::where('code', $code)->first();
+                                                if (!$coupon) {
+                                                    $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper($code)])->first();
+                                                }
+
+                                                if (!$coupon || !$coupon->is_active) {
+                                                    $set('coupon_discount', 0);
+                                                    
+                                                    // Recalculate totals
+                                                    $total = (float)($get('total_price') ?? 0);
+                                                    $discount = (float)($get('discount_percentage') ?? 0);
+                                                    $final = $total - ($total * ($discount / 100));
+                                                    $set('price', max(0, round($final, 2)));
+                                                    
+                                                    $paid = (float)($get('paid') ?? 0);
+                                                    if ($paid > $final) {
+                                                        $set('due_to', round($paid - $final, 2));
+                                                        $set('due_from', 0);
+                                                    } else {
+                                                        $set('due_from', round($final - $paid, 2));
+                                                        $set('due_to', 0);
+                                                    }
+                                                    return;
+                                                }
+
+                                                $total = (float)($get('total_price') ?? 0);
+                                                $discount = (float)($get('discount_percentage') ?? 0);
+                                                $totalAfterPercentage = $total - ($total * ($discount / 100));
+
+                                                $couponDiscount = $coupon->calculateDiscountFor($totalAfterPercentage);
+                                                $set('coupon_discount', $couponDiscount);
+                                                
+                                                $final = max(0, $totalAfterPercentage - $couponDiscount);
+                                                $set('price', round($final, 2));
+
+                                                $paid = (float)($get('paid') ?? 0);
+                                                if ($paid > $final) {
+                                                    $set('due_to', round($paid - $final, 2));
+                                                    $set('due_from', 0);
+                                                } else {
+                                                    $set('due_from', round($final - $paid, 2));
+                                                    $set('due_to', 0);
+                                                }
+                                            }),
+                                        Forms\Components\TextInput::make('coupon_discount')
+                                            ->label('قيمة خصم الكوبون')
+                                            ->numeric()
+                                            ->readOnly()
+                                            ->prefix('EGP')
+                                            ->placeholder('0.00'),
                                     ])->columns(2)->columnSpan(2),
                             ])
                     ])
@@ -760,6 +854,8 @@ class RequestResource extends Resource
                             'paid' => $paid,
                             'due_from' => max(0, $finalPrice - $paid),
                             'due_to' => max(0, $paid - $finalPrice),
+                            'coupon_code' => $record->coupon_code,
+                            'coupon_discount' => $record->coupon_discount,
                             'sessions' => $defaultSessions,
                         ];
                     })
@@ -796,6 +892,8 @@ class RequestResource extends Resource
                             'due_to' => $data['due_to'] > 0 ? $data['due_to'] : null,
                             'discount_percentage' => $data['discount_percentage'],
                             'type' => 'وقائية',
+                            'coupon_code' => $data['coupon_code'] ?? null,
+                            'coupon_discount' => $data['coupon_discount'] ?? 0,
                         ]);
 
                         // 3. Create Session for each active service

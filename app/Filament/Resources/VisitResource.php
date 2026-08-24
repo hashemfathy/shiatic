@@ -92,7 +92,7 @@ class VisitResource extends Resource
 
                 // Section 3: Booking Prices & Techniques (Read-only dynamic section)
                 Forms\Components\Section::make('أسعار خدمات الحجز والتكنيكات')
-                    ->visible(fn (callable $get, ?Visit $record) => $record?->request_id !== null || $get('request_id') !== null)
+                    ->visible(fn (callable $get, ?Visit $record) => ($record?->request_id !== null || $get('request_id') !== null) && auth()->user()?->type !== 'specialist')
                     ->schema([
                         Forms\Components\Placeholder::make('booking_prices_techniques')
                             ->label('')
@@ -111,7 +111,8 @@ class VisitResource extends Resource
                                 $totalBase = array_sum($basePrices) + $urgentFee;
 
                                 $discount = (float)($get('discount_percentage') ?? 0);
-                                $finalPrice = $totalBase - ($totalBase * ($discount / 100));
+                                $couponDiscount = (float)($get('coupon_discount') ?? $record?->coupon_discount ?? 0);
+                                $finalPrice = max(0, $totalBase - ($totalBase * ($discount / 100)) - $couponDiscount);
 
                                 // Render pricing sections
                                 $urgentFeeBox = '';
@@ -120,6 +121,17 @@ class VisitResource extends Resource
                                         <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                             <div style='color: #ff8c00; font-size: 0.85rem; margin-bottom: 0.25rem;'>🔥 رسوم مستعجل</div>
                                             <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$urgentFee} EGP</div>
+                                        </div>
+                                    ";
+                                }
+
+                                $couponBox = '';
+                                if ($couponDiscount > 0) {
+                                    $couponCode = $get('coupon_code') ?? $record?->coupon_code ?? 'خصم الكوبون';
+                                    $couponBox = "
+                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                            <div style='color: #10b981; font-size: 0.85rem; margin-bottom: 0.25rem;'>🎟️ كوبون ({$couponCode})</div>
+                                            <div style='color: #10b981; font-size: 1.25rem; font-weight: bold;'>-{$couponDiscount} EGP</div>
                                         </div>
                                     ";
                                 }
@@ -139,6 +151,7 @@ class VisitResource extends Resource
                                             <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaPrice} EGP</div>
                                         </div>
                                         {$urgentFeeBox}
+                                        {$couponBox}
                                         <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
                                             <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
                                             <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
@@ -203,9 +216,13 @@ class VisitResource extends Resource
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
-                                    $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
-                                        ->pluck('region_number')
-                                        ->toArray();
+                                    $parsed = \App\Filament\Resources\RequestResource::parseDescription($record->request->description);
+                                    $regions = $parsed['massage_regions'] ?? [];
+                                    if (empty($regions) && empty($parsed['packages'] ?? [])) {
+                                        $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
+                                            ->pluck('region_number')
+                                            ->toArray();
+                                    }
                                     $set('massage_regions', $regions);
                                 }
                             }),
@@ -289,9 +306,13 @@ class VisitResource extends Resource
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
-                                    $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
-                                        ->pluck('region_number')
-                                        ->toArray();
+                                    $parsed = \App\Filament\Resources\RequestResource::parseDescription($record->request->description);
+                                    $regions = $parsed['cracking_regions'] ?? [];
+                                    if (empty($regions) && ($parsed['cracking_type'] ?? 'none') === 'regions') {
+                                        $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
+                                            ->pluck('region_number')
+                                            ->toArray();
+                                    }
                                     $set('cracking_regions', $regions);
                                 }
                             }),
@@ -371,16 +392,27 @@ class VisitResource extends Resource
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
-                                    $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
-                                        ->pluck('region_number')
-                                        ->toArray();
+                                    $parsed = \App\Filament\Resources\RequestResource::parseDescription($record->request->description);
+                                    $hijamaType = $parsed['hijama_type'] ?? 'none';
+                                    if ($hijamaType === 'whole_back') {
+                                        $regions = [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37];
+                                    } elseif ($hijamaType === 'whole_front') {
+                                        $regions = [19, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36];
+                                    } else {
+                                        $regions = $parsed['hijama_regions'] ?? [];
+                                        if (empty($regions) && $hijamaType === 'regions') {
+                                            $regions = \App\Models\RequestRegion::where('request_id', $record->request_id)
+                                                ->pluck('region_number')
+                                                ->toArray();
+                                        }
+                                    }
                                     $set('hijama_regions', $regions);
                                 }
                             }),
                     ]),
 
                 // Section 5: Body Maps
-                Forms\Components\Grid::make(2)
+                Forms\Components\Grid::make(3)
                     ->visible(fn (callable $get) => $get('request_id') !== null)
                     ->schema([
                         Forms\Components\Section::make('خريطة المساج (Massage Chart)')
@@ -403,13 +435,68 @@ class VisitResource extends Resource
                             ->schema([
                                 Forms\Components\Placeholder::make('massage_chart_img')
                                     ->label('')
-                                    ->content(new \Illuminate\Support\HtmlString('
-                                        <div style="text-align: center;">
-                                            <img src="/images/body.jpg" alt="Massage Chart" style="max-width: 600px; width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);" />
-                                        </div>
-                                    '))
+                                    ->content(function (callable $get) {
+                                        $selected = array_map('intval', (array)($get('massage_regions') ?? []));
+                                        $regionCoords = [
+                                            1 => ['top' => 59, 'left' => 82.8],
+                                            2 => ['top' => 69.8, 'left' => 82.2],
+                                            3 => ['top' => 77.5, 'left' => 82.2],
+                                            4 => ['top' => 90.5, 'left' => 82.2],
+                                            5 => ['top' => 59.5, 'left' => 88.2],
+                                            6 => ['top' => 70.5, 'left' => 88.2],
+                                            7 => ['top' => 78.5, 'left' => 89.2],
+                                            8 => ['top' => 91.5, 'left' => 88.2],
+                                            9 => ['top' => 45.5, 'left' => 82.2],
+                                            10 => ['top' => 45.5, 'left' => 88.2],
+                                            11 => ['top' => 36.5, 'left' => 82.2],
+                                            12 => ['top' => 37.5, 'left' => 89.2],
+                                            13 => ['top' => 25.5, 'left' => 83.2],
+                                            14 => ['top' => 26.5, 'left' => 89.2],
+                                            15 => ['top' => 17.5, 'left' => 83.2],
+                                            16 => ['top' => 17.5, 'left' => 88.5],
+                                            17 => ['top' => 20.5, 'left' => 77.8],
+                                            18 => ['top' => 28.5, 'left' => 77],
+                                            19 => ['top' => 38.5, 'left' => 76.5],
+                                            20 => ['top' => 20.5, 'left' => 93.8],
+                                            21 => ['top' => 29.5, 'left' => 94.6],
+                                            22 => ['top' => 39.5, 'left' => 95.2],
+                                            23 => ['top' => 20.5, 'left' => 64],
+                                            24 => ['top' => 18.5, 'left' => 45.2],
+                                            25 => ['top' => 54.5, 'left' => 10],
+                                            26 => ['top' => 69.5, 'left' => 10],
+                                            27 => ['top' => 78.5, 'left' => 10],
+                                            28 => ['top' => 55, 'left' => 17.2],
+                                            29 => ['top' => 69.5, 'left' => 17.2],
+                                            30 => ['top' => 79.5, 'left' => 17.2],
+                                            31 => ['top' => 23.5, 'left' => 15.5],
+                                            32 => ['top' => 23.5, 'left' => 10.5],
+                                            33 => ['top' => 19.5, 'left' => 20],
+                                            34 => ['top' => 26.5, 'left' => 21.5],
+                                            35 => ['top' => 19.5, 'left' => 6],
+                                            36 => ['top' => 27.5, 'left' => 5.5],
+                                            37 => ['top' => 9.5, 'left' => 85.8],
+                                            38 => ['top' => 89.5, 'left' => 16.2],
+                                            39 => ['top' => 88.5, 'left' => 10]
+                                        ];
+
+                                        $hotspotsHtml = '';
+                                        foreach ($regionCoords as $num => $coord) {
+                                            $isSelected = in_array($num, $selected);
+                                            $class = $isSelected ? 'hotspot selected' : 'hotspot';
+                                            $hotspotsHtml .= "<div class='{$class}' style='top: {$coord['top']}%; left: {$coord['left']}%;' data-region='{$num}' onclick='toggleFilamentRegion(this, \"massage_regions\")'>{$num}</div>";
+                                        }
+
+                                        return new \Illuminate\Support\HtmlString("
+                                            <div style='text-align: center; display: flex; justify-content: center;'>
+                                                <div style='position: relative; display: inline-block; max-width: 600px; width: 100%; aspect-ratio: 438 / 166.32;'>
+                                                    <img src='/images/body.jpg' alt='Massage Chart' style='width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);' />
+                                                    {$hotspotsHtml}
+                                                </div>
+                                            </div>
+                                            " . self::getMapStylesAndScript());
+                                    })
                             ])
-                            ->columnSpan(fn (callable $get) => (($get('cracking_type') ?? 'none') === 'none') ? 2 : 1)
+                            ->columnSpan(1)
                             ->collapsible()
                             ->collapsed(false),
 
@@ -433,11 +520,121 @@ class VisitResource extends Resource
                             ->schema([
                                 Forms\Components\Placeholder::make('cracking_chart_img')
                                     ->label('')
-                                    ->content(new \Illuminate\Support\HtmlString('
-                                        <div style="text-align: center;">
-                                            <img src="/images/cracking.png" alt="Cracking Chart" style="max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);" />
-                                        </div>
-                                    '))
+                                    ->content(function (callable $get) {
+                                        $selected = array_map('intval', (array)($get('cracking_regions') ?? []));
+                                        $crackingRegionCoords = [
+                                            1 => [['top' => 14.9, 'left' => 49.0]],
+                                            2 => [['top' => 37.6, 'left' => 49.0]],
+                                            3 => [
+                                                ['top' => 26.9, 'left' => 23.5],
+                                                ['top' => 26.9, 'left' => 75.5],
+                                                ['top' => 59.0, 'left' => 50.0]
+                                            ]
+                                        ];
+
+                                        $hotspotsHtml = '';
+                                        foreach ($crackingRegionCoords as $num => $coordsList) {
+                                            $isSelected = in_array($num, $selected);
+                                            $class = $isSelected ? 'hotspot selected' : 'hotspot';
+                                            foreach ($coordsList as $coord) {
+                                                $hotspotsHtml .= "<div class='{$class}' style='top: {$coord['top']}%; left: {$coord['left']}%;' data-region='{$num}' onclick='toggleFilamentRegion(this, \"cracking_regions\")'>{$num}</div>";
+                                            }
+                                        }
+
+                                        return new \Illuminate\Support\HtmlString("
+                                            <div style='text-align: center; display: flex; justify-content: center;'>
+                                                <div style='position: relative; display: inline-block; max-width: 250px; width: 100%; aspect-ratio: 200 / 420; margin: 0 auto;'>
+                                                    <img src='/images/cracking.png' alt='Cracking Chart' style='width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);' />
+                                                    {$hotspotsHtml}
+                                                </div>
+                                            </div>
+                                            " . self::getMapStylesAndScript());
+                                    })
+                            ])
+                            ->columnSpan(1)
+                            ->collapsible()
+                            ->collapsed(false),
+
+                        Forms\Components\Section::make('خريطة الحجامة (Hijama Chart)')
+                            ->visible(function (callable $get) {
+                                $tempRecord = (object)[
+                                    'booking_type' => 'وقائية',
+                                    'packages' => $get('packages') ?? [],
+                                    'massage_regions' => $get('massage_regions') ?? [],
+                                    'massage_style' => $get('massage_style') ?? 'intensive',
+                                    'massage_intensity' => $get('massage_intensity') ?? 'medium',
+                                    'cracking_type' => $get('cracking_type') ?? 'none',
+                                    'cracking_regions' => $get('cracking_regions') ?? [],
+                                    'hijama_type' => $get('hijama_type') ?? 'none',
+                                    'hijama_style' => $get('hijama_style') ?? 'intensive',
+                                    'hijama_regions' => $get('hijama_regions') ?? [],
+                                ];
+                                $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($tempRecord);
+                                return ($basePrices['hijama'] ?? 0) > 0;
+                            })
+                            ->schema([
+                                Forms\Components\Placeholder::make('hijama_chart_img')
+                                    ->label('')
+                                    ->content(function (callable $get) {
+                                        $selected = array_map('intval', (array)($get('hijama_regions') ?? []));
+                                        $regionCoords = [
+                                            1 => ['top' => 59, 'left' => 82.8],
+                                            2 => ['top' => 69.8, 'left' => 82.2],
+                                            3 => ['top' => 77.5, 'left' => 82.2],
+                                            4 => ['top' => 90.5, 'left' => 82.2],
+                                            5 => ['top' => 59.5, 'left' => 88.2],
+                                            6 => ['top' => 70.5, 'left' => 88.2],
+                                            7 => ['top' => 78.5, 'left' => 89.2],
+                                            8 => ['top' => 91.5, 'left' => 88.2],
+                                            9 => ['top' => 45.5, 'left' => 82.2],
+                                            10 => ['top' => 45.5, 'left' => 88.2],
+                                            11 => ['top' => 36.5, 'left' => 82.2],
+                                            12 => ['top' => 37.5, 'left' => 89.2],
+                                            13 => ['top' => 25.5, 'left' => 83.2],
+                                            14 => ['top' => 26.5, 'left' => 89.2],
+                                            15 => ['top' => 17.5, 'left' => 83.2],
+                                            16 => ['top' => 17.5, 'left' => 88.5],
+                                            17 => ['top' => 20.5, 'left' => 77.8],
+                                            18 => ['top' => 28.5, 'left' => 77],
+                                            19 => ['top' => 38.5, 'left' => 76.5],
+                                            20 => ['top' => 20.5, 'left' => 93.8],
+                                            21 => ['top' => 29.5, 'left' => 94.6],
+                                            22 => ['top' => 39.5, 'left' => 95.2],
+                                            23 => ['top' => 20.5, 'left' => 64],
+                                            24 => ['top' => 18.5, 'left' => 45.2],
+                                            25 => ['top' => 54.5, 'left' => 10],
+                                            26 => ['top' => 69.5, 'left' => 10],
+                                            27 => ['top' => 78.5, 'left' => 10],
+                                            28 => ['top' => 55, 'left' => 17.2],
+                                            29 => ['top' => 69.5, 'left' => 17.2],
+                                            30 => ['top' => 79.5, 'left' => 17.2],
+                                            31 => ['top' => 23.5, 'left' => 15.5],
+                                            32 => ['top' => 23.5, 'left' => 10.5],
+                                            33 => ['top' => 19.5, 'left' => 20],
+                                            34 => ['top' => 26.5, 'left' => 21.5],
+                                            35 => ['top' => 19.5, 'left' => 6],
+                                            36 => ['top' => 27.5, 'left' => 5.5],
+                                            37 => ['top' => 9.5, 'left' => 85.8],
+                                            38 => ['top' => 89.5, 'left' => 16.2],
+                                            39 => ['top' => 88.5, 'left' => 10]
+                                        ];
+
+                                        $hotspotsHtml = '';
+                                        foreach ($regionCoords as $num => $coord) {
+                                            $isSelected = in_array($num, $selected);
+                                            $class = $isSelected ? 'hotspot selected' : 'hotspot';
+                                            $hotspotsHtml .= "<div class='{$class}' style='top: {$coord['top']}%; left: {$coord['left']}%;' data-region='{$num}' onclick='toggleFilamentRegion(this, \"hijama_regions\")'>{$num}</div>";
+                                        }
+
+                                        return new \Illuminate\Support\HtmlString("
+                                            <div style='text-align: center; display: flex; justify-content: center;'>
+                                                <div style='position: relative; display: inline-block; max-width: 600px; width: 100%; aspect-ratio: 438 / 166.32;'>
+                                                    <img src='/images/body.jpg' alt='Hijama Chart' style='width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);' />
+                                                    {$hotspotsHtml}
+                                                </div>
+                                            </div>
+                                            " . self::getMapStylesAndScript());
+                                    })
                             ])
                             ->columnSpan(1)
                             ->collapsible()
@@ -527,6 +724,8 @@ class VisitResource extends Resource
                                     ->numeric()
                                     ->prefix('EGP')
                                     ->reactive()
+                                    ->hidden(fn () => auth()->user()?->type === 'specialist')
+                                    ->dehydrated(fn () => auth()->user()?->type !== 'specialist')
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         self::updateVisitTotals($set, $get);
                                     })
@@ -577,14 +776,57 @@ class VisitResource extends Resource
                             ->prefix('EGP')
                             ->reactive(),
 
-                        Forms\Components\TextInput::make('discount_percentage')
-                            ->label('نسبة الخصم (%)')
-                            ->numeric()
-                            ->prefix('%')
+                        // Forms\Components\TextInput::make('discount_percentage')
+                        //     ->label('نسبة الخصم (%)')
+                        //     ->numeric()
+                        //     ->prefix('%')
+                        //     ->reactive()
+                        //     ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        //         self::updateVisitTotals($set, $get);
+                        //     }),
+
+                        Forms\Components\TextInput::make('coupon_code')
+                            ->label('كود كوبون الخصم')
+                            ->placeholder('أدخل كود الكوبون إن وجد')
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $code = trim($state);
+                                if (!$code) {
+                                    $set('coupon_discount', 0);
+                                    self::updateVisitTotals($set, $get);
+                                    return;
+                                }
+
+                                $coupon = \App\Models\Coupon::where('code', $code)->first();
+                                if (!$coupon) {
+                                    $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper($code)])->first();
+                                }
+
+                                if (!$coupon || !$coupon->is_active) {
+                                    $set('coupon_discount', 0);
+                                    self::updateVisitTotals($set, $get);
+                                    return;
+                                }
+
+                                // Calculate the discount based on the sum of sessions
+                                $sessions = $get('Sessions') ?: [];
+                                $total = collect($sessions)->sum('price');
+                                
+                                // Subtract discount percentage if any
+                                $discountPercentage = (float)($get('discount_percentage') ?? 0);
+                                $totalAfterPercentage = $total - ($total * ($discountPercentage / 100));
+
+                                $discount = $coupon->calculateDiscountFor($totalAfterPercentage);
+                                $set('coupon_discount', $discount);
                                 self::updateVisitTotals($set, $get);
                             }),
+
+                        Forms\Components\TextInput::make('coupon_discount')
+                            ->label('قيمة خصم الكوبون')
+                            ->numeric()
+                            ->readOnly()
+                            ->prefix('EGP')
+                            ->placeholder('0.00'),
                     ])->columns(2)->columnSpanFull(),
             ]);
     }
@@ -593,6 +835,22 @@ class VisitResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('client.name')
+                    ->label('الاسم')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('hour')
+                    ->label('الساعة')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('date')
+                    ->label('التاريخ')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('sessions.employee.name')
+                    ->label('المختصين')
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('id')
                     ->numeric()
                     ->sortable(),
@@ -602,22 +860,20 @@ class VisitResource extends Resource
                     ->state(fn ($record) => $record->request?->is_urgent ? 'مستعجل' : 'عادي')
                     ->color(fn ($record) => $record->request?->is_urgent ? 'warning' : 'gray')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('complaint')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('السعر النهائي')
                     ->money("EGP")
                     ->description(fn ($record) => $record->request?->is_urgent ? 'يشمل رسوم مستعجل' : null)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('hour')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('client.name')
+                Tables\Columns\TextColumn::make('coupon_code')
+                    ->label('الكوبون المطبق')
+                    ->badge()
+                    ->color('success')
+                    ->formatStateUsing(fn ($state, $record) => $state ? "🎟️ {$state} (-{$record->coupon_discount} EGP)" : null)
+                    ->placeholder('لا يوجد')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('specialist.name')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('notes'),
+                Tables\Columns\TextColumn::make('notes')
+                    ->label('الملاحظات'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -626,13 +882,14 @@ class VisitResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ])->defaultSort('id','desc')
+            ])
             ->filters([
                 Filter::make('Today')
-                ->query(fn (Builder $query): Builder => $query->where('date', today()->toDateString())),
+                    ->default()
+                    ->query(fn (Builder $query): Builder => $query->where('date', today()->toDateString())),
                 Filter::make('This Month')
-                ->query(fn (Builder $query): Builder => $query->whereYear('date', Carbon::now()->year)
-                                                        ->whereMonth('date', Carbon::now()->month))
+                    ->query(fn (Builder $query): Builder => $query->whereYear('date', Carbon::now()->year)
+                                                            ->whereMonth('date', Carbon::now()->month))
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -661,6 +918,7 @@ class VisitResource extends Resource
         $sessions = $get($prefix . 'Sessions') ?: [];
         $discount = (float)($get($prefix . 'discount_percentage') ?? 0);
         $paid = (float)($get($prefix . 'paid') ?? 0);
+        $couponDiscount = (float)($get($prefix . 'coupon_discount') ?? 0);
 
         $total = collect($sessions)->sum('price');
         $requestId = $get($prefix . 'request_id');
@@ -671,8 +929,8 @@ class VisitResource extends Resource
                 $total += $urgentFee;
             }
         }
-        $discountedTotal = $total - ($total * ($discount / 100));
-        $finalPrice = round($discountedTotal, 2);
+        $discountedTotal = $total - ($total * ($discount / 100)) - $couponDiscount;
+        $finalPrice = max(0, round($discountedTotal, 2));
 
         $set($prefix . 'price', $finalPrice);
 
@@ -691,28 +949,53 @@ class VisitResource extends Resource
         if ($requestId) {
             $request = \App\Models\Request::find($requestId);
             if ($request) {
+                $parsed = \App\Filament\Resources\RequestResource::parseDescription($request->description);
+                $packages = $get('../../packages') ?? $request->packages ?? [];
+
+                $massageRegions = $get('../../massage_regions');
+                if ($massageRegions === null) {
+                    $massageRegions = $parsed['massage_regions'] ?? [];
+                    if (empty($massageRegions) && empty($packages)) {
+                        $massageRegions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
+                    }
+                }
+
+                $crackingType = $get('../../cracking_type') ?? $parsed['cracking_type'] ?? 'none';
+                $crackingRegions = $get('../../cracking_regions');
+                if ($crackingRegions === null) {
+                    $crackingRegions = $parsed['cracking_regions'] ?? [];
+                    if (empty($crackingRegions) && $crackingType === 'regions') {
+                        $crackingRegions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
+                    }
+                }
+
+                $hijamaType = $get('../../hijama_type') ?? $parsed['hijama_type'] ?? 'none';
+                $hijamaRegions = $get('../../hijama_regions');
+                if ($hijamaRegions === null) {
+                    if ($hijamaType === 'whole_back') {
+                        $hijamaRegions = [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37];
+                    } elseif ($hijamaType === 'whole_front') {
+                        $hijamaRegions = [19, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36];
+                    } else {
+                        $hijamaRegions = $parsed['hijama_regions'] ?? [];
+                        if (empty($hijamaRegions) && $hijamaType === 'regions') {
+                            $hijamaRegions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
+                        }
+                    }
+                }
+
                 $tempRecord = (object)[
                     'booking_type' => 'وقائية',
-                    'packages' => $get('../../packages') ?? $request->packages ?? [],
-                    'massage_regions' => $get('../../massage_regions') ?? [],
-                    'massage_style' => $get('../../massage_style') ?? 'intensive',
-                    'massage_intensity' => $get('../../massage_intensity') ?? 'medium',
-                    'cracking_type' => $get('../../cracking_type') ?? 'none',
-                    'cracking_regions' => $get('../../cracking_regions') ?? [],
-                    'hijama_type' => $get('../../hijama_type') ?? 'none',
-                    'hijama_style' => $get('../../hijama_style') ?? 'intensive',
-                    'hijama_regions' => $get('../../hijama_regions') ?? [],
+                    'packages' => $packages,
+                    'massage_regions' => $massageRegions,
+                    'massage_style' => $get('../../massage_style') ?? $parsed['massage_style'] ?? 'intensive',
+                    'massage_intensity' => $get('../../massage_intensity') ?? $parsed['massage_intensity'] ?? 'medium',
+                    'cracking_type' => $crackingType,
+                    'cracking_regions' => $crackingRegions,
+                    'hijama_type' => $hijamaType,
+                    'hijama_style' => $get('../../hijama_style') ?? $parsed['hijama_style'] ?? 'intensive',
+                    'hijama_regions' => $hijamaRegions,
                 ];
-
-                if (empty($tempRecord->massage_regions) && $record) {
-                    $tempRecord->massage_regions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
-                }
-                if (empty($tempRecord->cracking_regions) && $record) {
-                    $tempRecord->cracking_regions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
-                }
-                if (empty($tempRecord->hijama_regions) && $record) {
-                    $tempRecord->hijama_regions = \App\Models\RequestRegion::where('request_id', $requestId)->pluck('region_number')->toArray();
-                }
 
                 $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($tempRecord);
                 
@@ -832,6 +1115,85 @@ class VisitResource extends Resource
         }
     }
 
+
+    protected static function getMapStylesAndScript(): string
+    {
+        return '
+            <style>
+                .hotspot {
+                    position: absolute;
+                    width: 22px;
+                    aspect-ratio: 1;
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    user-select: none;
+                    z-index: 10;
+                    border: 2px solid transparent;
+                    background: transparent;
+                    color: transparent;
+                    transition: all 0.2s ease;
+                }
+                .hotspot.selected {
+                    background: #2ecc71 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5);
+                    border-color: #ffffff !important;
+                }
+                .hotspot:hover {
+                    border-color: rgba(46, 204, 113, 0.5);
+                    background: rgba(46, 204, 113, 0.25);
+                    color: #2ecc71;
+                    cursor: pointer;
+                    transform: translate(-50%, -50%) scale(1.15);
+                }
+            </style>
+            <script>
+                if (typeof window.toggleFilamentRegion === "undefined") {
+                    window.toggleFilamentRegion = function(el, fieldName) {
+                        let region = parseInt(el.dataset.region);
+                        let wireEl = el;
+                        while (wireEl && !wireEl.hasAttribute("wire:id")) {
+                            wireEl = wireEl.parentElement;
+                        }
+                        if (!wireEl) {
+                            let allElements = document.querySelectorAll("*");
+                            for (let i = 0; i < allElements.length; i++) {
+                                if (allElements[i].hasAttribute("wire:id")) {
+                                    wireEl = allElements[i];
+                                    break;
+                                }
+                            }
+                        }
+                        if (wireEl && window.Livewire) {
+                            let component = window.Livewire.find(wireEl.getAttribute("wire:id"));
+                            if (component) {
+                                let current = (component.get("data." + fieldName) || []).map(Number);
+                                let idx = current.indexOf(region);
+                                if (idx > -1) {
+                                    current.splice(idx, 1);
+                                } else {
+                                    current.push(region);
+                                }
+                                component.set("data." + fieldName, current);
+                            }
+                        }
+                    };
+                }
+            </script>
+        ';
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderBy('date', 'asc')
+            ->orderBy('hour', 'asc');
+    }
 
     public static function getPages(): array
     {

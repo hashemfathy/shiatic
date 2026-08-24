@@ -621,6 +621,17 @@
                         <input type="hidden" id="appointment_time" name="time" required>
                     </div>
 
+                    <!-- Coupon Input Section -->
+                    <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 16px; text-align: right;">
+                        <label for="coupon_input" class="form-label fw-bold text-dark mb-2">🎟️ هل لديك كوبون خصم؟</label>
+                        <div class="input-group">
+                            <input type="text" id="coupon_input" class="form-control" placeholder="أدخل كود الكوبون هنا" style="text-transform: uppercase; border-radius: 0 12px 12px 0;">
+                            <button type="button" id="btn-apply-coupon" class="btn btn-warning fw-bold text-white px-4" style="border-radius: 12px 0 0 12px;">تطبيق</button>
+                        </div>
+                        <input type="hidden" name="coupon_code" id="submitted_coupon_code">
+                        <div id="coupon_feedback" class="mt-2 fw-bold" style="display: none; font-size: 0.95rem;"></div>
+                    </div>
+
                     <!-- Services Summary -->
                     <div class="mt-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.03); border-right: 4px solid #38bdf8;">
                         <h5 class="mb-3 text-dark" style="font-weight: 700;">💰 تفاصيل السعر والمدة الإجمالية :</h5>
@@ -637,6 +648,10 @@
                         <div id="urgent_fee_row" class="justify-content-between mb-2" style="display: none;">
                             <span>رسوم الحجز المستعجل الإضافية:</span>
                             <span class="fw-bold text-warning"><span id="summary_urgent_fee">0</span> ج.م</span>
+                        </div>
+                        <div id="coupon_discount_row" class="justify-content-between mb-2 text-success" style="display: none;">
+                            <span>خصم الكوبون:</span>
+                            <span class="fw-bold"><span id="summary_coupon_discount">0</span> ج.م</span>
                         </div>
                         <div class="d-flex justify-content-between" id="duration_row">
                             <span>المدة الأقصى المتوقعة (لجلسة متزامنة):</span>
@@ -739,6 +754,9 @@
                         </h2>
                         <div id="collapsePhysio-{index}" class="accordion-collapse collapse" data-bs-parent="#bookingAccordion-{index}">
                             <div class="accordion-body">
+                                <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info p-2 rounded-3 mb-3 text-center female-chiro-note" id="female-chiro-note-{index}" style="display: none; font-size: 0.95rem; font-weight: 700;">
+                                    يقوم بتنفيذه ك. احمد عادل
+                                </div>
                                 <div class="booking-row">
                                     <div class="packages-col">
                                         <label class="form-label d-block mb-3">اختر نوع تقويم العمود الفقري *</label>
@@ -1094,6 +1112,10 @@
 
             let attendees = [];
             let nextAttendeeIndex = 0;
+            let couponCode = '';
+            let couponType = '';
+            let couponValue = 0;
+            let couponDiscount = 0;
 
             const attendeesListEl = document.getElementById('attendees-list');
             const templateHtml = document.getElementById('attendee-template').innerHTML;
@@ -1393,6 +1415,15 @@
                 const genderSel = document.getElementById(`gender-${index}`);
                 if (genderSel) {
                     genderSel.addEventListener('change', function() {
+                        const noteEl = document.getElementById(`female-chiro-note-${index}`);
+                        if (noteEl) {
+                            if (this.value === 'female') {
+                                noteEl.style.display = 'block';
+                            } else {
+                                noteEl.style.display = 'none';
+                            }
+                        }
+
                         const isUrgentChecked = document.getElementById('is_urgent') && document.getElementById('is_urgent').checked;
                         if (isUrgentChecked) {
                             validateTimeSelection();
@@ -1643,9 +1674,32 @@
                     }
                 });
 
+                // Calculate dynamic coupon discount
+                if (couponCode) {
+                    if (couponType === 'percentage') {
+                        couponDiscount = Math.round(grandTotalSessionsPrice * (couponValue / 100) * 100) / 100;
+                    } else {
+                        couponDiscount = Math.min(couponValue, grandTotalSessionsPrice);
+                    }
+                    
+                    const couponDiscountRow = document.getElementById('coupon_discount_row');
+                    if (couponDiscountRow) {
+                        document.getElementById('summary_coupon_discount').innerText = couponDiscount.toFixed(2);
+                        couponDiscountRow.style.display = 'flex';
+                    }
+                } else {
+                    couponDiscount = 0;
+                    const couponDiscountRow = document.getElementById('coupon_discount_row');
+                    if (couponDiscountRow) {
+                        couponDiscountRow.style.display = 'none';
+                    }
+                }
+
                 // Apply group level urgent fee if selected
                 const isUrgentChecked = document.getElementById('is_urgent') && document.getElementById('is_urgent').checked;
-                let grandTotal = grandTotalSessionsPrice;
+                let grandTotal = grandTotalSessionsPrice - couponDiscount;
+                if (grandTotal < 0) grandTotal = 0;
+                
                 const urgentFeeRow = document.getElementById('urgent_fee_row');
 
                 if (isUrgentChecked) {
@@ -1892,6 +1946,69 @@
                     handleUrgentToggle();
                 });
             }
+
+            // Coupon Apply click listener
+            document.getElementById('btn-apply-coupon').addEventListener('click', function() {
+                const codeInput = document.getElementById('coupon_input').value.trim();
+                const feedbackEl = document.getElementById('coupon_feedback');
+                const dateVal = document.getElementById('appointment_date').value;
+
+                if (!codeInput) {
+                    feedbackEl.style.display = 'block';
+                    feedbackEl.style.color = '#e74c3c';
+                    feedbackEl.innerText = 'يرجى كتابة كود الكوبون أولاً.';
+                    return;
+                }
+
+                if (!dateVal) {
+                    feedbackEl.style.display = 'block';
+                    feedbackEl.style.color = '#e74c3c';
+                    feedbackEl.innerText = 'يرجى اختيار تاريخ الزيارة أولاً للتحقق من صلاحية الكوبون.';
+                    return;
+                }
+
+                // Calculate current sessions total price (before urgent fee)
+                let totalSessionsPrice = attendees.reduce((acc, a) => acc + a.price, 0);
+
+                feedbackEl.style.display = 'block';
+                feedbackEl.style.color = '#e67e22';
+                feedbackEl.innerText = '⏳ جاري التحقق من الكوبون...';
+
+                fetch(`{{ route("booking.validate-coupon") }}?code=${encodeURIComponent(codeInput)}&total_price=${totalSessionsPrice}&date=${encodeURIComponent(dateVal)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.valid) {
+                        couponCode = data.code;
+                        couponType = data.type;
+                        couponValue = data.value;
+                        couponDiscount = data.discount;
+                        document.getElementById('submitted_coupon_code').value = couponCode;
+                        
+                        feedbackEl.style.color = '#2ecc71';
+                        feedbackEl.innerText = '✓ ' + data.message;
+                        
+                        // Update UI pricing
+                        updateFormInputsAndPricing();
+                    } else {
+                        // Reset
+                        couponCode = '';
+                        couponType = '';
+                        couponValue = 0;
+                        couponDiscount = 0;
+                        document.getElementById('submitted_coupon_code').value = '';
+                        
+                        feedbackEl.style.color = '#e74c3c';
+                        feedbackEl.innerText = '✗ ' + data.message;
+                        
+                        // Update UI pricing
+                        updateFormInputsAndPricing();
+                    }
+                })
+                .catch(err => {
+                    feedbackEl.style.color = '#e74c3c';
+                    feedbackEl.innerText = '⚠️ خطأ في الاتصال بالخادم للتحقق من الكوبون.';
+                });
+            });
 
             // Initialize Form with 1st Attendee
             addAttendee();

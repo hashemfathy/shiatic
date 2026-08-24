@@ -21,9 +21,9 @@ class ViewRequest extends ViewRecord
     {
         $parsed = \App\Filament\Resources\RequestResource::parseDescription($data['description'] ?? '');
         
-        // Also load massage regions from database relation
+        // Also load massage regions from database relation if parsed massage regions is empty
         $record = $this->getRecord();
-        if ($record) {
+        if ($record && empty($parsed['massage_regions'])) {
             $parsed['massage_regions'] = $record->regions()->pluck('region_number')->toArray();
         }
         

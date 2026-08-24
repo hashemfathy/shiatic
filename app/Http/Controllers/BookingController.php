@@ -30,6 +30,7 @@ class BookingController extends Controller
             'time' => 'required|string',
             'user_agreement' => 'required|string|in:موافق',
             'is_urgent' => 'nullable|boolean',
+            'coupon_code' => 'nullable|string',
             'attendees' => 'required|array|min:1',
             'attendees.*.name' => 'required|string|max:255',
             'attendees.*.phone' => 'required|string|max:255',
@@ -229,6 +230,20 @@ class BookingController extends Controller
             return redirect()->back()->withInput()->withErrors(['time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة لمجموعتكم.']);
         }
 
+        // Process coupon if submitted
+        $couponCode = $request->input('coupon_code');
+        $coupon = null;
+        $couponDiscount = 0;
+        if ($couponCode) {
+            $coupon = \App\Models\Coupon::where('code', trim($couponCode))->first();
+            if (!$coupon) {
+                $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper(trim($couponCode))])->first();
+            }
+            if ($coupon && $coupon->isValidFor($bookingDate, $totalSessionsPrice)) {
+                $couponDiscount = $coupon->calculateDiscountFor($totalSessionsPrice);
+            }
+        }
+
         // 4. Save requests to database
         $parentBooking = null;
         foreach ($processedAttendees as $index => $att) {
@@ -236,6 +251,12 @@ class BookingController extends Controller
 
             // Deposit calculation: 40% of the total price (including urgent fee on the parent request only)
             $individualPrice = $att['total_price'] + ($isFirst ? $urgentFee : 0);
+            
+            // Subtract coupon discount from parent request only
+            if ($isFirst && $couponDiscount > 0) {
+                $individualPrice = max(0, $individualPrice - $couponDiscount);
+            }
+            
             $deposit = ceil($individualPrice * 0.40);
 
             $booking = BookingRequest::create([
@@ -255,10 +276,15 @@ class BookingController extends Controller
                 'deposit' => $deposit,
                 'user_agreement' => $userAgreement,
                 'is_urgent' => $isUrgent,
+                'coupon_code' => $isFirst && $coupon ? $coupon->code : null,
+                'coupon_discount' => $isFirst ? $couponDiscount : 0,
             ]);
 
             if ($isFirst) {
                 $parentBooking = $booking;
+                if ($coupon && $couponDiscount > 0) {
+                    $coupon->increment('uses');
+                }
             }
 
             // Save regions for this attendee
@@ -735,6 +761,71 @@ class BookingController extends Controller
         }
 
         return true;
+    }
+
+    public function validateCoupon(Request $request)
+    {
+        $code = $request->input('code');
+        $totalPrice = (float)$request->input('total_price', 0);
+        $date = $request->input('date');
+
+        if (!$code) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'يرجى إدخال كود الكوبون.'
+            ]);
+        }
+
+        $coupon = \App\Models\Coupon::where('code', trim($code))->first();
+        if (!$coupon) {
+            $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper(trim($code))])->first();
+        }
+
+        if (!$coupon) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'كود الكوبون غير صحيح.'
+            ]);
+        }
+
+        if (!$coupon->is_active) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'هذا الكوبون غير نشط حالياً.'
+            ]);
+        }
+
+        if ($coupon->expires_at && \Carbon\Carbon::parse($date)->greaterThan($coupon->expires_at)) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'انتهت صلاحية هذا الكوبون.'
+            ]);
+        }
+
+        if ($coupon->max_uses !== null && $coupon->uses >= $coupon->max_uses) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'تم استهلاك الحد الأقصى لاستخدام هذا الكوبون.'
+            ]);
+        }
+
+        if ($totalPrice < $coupon->min_booking_value) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'قيمة الحجز أقل من الحد الأدنى لتفعيل هذا الكوبون (' . $coupon->min_booking_value . ' ج.م).'
+            ]);
+        }
+
+        $discount = $coupon->calculateDiscountFor($totalPrice);
+
+        return response()->json([
+            'valid' => true,
+            'code' => $coupon->code,
+            'type' => $coupon->type,
+            'value' => $coupon->value,
+            'discount' => $discount,
+            'message' => 'تم تطبيق الكوبون بنجاح! خصم بقيمة ' . $discount . ' ج.م.'
+        ]);
     }
 
     private function timeToMinutes($timeStr)

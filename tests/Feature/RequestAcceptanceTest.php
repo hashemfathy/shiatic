@@ -60,6 +60,7 @@ class RequestAcceptanceTest extends TestCase
         $sessions = $mountedData['sessions'] ?? [];
         foreach ($sessions as $uuid => $session) {
             $sessions[$uuid]['employee_id'] = $employee->id;
+            $sessions[$uuid]['price'] = $session['price'] - ($session['price'] * 0.10);
         }
 
         $testable->callTableAction('Accept', $booking, data: [

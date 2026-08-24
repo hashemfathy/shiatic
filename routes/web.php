@@ -36,6 +36,7 @@ Route::get('/booking/form', [\App\Http\Controllers\BookingController::class, 'fo
 Route::post('/booking/store', [\App\Http\Controllers\BookingController::class, 'store'])->name('booking.store');
 Route::get('/booking/available-times', [\App\Http\Controllers\BookingController::class, 'availableTimes'])->name('booking.available-times');
 Route::get('/booking/validate-time', [\App\Http\Controllers\BookingController::class, 'checkTimeAvailability'])->name('booking.validate-time');
+Route::get('/booking/validate-coupon', [\App\Http\Controllers\BookingController::class, 'validateCoupon'])->name('booking.validate-coupon');
 
 Route::get('/artisan-panel', function () {
     $key = env('ARTISAN_PANEL_KEY');

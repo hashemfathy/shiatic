@@ -25,7 +25,9 @@ class Request extends Model
         'total_price',
         'total_duration',
         'user_agreement',
-        'is_urgent'
+        'is_urgent',
+        'coupon_code',
+        'coupon_discount'
     ];
 
     protected $casts = [

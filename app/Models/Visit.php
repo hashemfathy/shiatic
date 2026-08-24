@@ -10,7 +10,7 @@ class Visit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'complaint', 'price', 'date', 'hour','type', 'duration', 'client_id', 'protocol_id','notes','paid','due_to','due_from','discount_percentage','improvement_percentage', 'request_id'
+        'complaint', 'price', 'date', 'hour','type', 'duration', 'client_id', 'protocol_id','notes','paid','due_to','due_from','discount_percentage','improvement_percentage', 'request_id', 'coupon_code', 'coupon_discount'
     ];
     /**
      * @return HasMany
