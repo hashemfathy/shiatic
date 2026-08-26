@@ -23,6 +23,11 @@ class CouponResource extends Resource
     protected static ?string $pluralModelLabel = 'الكوبونات';
     protected static ?string $modelLabel = 'كوبون';
 
+    public static function canAccess(): bool
+    {
+        return !in_array(auth()->user()?->type, ['specialist']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

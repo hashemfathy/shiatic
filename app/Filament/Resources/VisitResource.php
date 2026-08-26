@@ -92,7 +92,8 @@ class VisitResource extends Resource
 
                 // Section 3: Booking Prices & Techniques (Read-only dynamic section)
                 Forms\Components\Section::make('أسعار خدمات الحجز والتكنيكات')
-                    ->visible(fn (callable $get, ?Visit $record) => ($record?->request_id !== null || $get('request_id') !== null) && auth()->user()?->type !== 'specialist')
+                    ->label(fn () => auth()->user()?->type === 'specialist' ? 'تكنيكات الحجز' : 'أسعار خدمات الحجز والتكنيكات')
+                    ->visible(fn (callable $get, ?Visit $record) => ($record?->request_id !== null || $get('request_id') !== null))
                     ->schema([
                         Forms\Components\Placeholder::make('booking_prices_techniques')
                             ->label('')
@@ -136,28 +137,31 @@ class VisitResource extends Resource
                                     ";
                                 }
 
-                                $pricingHtml = "
-                                    <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
-                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                            <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ سعر المساج</div>
-                                            <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$massagePrice} EGP</div>
+                                $pricingHtml = '';
+                                if (auth()->user()?->type !== 'specialist') {
+                                    $pricingHtml = "
+                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ سعر المساج</div>
+                                                <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$massagePrice} EGP</div>
+                                            </div>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ سعر التقويم</div>
+                                                <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingPrice} EGP</div>
+                                            </div>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 سعر الحجامة</div>
+                                                <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaPrice} EGP</div>
+                                            </div>
+                                            {$urgentFeeBox}
+                                            {$couponBox}
+                                            <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                                <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
+                                                <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
+                                            </div>
                                         </div>
-                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                            <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ سعر التقويم</div>
-                                            <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingPrice} EGP</div>
-                                        </div>
-                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                            <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 سعر الحجامة</div>
-                                            <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaPrice} EGP</div>
-                                        </div>
-                                        {$urgentFeeBox}
-                                        {$couponBox}
-                                        <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
-                                            <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
-                                            <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
-                                        </div>
-                                    </div>
-                                ";
+                                    ";
+                                }
 
                                 $techniquesHtml = '';
                                 if ($massagePrice > 0) {
