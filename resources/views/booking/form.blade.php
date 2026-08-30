@@ -1049,13 +1049,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Repetition definitions
-            const regionRepetitions = {
-                1: 2, 2: 1, 3: 2, 4: 3, 5: 2, 6: 1, 7: 2, 8: 3,
-                9: 1, 10: 1, 11: 1, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1,
-                17: 1, 18: 1, 19: 1, 20: 1, 21: 1, 22: 1, 23: 1, 24: 1,
-                25: 2, 26: 3, 27: 2, 28: 2, 29: 3, 30: 2,
-                31: 1, 32: 1, 33: 1, 34: 1, 35: 1, 36: 1,
-                37: 1, 38: 2, 39: 2
+            const regionRepetitionsIntensive = {
+                1: 2, 3: 2, 4: 3, 5: 2, 7: 2, 8: 3, 9: 1, 10: 1,
+                11: 4, 12: 4, 13: 1, 14: 1, 15: 1, 16: 1, 17: 2, 18: 4,
+                19: 2, 20: 2, 25: 2, 27: 2, 28: 2, 30: 2, 31: 1,
+                32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 37: 1
+            };
+
+            const regionRepetitionsEconomy = {
+                1: 2, 3: 2, 5: 2, 7: 2, 9: 1, 10: 1, 11: 2, 12: 2,
+                13: 1, 14: 1, 15: 1, 16: 1, 17: 1, 18: 2, 19: 2,
+                20: 1, 21: 1, 22: 1, 23: 1, 24: 1, 25: 2, 27: 2,
+                28: 2, 30: 2, 31: 1, 32: 1, 33: 1, 34: 1, 35: 1,
+                36: 1, 37: 1
             };
 
             // Percentage coordinates of numbered body labels (1 to 39)
@@ -1486,9 +1492,11 @@
                     }
 
                     // 2. Calculate Attendee Pricing & Duration
-                    let totalRepetitions = 0;
+                    let totalRepetitionsInt = 0;
+                    let totalRepetitionsEco = 0;
                     att.selectedRegions.forEach(rNum => {
-                        totalRepetitions += regionRepetitions[rNum] || 0;
+                        totalRepetitionsInt += regionRepetitionsIntensive[rNum] || 0;
+                        totalRepetitionsEco += regionRepetitionsEconomy[rNum] || 0;
                     });
 
                     const isIntensiveChecked = packChoice === 'intensive';
@@ -1505,21 +1513,23 @@
                         if (isIntensiveChecked || isEconomyChecked || att.selectedRegions.size > 0) {
                             if (isIntensiveChecked) {
                                 document.getElementById(`treatment_style-${index}`).value = 'intensive';
-                                massageDuration = 92.4 + (totalRepetitions * 1.54);
-                                massagePrice = isHard ? 1570.8 + (totalRepetitions * 26.18) : 1201.2 + (totalRepetitions * 20.02);
+                                massageDuration = 95.4 + (totalRepetitionsInt * 1.8);
+                                massagePrice = isHard ? 1600.00 + (totalRepetitionsInt * 17) : 1200.00 + (totalRepetitionsInt * 13);
                                 pricingRows.innerHTML = `<tr><td><strong>كامل الجسم مكثف (${isHard ? 'هارد' : 'ميديم'})</strong></td><td><span>${massageDuration.toFixed(1)} د</span></td><td><span>${massagePrice.toFixed(2)} ج.م</span></td></tr>`;
                             } else if (isEconomyChecked) {
                                 document.getElementById(`treatment_style-${index}`).value = 'economy';
-                                massageDuration = 61.6 + (totalRepetitions * 1.54);
-                                massagePrice = isHard ? 866.8 + (totalRepetitions * 21.67) : 660.4 + (totalRepetitions * 16.51);
+                                massageDuration = 57.4 + (totalRepetitionsEco * 1.4);
+                                massagePrice = isHard ? 950.00 + (totalRepetitionsEco * 17) : 725.00 + (totalRepetitionsEco * 13);
                                 pricingRows.innerHTML = `<tr><td><strong>كامل الجسم اقتصادي (${isHard ? 'هارد' : 'ميديم'})</strong></td><td><span>${massageDuration.toFixed(1)} د</span></td><td><span>${massagePrice.toFixed(2)} ج.م</span></td></tr>`;
                             } else {
                                 // Regions only
-                                const durationVal = totalRepetitions * 1.54;
-                                const treatmentStyleVal = document.getElementById(`treatment_style-${index}`).value;
-                                
-                                const priceInt = totalRepetitions * (isHard ? 26.18 : 20.02);
-                                const priceEco = totalRepetitions * (isHard ? 21.67 : 16.51);
+                                const durationValInt = totalRepetitionsInt * 1.8;
+                                const priceInt = totalRepetitionsInt * (isHard ? 17 : 13);
+
+                                const durationValEco = totalRepetitionsEco * 1.4;
+                                const priceEco = totalRepetitionsEco * (isHard ? 17 : 13);
+
+                                const treatmentStyleVal = document.getElementById(`treatment_style-${index}`).value || 'intensive';
 
                                 pricingRows.innerHTML = `
                                     <tr>
@@ -1527,7 +1537,7 @@
                                             <input type="radio" name="style-${index}" value="intensive" ${treatmentStyleVal === 'intensive' ? 'checked' : ''} id="s1-${index}"> 
                                             <label for="s1-${index}">مكثف (${isHard ? 'هارد' : 'ميديم'})</label>
                                         </td>
-                                        <td>${durationVal.toFixed(1)} د</td>
+                                        <td>${durationValInt.toFixed(1)} د</td>
                                         <td>${priceInt.toFixed(2)} ج.م</td>
                                     </tr>
                                     <tr>
@@ -1535,7 +1545,7 @@
                                             <input type="radio" name="style-${index}" value="economy" ${treatmentStyleVal === 'economy' ? 'checked' : ''} id="s2-${index}"> 
                                             <label for="s2-${index}">اقتصادي (${isHard ? 'هارد' : 'ميديم'})</label>
                                         </td>
-                                        <td>${durationVal.toFixed(1)} د</td>
+                                        <td>${durationValEco.toFixed(1)} د</td>
                                         <td>${priceEco.toFixed(2)} ج.م</td>
                                     </tr>`;
                                 
@@ -1549,10 +1559,10 @@
                                 });
 
                                 if (treatmentStyleVal === 'intensive') {
-                                    massageDuration = durationVal;
+                                    massageDuration = durationValInt;
                                     massagePrice = priceInt;
                                 } else {
-                                    massageDuration = durationVal;
+                                    massageDuration = durationValEco;
                                     massagePrice = priceEco;
                                 }
                             }

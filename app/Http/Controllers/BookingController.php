@@ -68,16 +68,6 @@ class BookingController extends Controller
             return redirect()->back()->withInput()->withErrors(['time' => 'يجب أن يكون موعد الحجز بعد 40 دقيقة من الآن على الأقل.']);
         }
 
-        // Definitions of repetitions
-        $regionRepetitions = [
-            1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-            9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-            17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-            25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-            37 => 1, 38 => 2, 39 => 2
-        ];
-
         $processedAttendees = [];
         $totalSessionsPrice = 0;
         $totalGroupDuration = 0;
@@ -94,6 +84,16 @@ class BookingController extends Controller
             $hijamaType = $attData['hijama_type'] ?? 'none';
             $hijamaStyle = $attData['hijama_style'] ?? 'intensive';
             $hijamaRegions = $attData['hijama_regions'] ?? [];
+
+            $style = 'economy';
+            if (in_array('intensive', $packages)) {
+                $style = 'intensive';
+            } elseif (in_array('economy', $packages)) {
+                $style = 'economy';
+            } else {
+                $style = $treatmentStyle;
+            }
+            $regionRepetitions = \App\Helpers\MassageHelper::getRegionRepetitions($style);
 
             if ($bookingType === 'وقائية') {
                 $massageActive = !empty($packages) || !empty($selectedRegions);
@@ -171,6 +171,7 @@ class BookingController extends Controller
                 'description' => $built['description'],
                 'massage_active' => $massageActive,
                 'valid_regions' => $validRegions,
+                'style' => $style,
             ];
 
             $totalSessionsPrice += $totalPrice;
@@ -289,6 +290,7 @@ class BookingController extends Controller
 
             // Save regions for this attendee
             if ($att['massage_active']) {
+                $regionRepetitions = \App\Helpers\MassageHelper::getRegionRepetitions($att['style'] ?? 'intensive');
                 foreach ($att['valid_regions'] as $rNum) {
                     $booking->regions()->create([
                         'region_number' => $rNum,

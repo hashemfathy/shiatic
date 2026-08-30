@@ -15,14 +15,16 @@ class CreateRequest extends CreateRecord
         $bookings = $data['dates_times'] ?? [];
         $record = null;
 
-        $regionRepetitions = [
-            1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-            9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-            17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-            25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-            37 => 1, 38 => 2, 39 => 2
-        ];
+        $packages = $data['packages'] ?? [];
+        $style = 'economy';
+        if (in_array('intensive', $packages)) {
+            $style = 'intensive';
+        } elseif (in_array('economy', $packages)) {
+            $style = 'economy';
+        } else {
+            $style = $data['massage_style'] ?? 'intensive';
+        }
+        $regionRepetitions = \App\Helpers\MassageHelper::getRegionRepetitions($style);
 
         // 1. Rebuild details on the data array first
         $pricing = \App\Filament\Resources\RequestResource::calculatePricing($data);
@@ -50,7 +52,7 @@ class CreateRequest extends CreateRecord
         if (empty($bookings)) {
             $data['deposit'] = $pricing['deposit'];
             $record = static::getModel()::create($data);
-            $this->syncRegions($record, $data['massage_regions'] ?? []);
+            $this->syncRegions($record, $data['massage_regions'] ?? [], $style);
             return $record;
         }
 
@@ -62,22 +64,15 @@ class CreateRequest extends CreateRecord
             $recordData['deposit'] = $booking['deposit'] ?? $pricing['deposit'];
             
             $record = static::getModel()::create($recordData);
-            $this->syncRegions($record, $data['massage_regions'] ?? []);
+            $this->syncRegions($record, $data['massage_regions'] ?? [], $style);
         }
 
         return $record;
     }
 
-    protected function syncRegions($record, array $massageRegions): void
+    protected function syncRegions($record, array $massageRegions, string $style): void
     {
-        $regionRepetitions = [
-            1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-            9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-            17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-            25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-            37 => 1, 38 => 2, 39 => 2
-        ];
+        $regionRepetitions = \App\Helpers\MassageHelper::getRegionRepetitions($style);
         
         $record->regions()->delete();
         foreach ($massageRegions as $rNum) {

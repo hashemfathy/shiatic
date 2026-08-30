@@ -1263,14 +1263,37 @@ class RequestResource extends Resource
         if (is_string($hijamaRegions)) $hijamaRegions = empty($hijamaRegions) ? [] : array_map('trim', explode(',', $hijamaRegions));
         elseif (!is_array($hijamaRegions)) $hijamaRegions = [];
 
-        $regionRepetitions = [
-            1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-            9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-            17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-            25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-            37 => 1, 38 => 2, 39 => 2
+        $regionRepetitionsIntensive = [
+            1 => 2, 3 => 2, 4 => 3, 5 => 2, 7 => 2, 8 => 3, 9 => 1, 10 => 1,
+            11 => 4, 12 => 4, 13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 2, 18 => 4,
+            19 => 2, 20 => 2, 25 => 2, 27 => 2, 28 => 2, 30 => 2, 31 => 1,
+            32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 1
         ];
+
+        $regionRepetitionsEconomy = [
+            1 => 2, 3 => 2, 5 => 2, 7 => 2, 9 => 1, 10 => 1, 11 => 2, 12 => 2,
+            13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 1, 18 => 2, 19 => 2,
+            20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1, 25 => 2, 27 => 2,
+            28 => 2, 30 => 2, 31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1,
+            36 => 1, 37 => 1
+        ];
+
+        $style = 'economy';
+        if (in_array('intensive', $packages)) {
+            $style = 'intensive';
+        } elseif (in_array('economy', $packages)) {
+            $style = 'economy';
+        } else {
+            $style = $massageStyle;
+        }
+
+        $repsMap = ($style === 'intensive') ? $regionRepetitionsIntensive : $regionRepetitionsEconomy;
+        $totalRepetitions = 0;
+        foreach ($massageRegions as $rNum) {
+            if (isset($repsMap[$rNum])) {
+                $totalRepetitions += $repsMap[$rNum];
+            }
+        }
 
         // Massage
         $massagePrice = 0;
@@ -1278,27 +1301,16 @@ class RequestResource extends Resource
         $massageActive = ($bookingType === 'وقائية') && (!empty($packages) || !empty($massageRegions));
         
         if ($massageActive) {
-            $totalRepetitions = 0;
-            foreach ($massageRegions as $rNum) {
-                if (isset($regionRepetitions[$rNum])) {
-                    $totalRepetitions += $regionRepetitions[$rNum];
-                }
-            }
             $isHard = ($massageIntensity === 'hard');
             if (in_array('intensive', $packages)) {
-                $massageDuration = 92.4 + ($totalRepetitions * 1.54);
-                $massagePrice = $isHard ? 1570.8 + ($totalRepetitions * 26.18) : 1201.2 + ($totalRepetitions * 20.02);
+                $massageDuration = 95.4 + ($totalRepetitions * 1.8);
+                $massagePrice = $isHard ? 1600.00 + ($totalRepetitions * 17) : 1200.00 + ($totalRepetitions * 13);
             } elseif (in_array('economy', $packages)) {
-                $massageDuration = 61.6 + ($totalRepetitions * 1.54);
-                $massagePrice = $isHard ? 866.8 + ($totalRepetitions * 21.67) : 660.4 + ($totalRepetitions * 16.51);
+                $massageDuration = 57.4 + ($totalRepetitions * 1.4);
+                $massagePrice = $isHard ? 950.00 + ($totalRepetitions * 17) : 725.00 + ($totalRepetitions * 13);
             } else {
-                // Regions only!
-                $massageDuration = ($totalRepetitions * 1.54);
-                if ($massageStyle === 'intensive') {
-                    $massagePrice = $isHard ? ($totalRepetitions * 26.18) : ($totalRepetitions * 20.02);
-                } else {
-                    $massagePrice = $isHard ? ($totalRepetitions * 21.67) : ($totalRepetitions * 16.51);
-                }
+                $massageDuration = $totalRepetitions * ($style === 'intensive' ? 1.8 : 1.4);
+                $massagePrice = $isHard ? ($totalRepetitions * 17) : ($totalRepetitions * 13);
             }
         }
 
@@ -1615,12 +1627,10 @@ class RequestResource extends Resource
 
         // Rebuild description and service_type
         $regionRepetitions = [
-            1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-            9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-            17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-            25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-            37 => 1, 38 => 2, 39 => 2
+            1 => 2, 3 => 2, 4 => 3, 5 => 2, 7 => 2, 8 => 3, 9 => 1, 10 => 1,
+            11 => 4, 12 => 4, 13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 2, 18 => 4,
+            19 => 2, 20 => 2, 25 => 2, 27 => 2, 28 => 2, 30 => 2, 31 => 1,
+            32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 1
         ];
         $built = self::buildDescription(
             $bookingType,

@@ -104,114 +104,104 @@ class MassageHelper
 
     public static function generateTechniquesHtml($style, $intensity, $regions, $isFullBody)
     {
-
-        // Technique list
         $intensiveList = [
-            ['m' => 1, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 2, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 3, 'region' => 4, 'name' => 'الكعب الخارجي', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 4, 'region' => 4, 'name' => 'الكعب الداخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 5, 'region' => 4, 'name' => 'باطن القدم', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 6, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 7, 'region' => 2, 'name' => 'باطن الركبه', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 8, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 9, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 10, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 11, 'region' => 8, 'name' => 'الكعب الخارجي', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 12, 'region' => 8, 'name' => 'الكعب الداخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 13, 'region' => 8, 'name' => 'باطن القدم', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 14, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 15, 'region' => 6, 'name' => 'باطن الركبه', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 16, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 17, 'region' => 9, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 18, 'region' => 11, 'name' => 'القطنيه المربعه', 'method' => 'كلوه / ابهامين', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 19, 'region' => 11, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 20, 'region' => 11, 'name' => 'القطنيه المربعه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 21, 'region' => 11, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 22, 'region' => 10, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 23, 'region' => 12, 'name' => 'القطنيه المربعه', 'method' => 'كلوه / ابهامين', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 24, 'region' => 12, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 25, 'region' => 12, 'name' => 'القطنيه المربعه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 26, 'region' => 12, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 27, 'region' => 13, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 28, 'region' => 15, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 29, 'region' => 14, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 30, 'region' => 16, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 31, 'region' => 37, 'name' => 'الرقبة', 'method' => 'اصابع', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 32, 'region' => 17, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 33, 'region' => 17, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 34, 'region' => 33, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 35, 'region' => 34, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 36, 'region' => 20, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 37, 'region' => 20, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 38, 'region' => 35, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 39, 'region' => 36, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 40, 'region' => 18, 'name' => 'الذراع من الابط', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 41, 'region' => 18, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 42, 'region' => 19, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 43, 'region' => 31, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 44, 'region' => 21, 'name' => 'الذراع من الابط', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 45, 'region' => 21, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 46, 'region' => 22, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 47, 'region' => 32, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 48, 'region' => 28, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 49, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 50, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 51, 'region' => 29, 'name' => 'الركبه الداخليه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 52, 'region' => 29, 'name' => 'الركبه الخارجيه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 53, 'region' => 29, 'name' => 'رباط داخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 54, 'region' => 28, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 55, 'region' => 25, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 56, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 57, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 58, 'region' => 26, 'name' => 'الركبه الداخليه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 59, 'region' => 26, 'name' => 'الركبه الخارجيه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 60, 'region' => 26, 'name' => 'رباط داخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 61, 'region' => 25, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%']
+            ['m' => 1, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 2, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 3, 'region' => 4, 'name' => 'الكعب الخارجي', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 4, 'region' => 4, 'name' => 'الكعب الداخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 5, 'region' => 4, 'name' => 'باطن القدم', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 6, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 7, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 8, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 9, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 10, 'region' => 8, 'name' => 'الكعب الخارجي', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 11, 'region' => 8, 'name' => 'الكعب الداخلي', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 12, 'region' => 8, 'name' => 'باطن القدم', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 13, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 14, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 15, 'region' => 9, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 16, 'region' => 11, 'name' => 'الالقطنيه المربعه', 'method' => 'كلوه / ابهامين', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 17, 'region' => 11, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 18, 'region' => 11, 'name' => 'القطنيه المربعه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 19, 'region' => 11, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 20, 'region' => 10, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 21, 'region' => 12, 'name' => 'القطنيه المربعه', 'method' => 'كلوه / ابهامين', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 22, 'region' => 12, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 23, 'region' => 12, 'name' => 'القطنيه المربعه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 24, 'region' => 12, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 25, 'region' => 13, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 26, 'region' => 15, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 27, 'region' => 14, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 28, 'region' => 16, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 29, 'region' => 37, 'name' => 'الرقبة', 'method' => 'اصابع', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 30, 'region' => 17, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 31, 'region' => 17, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 32, 'region' => 18, 'name' => 'الذراع من الابط', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 33, 'region' => 18, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 34, 'region' => 19, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 35, 'region' => 20, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 36, 'region' => 20, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 37, 'region' => 18, 'name' => 'الذراع من الابط', 'method' => 'ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 38, 'region' => 18, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 39, 'region' => 19, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 40, 'region' => 28, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 41, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 42, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 43, 'region' => 28, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 44, 'region' => 25, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 45, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 46, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 47, 'region' => 25, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 48, 'region' => 31, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 49, 'region' => 33, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 50, 'region' => 34, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 51, 'region' => 32, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 52, 'region' => 35, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 53, 'region' => 36, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 18, 'intensity' => '40%/70%', 'speed' => '10%'],
         ];
 
         $economyList = [
-            ['m' => 1, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 2, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 3, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 4, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 5, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 6, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 7, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 8, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 9, 'region' => 9, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 10, 'region' => 11, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 11, 'region' => 11, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 12, 'region' => 10, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 13, 'region' => 12, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 14, 'region' => 12, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 15, 'region' => 13, 'name' => 'الابهـر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 16, 'region' => 15, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 17, 'region' => 14, 'name' => 'الابهـر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 18, 'region' => 16, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 25, 'intensity' => '40%/70%', 'speed' => '40%'],
-            ['m' => 19, 'region' => 37, 'name' => 'الرقبة', 'method' => 'اصابع', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 20, 'region' => 17, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 21, 'region' => 17, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 22, 'region' => 33, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 23, 'region' => 34, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 24, 'region' => 20, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 25, 'region' => 20, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 26, 'region' => 35, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 27, 'region' => 36, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 28, 'region' => 18, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 29, 'region' => 19, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 30, 'region' => 31, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 31, 'region' => 21, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 32, 'region' => 22, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 33, 'region' => 32, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 34, 'region' => 28, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 35, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 36, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 37, 'region' => 28, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 38, 'region' => 25, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 39, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 40, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%'],
-            ['m' => 41, 'region' => 25, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 15, 'intensity' => '40%/70%', 'speed' => '20%']
+            ['m' => 1, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 2, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 3, 'region' => 3, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 4, 'region' => 1, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 5, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 6, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 7, 'region' => 7, 'name' => 'السمانه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 8, 'region' => 5, 'name' => 'الخلفيه الوسطى', 'method' => 'ابهام / قبضه م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 9, 'region' => 9, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 10, 'region' => 11, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 11, 'region' => 11, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 12, 'region' => 10, 'name' => 'الجلوتس', 'method' => 'ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 13, 'region' => 12, 'name' => 'القطنيه الانقباضيه', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 14, 'region' => 12, 'name' => 'القطنيه المحوريه', 'method' => 'ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 15, 'region' => 13, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 16, 'region' => 15, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 17, 'region' => 14, 'name' => 'الابهر', 'method' => 'ابهام / ابهامين', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 18, 'region' => 16, 'name' => 'الترابس العلويه', 'method' => 'قبضه م', 'direction' => 'للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 19, 'region' => 37, 'name' => 'الرقبة', 'method' => 'اصابع', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 20, 'region' => 17, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 21, 'region' => 24, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 22, 'region' => 18, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 23, 'region' => 19, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 24, 'region' => 20, 'name' => 'الكتف الخلفي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 25, 'region' => 23, 'name' => 'الكتف الجانبي', 'method' => 'قبضه م / ابهام', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 26, 'region' => 21, 'name' => 'التراي', 'method' => 'كلوه / قبضه/م', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 27, 'region' => 22, 'name' => 'الريست والساعد', 'method' => 'اصابع', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 28, 'region' => 28, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 29, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 30, 'region' => 30, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 31, 'region' => 28, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 32, 'region' => 25, 'name' => 'الاماميه', 'method' => 'كف / قبضه م', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 33, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 34, 'region' => 27, 'name' => 'التيبيال', 'method' => 'قبضه/م / ابهام', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 35, 'region' => 25, 'name' => 'الاماميه والضامه', 'method' => 'ابهام / ابهامين', 'direction' => 'اسفل لاعلى', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 36, 'region' => 31, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 37, 'region' => 33, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 38, 'region' => 34, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 39, 'region' => 32, 'name' => 'الشيست', 'method' => 'كلوه / قبضه/م', 'direction' => 'داخل للخارج', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 40, 'region' => 35, 'name' => 'الكتف الامامي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
+            ['m' => 41, 'region' => 36, 'name' => 'الباي', 'method' => 'قبضه م / ابهام', 'direction' => 'اعلى لاسفل', 'rep' => 14, 'intensity' => '40%/70%', 'speed' => '10%'],
         ];
 
         $techniques = ($style === 'intensive') ? $intensiveList : $economyList;
@@ -357,31 +347,45 @@ class MassageHelper
         $massagePrice = 0;
         $massageActive = (!empty($packages) || !empty($massageRegions));
         if ($massageActive) {
-            $regionRepetitions = [
-                1 => 2, 2 => 1, 3 => 2, 4 => 3, 5 => 2, 6 => 1, 7 => 2, 8 => 3,
-                9 => 1, 10 => 1, 11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1,
-                17 => 1, 18 => 1, 19 => 1, 20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1,
-                25 => 2, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1,
-                37 => 1, 38 => 2, 39 => 2
+            $regionRepetitionsIntensive = [
+                1 => 2, 3 => 2, 4 => 3, 5 => 2, 7 => 2, 8 => 3, 9 => 1, 10 => 1,
+                11 => 4, 12 => 4, 13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 2, 18 => 4,
+                19 => 2, 20 => 2, 25 => 2, 27 => 2, 28 => 2, 30 => 2, 31 => 1,
+                32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 1
             ];
+
+            $regionRepetitionsEconomy = [
+                1 => 2, 3 => 2, 5 => 2, 7 => 2, 9 => 1, 10 => 1, 11 => 2, 12 => 2,
+                13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 1, 18 => 2, 19 => 2,
+                20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1, 25 => 2, 27 => 2,
+                28 => 2, 30 => 2, 31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1,
+                36 => 1, 37 => 1
+            ];
+
+            $style = 'economy';
+            if (in_array('intensive', $packages)) {
+                $style = 'intensive';
+            } elseif (in_array('economy', $packages)) {
+                $style = 'economy';
+            } else {
+                $style = $massageStyle;
+            }
+
+            $repsMap = ($style === 'intensive') ? $regionRepetitionsIntensive : $regionRepetitionsEconomy;
             $totalRepetitions = 0;
             foreach ($massageRegions as $rNum) {
-                if (isset($regionRepetitions[$rNum])) {
-                    $totalRepetitions += $regionRepetitions[$rNum];
+                if (isset($repsMap[$rNum])) {
+                    $totalRepetitions += $repsMap[$rNum];
                 }
             }
+
             $isHard = ($massageIntensity === 'hard');
             if (in_array('intensive', $packages)) {
-                $massagePrice = $isHard ? 1570.8 + ($totalRepetitions * 26.18) : 1201.2 + ($totalRepetitions * 20.02);
+                $massagePrice = $isHard ? 1600.00 + ($totalRepetitions * 17) : 1200.00 + ($totalRepetitions * 13);
             } elseif (in_array('economy', $packages)) {
-                $massagePrice = $isHard ? 866.8 + ($totalRepetitions * 21.67) : 660.4 + ($totalRepetitions * 16.51);
+                $massagePrice = $isHard ? 950.00 + ($totalRepetitions * 17) : 725.00 + ($totalRepetitions * 13);
             } else {
-                if ($massageStyle === 'intensive') {
-                    $massagePrice = $isHard ? ($totalRepetitions * 26.18) : ($totalRepetitions * 20.02);
-                } else {
-                    $massagePrice = $isHard ? ($totalRepetitions * 21.67) : ($totalRepetitions * 16.51);
-                }
+                $massagePrice = $isHard ? ($totalRepetitions * 17) : ($totalRepetitions * 13);
             }
         }
 
@@ -470,5 +474,25 @@ class MassageHelper
             'cracking' => $crackingPrice,
             'hijama' => $hijamaPrice,
         ];
+    }
+
+    public static function getRegionRepetitions($style = 'intensive')
+    {
+        $regionRepetitionsIntensive = [
+            1 => 2, 3 => 2, 4 => 3, 5 => 2, 7 => 2, 8 => 3, 9 => 1, 10 => 1,
+            11 => 4, 12 => 4, 13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 2, 18 => 4,
+            19 => 2, 20 => 2, 25 => 2, 27 => 2, 28 => 2, 30 => 2, 31 => 1,
+            32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 1
+        ];
+
+        $regionRepetitionsEconomy = [
+            1 => 2, 3 => 2, 5 => 2, 7 => 2, 9 => 1, 10 => 1, 11 => 2, 12 => 2,
+            13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 1, 18 => 2, 19 => 2,
+            20 => 1, 21 => 1, 22 => 1, 23 => 1, 24 => 1, 25 => 2, 27 => 2,
+            28 => 2, 30 => 2, 31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1,
+            36 => 1, 37 => 1
+        ];
+
+        return ($style === 'intensive') ? $regionRepetitionsIntensive : $regionRepetitionsEconomy;
     }
 }
