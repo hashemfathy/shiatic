@@ -218,6 +218,19 @@ class RequestResource extends Resource
                                 }
                                 self::updateTotals($set, $get);
                             }),
+                        Forms\Components\Radio::make('cracking_style')
+                            ->label('طريقة تقويم العمود الفقري')
+                            ->options([
+                                'intensive' => 'مكثف',
+                                'economy' => 'اقتصادي',
+                            ])
+                            ->default('intensive')
+                            ->inline()
+                            ->reactive()
+                            ->visible(fn (callable $get) => $get('cracking_type') !== 'none')
+                            ->afterStateUpdated(function (callable $set, callable $get) {
+                                self::updateTotals($set, $get);
+                            }),
                         Forms\Components\Select::make('cracking_regions')
                             ->label('مناطق التقويم المحددة')
                             ->multiple()
@@ -225,6 +238,8 @@ class RequestResource extends Resource
                                 1 => 'منطقة 1',
                                 2 => 'منطقة 2',
                                 3 => 'منطقة 3',
+                                4 => 'منطقة 4',
+                                5 => 'منطقة 5',
                              ])
                             ->reactive()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
@@ -306,6 +321,16 @@ class RequestResource extends Resource
                         Forms\Components\Placeholder::make('massage_techniques_table')
                             ->label('')
                             ->content(fn (callable $get) => \App\Helpers\MassageHelper::renderTechniquesTableForForm($get)),
+                    ])
+                    ->columnSpanFull(),
+                Forms\Components\Section::make('التكنيكات الخاصة بجلسة تقويم العمود الفقري (Cracking Techniques)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get) => $get('booking_type') === 'وقائية' && $get('cracking_type') !== 'none')
+                    ->schema([
+                        Forms\Components\Placeholder::make('cracking_techniques_table')
+                            ->label('')
+                            ->content(fn (callable $get) => \App\Helpers\CrackingHelper::renderTechniquesTableForForm($get)),
                     ])
                     ->columnSpanFull(),
                 Forms\Components\Section::make('أفراد المجموعة المشتركة بالحجز')
@@ -1168,6 +1193,7 @@ class RequestResource extends Resource
             'massage_intensity' => '',
             'massage_regions' => [],
             'cracking_type' => 'none',
+            'cracking_style' => '',
             'cracking_regions' => [],
             'hijama_type' => 'none',
             'hijama_style' => '',
@@ -1201,14 +1227,35 @@ class RequestResource extends Resource
         }
 
         // Parse Cracking
+        $data['cracking_style'] = 'intensive'; // default fallback
         if (preg_match('/التقويم\s*\[([^\]]+)\]/', $description, $m)) {
             $inner = $m[1];
-            if (str_contains($inner, 'جسم كامل')) {
-                $data['cracking_type'] = 'whole_body';
-            } elseif (str_contains($inner, 'مناطق:')) {
-                $data['cracking_type'] = 'regions';
-                $regionsStr = str_replace('مناطق:', '', $inner);
-                $data['cracking_regions'] = array_map('intval', explode(',', $regionsStr));
+            $parts = explode(' | ', $inner);
+            foreach ($parts as $part) {
+                if (str_contains($part, 'النوع:')) {
+                    $typeStr = trim(str_replace('النوع:', '', $part));
+                    if ($typeStr === 'جسم كامل') $data['cracking_type'] = 'whole_body';
+                    elseif ($typeStr === 'مناطق') $data['cracking_type'] = 'regions';
+                }
+                if (str_contains($part, 'الاستايل:')) {
+                    $styleStr = trim(str_replace('الاستايل:', '', $part));
+                    if ($styleStr === 'مكثف') $data['cracking_style'] = 'intensive';
+                    elseif ($styleStr === 'اقتصادي') $data['cracking_style'] = 'economy';
+                }
+                if (str_contains($part, 'مناطق:')) {
+                    $regionsStr = trim(str_replace('مناطق:', '', $part));
+                    $data['cracking_regions'] = array_map('intval', explode(',', $regionsStr));
+                }
+            }
+            // For backwards compatibility: if "النوع:" is missing but "جسم كامل" or "مناطق:" is present
+            if (!str_contains($inner, 'النوع:')) {
+                if (str_contains($inner, 'جسم كامل')) {
+                    $data['cracking_type'] = 'whole_body';
+                } elseif (str_contains($inner, 'مناطق:')) {
+                    $data['cracking_type'] = 'regions';
+                    $regionsStr = str_replace('مناطق:', '', $inner);
+                    $data['cracking_regions'] = array_map('intval', explode(',', $regionsStr));
+                }
             }
         }
 
@@ -1253,6 +1300,7 @@ class RequestResource extends Resource
         $massageIntensity = $data['massage_intensity'] ?? 'medium';
 
         $crackingType = $data['cracking_type'] ?? 'none';
+        $crackingStyle = $data['cracking_style'] ?? 'intensive';
         $crackingRegions = $data['cracking_regions'] ?? [];
         if (is_string($crackingRegions)) $crackingRegions = empty($crackingRegions) ? [] : array_map('trim', explode(',', $crackingRegions));
         elseif (!is_array($crackingRegions)) $crackingRegions = [];
@@ -1319,12 +1367,32 @@ class RequestResource extends Resource
         $crackingDuration = 0;
         $crackingActive = ($bookingType === 'وقائية') && ($crackingType !== 'none');
         if ($crackingActive) {
+            $crackingRepsMap = \App\Helpers\CrackingHelper::getRegionRepetitions($crackingStyle);
+            $crackingCountMap = \App\Helpers\CrackingHelper::getRegionTechniquesCount($crackingStyle);
+
+            $totalCrackingReps = 0;
+            $totalCrackingCount = 0;
+            foreach ($crackingRegions as $rNum) {
+                $rNum = (int)$rNum;
+                if (isset($crackingRepsMap[$rNum])) {
+                    $totalCrackingReps += $crackingRepsMap[$rNum];
+                }
+                if (isset($crackingCountMap[$rNum])) {
+                    $totalCrackingCount += $crackingCountMap[$rNum];
+                }
+            }
+
             if ($crackingType === 'whole_body') {
-                $crackingPrice = 350;
-                $crackingDuration = 6;
+                if ($crackingStyle === 'intensive') {
+                    $crackingPrice = 600.00;
+                    $crackingDuration = 16.1; // 161 reps * 0.1 min
+                } else {
+                    $crackingPrice = 450.00;
+                    $crackingDuration = 13.0; // 130 reps * 0.1 min
+                }
             } else {
-                $crackingPrice = count($crackingRegions) * 150;
-                $crackingDuration = count($crackingRegions) * 2 ;
+                $crackingPrice = $totalCrackingCount * 12.00;
+                $crackingDuration = $totalCrackingReps * 0.1;
             }
         }
 
@@ -1418,7 +1486,7 @@ class RequestResource extends Resource
         ];
     }
 
-    public static function buildDescription($bookingType, $packages, $massageRegions, $massageStyle, $massageIntensity, $crackingType, $crackingRegions, $hijamaType, $hijamaStyle, $hijamaRegions, $regionRepetitions) {
+    public static function buildDescription($bookingType, $packages, $massageRegions, $massageStyle, $massageIntensity, $crackingType, $crackingRegions, $hijamaType, $hijamaStyle, $hijamaRegions, $regionRepetitions, $crackingStyle = 'intensive') {
         if (is_string($packages)) $packages = empty($packages) ? [] : array_map('trim', explode(',', $packages));
         elseif (!is_array($packages)) $packages = [];
 
@@ -1462,11 +1530,9 @@ class RequestResource extends Resource
         $crackingActive = $crackingType !== 'none';
         if ($crackingActive) {
             $activeServices[] = 'تقويم';
-            $crackingDesc = "التقويم [";
-            if ($crackingType === 'whole_body') {
-                $crackingDesc .= "جسم كامل";
-            } else {
-                $crackingDesc .= "مناطق: " . implode(', ', $crackingRegions);
+            $crackingDesc = "التقويم [النوع: " . ($crackingType === 'whole_body' ? 'جسم كامل' : 'مناطق') . " | الاستايل: " . ($crackingStyle === 'intensive' ? 'مكثف' : 'اقتصادي');
+            if ($crackingType === 'regions' && !empty($crackingRegions)) {
+                $crackingDesc .= " | مناطق: " . implode(', ', $crackingRegions);
             }
             $crackingDesc .= "]";
             $descriptionParts[] = $crackingDesc;
@@ -1575,6 +1641,7 @@ class RequestResource extends Resource
         $massageStyle = $get('massage_style') ?: 'intensive';
         $massageIntensity = $get('massage_intensity') ?: 'medium';
         $crackingType = $get('cracking_type') ?: 'none';
+        $crackingStyle = $get('cracking_style') ?: 'intensive';
         $crackingRegions = $get('cracking_regions') ?: [];
         $hijamaType = $get('hijama_type') ?: 'none';
         $hijamaStyle = $get('hijama_style') ?: 'intensive';
@@ -1615,6 +1682,7 @@ class RequestResource extends Resource
             'massage_style' => $massageStyle,
             'massage_intensity' => $massageIntensity,
             'cracking_type' => $crackingType,
+            'cracking_style' => $crackingStyle,
             'cracking_regions' => $crackingRegions,
             'hijama_type' => $hijamaType,
             'hijama_style' => $hijamaStyle,
@@ -1643,7 +1711,8 @@ class RequestResource extends Resource
             $hijamaType,
             $hijamaStyle,
             $hijamaRegions,
-            $regionRepetitions
+            $regionRepetitions,
+            $crackingStyle
         );
 
         $set('service_type', $built['service_type']);

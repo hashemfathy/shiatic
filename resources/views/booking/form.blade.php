@@ -773,7 +773,7 @@
                                             <input type="radio" id="cracking_full_body-{index}" name="attendees[{index}][cracking_type]" value="whole_body">
                                             <label for="cracking_full_body-{index}" class="ms-2">
                                                 تقويم الجسم كامل
-                                                <div class="fw-normal text-warning" style="font-size: 0.85rem; margin-top: 0.25rem;"> السعر 350 جنيه بدلا من <span style="text-decoration: line-through;">450 جنيه</span></div>
+                                                <div class="fw-normal text-warning" style="font-size: 0.85rem; margin-top: 0.25rem;">مكثف (600 ج.م) أو اقتصادي (450 ج.م)</div>
                                             </label>
                                         </div>
                                         
@@ -781,12 +781,30 @@
                                             <input type="radio" id="cracking_regions_option-{index}" name="attendees[{index}][cracking_type]" value="regions">
                                             <label for="cracking_regions_option-{index}" class="ms-2">
                                                 اختيار مناطق من الصورة
-                                                <div class="fw-normal text-warning" style="font-size: 0.85rem; margin-top: 0.25rem;"> المنطقة ب 150 جنيه</div>
                                             </label>
                                         </div>
                                         
                                         <!-- Hidden inputs for cracking regions -->
                                         <div id="hidden-cracking-regions-inputs-{index}"></div>
+
+                                        <!-- Cracking Style Section -->
+                                        <div id="cracking_style_section-{index}" class="cracking-style-section-el mt-4 p-3 rounded-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); display: none;">
+                                            <label class="form-label d-block mb-3" style="font-weight: 600;">اختر باقة تقويم العمود الفقري *</label>
+                                            <div class="d-flex flex-column gap-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="attendees[{index}][cracking_style]" id="cracking_style_intensive-{index}" value="intensive" checked>
+                                                    <label class="form-check-label text-dark" for="cracking_style_intensive-{index}" style="font-weight: 600;">
+                                                        مكثف (جلسة شاملة ومكثفة)
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="attendees[{index}][cracking_style]" id="cracking_style_economy-{index}" value="economy">
+                                                    <label class="form-check-label text-dark" for="cracking_style_economy-{index}" style="font-weight: 600;">
+                                                        اقتصادي (جلسة أساسية)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="pricing-col">
@@ -811,10 +829,10 @@
                                     
                                     <div class="body-map-col" id="cracking_map_col-{index}">
                                         <div class="form-label text-center mb-2">
-                                            <p style="color: #16a34a; margin-bottom: 0; font-weight: 600;">اضغط على الأرقام لاختيار وتحديد مناطق (1، 2، 3)</p>
+                                            <p style="color: #16a34a; margin-bottom: 0; font-weight: 600;">اضغط على الأرقام لاختيار وتحديد مناطق (1، 2، 3، 4، 5)</p>
                                         </div>
-                                        <div class="body-map-container cracking-map-container-el" id="cracking-map-container-{index}" style="max-width: 250px; aspect-ratio: 200 / 420;">
-                                            <img src="{{ asset('images/cracking.png') }}" alt="Cracking Spine Chart" class="body-map-img" style="max-width: 250px;">
+                                        <div class="body-map-container cracking-map-container-el" id="cracking-map-container-{index}" style="max-width: 380px; aspect-ratio: 200 / 420;">
+                                            <img src="{{ asset('images/cracking.png') }}" alt="Cracking Spine Chart" class="body-map-img" style="max-width: 380px;">
                                         </div>
                                         <p class="text-muted mt-2" style="font-size: 0.8rem;">يمكنك تحديد منطقة أو أكثر مباشرة من الصورة بالضغط على الأرقام.</p>
                                     </div>
@@ -1108,9 +1126,11 @@
             };
 
             const crackingRegionCoords = {
-                1: [{top: 14.9, left: 49.0}],
-                2: [{top: 37.6, left: 49.0}],
-                3: [{top: 26.9, left: 23.5}, {top: 26.9, left: 75.5}, {top: 59.0, left: 50.0}]
+                1: [{top: 17.5, left: 50.0}],
+                2: [{top: 27.8, left: 29.0}, {top: 27.8, left: 71.0}],
+                3: [{top: 26.0, left: 50.0}],
+                4: [{top: 36.5, left: 50.0}],
+                5: [{top: 63.8, left: 50.0}]
             };
 
             const minBookingAmount = {{ $minBookingAmount }};
@@ -1365,10 +1385,26 @@
                 const crackingRadios = document.querySelectorAll(`input[name="attendees[${index}][cracking_type]"]`);
                 crackingRadios.forEach(radio => {
                     radio.addEventListener('change', function() {
+                        const crackingStyleSec = document.getElementById(`cracking_style_section-${index}`);
+                        if (crackingStyleSec) {
+                            if (this.value === 'none') {
+                                crackingStyleSec.style.display = 'none';
+                            } else {
+                                crackingStyleSec.style.display = 'block';
+                            }
+                        }
                         if (this.value === 'none' || this.value === 'whole_body') {
                             att.selectedCrackingRegions.clear();
                             document.querySelectorAll(`#cracking-map-container-${index} .hotspot`).forEach(el => el.classList.remove('selected'));
                         }
+                        updateFormInputsAndPricing();
+                    });
+                });
+
+                // Cracking style change handler
+                const crackingStyles = document.querySelectorAll(`input[name="attendees[${index}][cracking_style]"]`);
+                crackingStyles.forEach(radio => {
+                    radio.addEventListener('change', function() {
                         updateFormInputsAndPricing();
                     });
                 });
@@ -1573,17 +1609,51 @@
                     let crackingPrice = 0;
                     let crackingDuration = 0;
                     const crackingChoice = document.querySelector(`input[name="attendees[${index}][cracking_type]"]:checked`).value;
+                    const crackingStyleEl = document.querySelector(`input[name="attendees[${index}][cracking_style]"]:checked`);
+                    const crackingStyle = crackingStyleEl ? crackingStyleEl.value : 'intensive';
+
+                    // Display or hide cracking style section
+                    const crackingStyleSec = document.getElementById(`cracking_style_section-${index}`);
+                    if (crackingStyleSec) {
+                        if (crackingChoice === 'none') {
+                            crackingStyleSec.style.display = 'none';
+                        } else {
+                            crackingStyleSec.style.display = 'block';
+                        }
+                    }
+
+                    // Mappings for cracking
+                    const crackingRepsIntensive = { 1: 22, 2: 39, 3: 40, 4: 28, 5: 32 };
+                    const crackingRepsEconomy = { 1: 18, 2: 33, 3: 31, 4: 20, 5: 28 };
+                    const crackingCountIntensive = { 1: 11, 2: 13, 3: 9, 4: 11, 5: 16 };
+                    const crackingCountEconomy = { 1: 9, 2: 11, 3: 7, 4: 9, 5: 14 };
+
+                    const repsMap = (crackingStyle === 'intensive') ? crackingRepsIntensive : crackingRepsEconomy;
+                    const countMap = (crackingStyle === 'intensive') ? crackingCountIntensive : crackingCountEconomy;
 
                     if (crackingChoice === 'whole_body') {
-                        crackingPrice = 350;
-                        crackingDuration = 6;
-                        document.getElementById(`cracking_price_desc-${index}`).innerText = 'تقويم الجسم كامل';
-                        document.getElementById(`cracking_price_value-${index}`).innerText = '350.00 ج.م';
+                        if (crackingStyle === 'intensive') {
+                            crackingPrice = 600;
+                            crackingDuration = 16.1;
+                        } else {
+                            crackingPrice = 450;
+                            crackingDuration = 13.0;
+                        }
+                        const labelStyle = crackingStyle === 'intensive' ? 'مكثف' : 'اقتصادي';
+                        document.getElementById(`cracking_price_desc-${index}`).innerText = `تقويم الجسم كامل (${labelStyle})`;
+                        document.getElementById(`cracking_price_value-${index}`).innerText = crackingPrice.toFixed(2) + ' ج.م';
                     } else if (crackingChoice === 'regions') {
-                        const rCount = att.selectedCrackingRegions.size;
-                        crackingPrice = rCount * 150;
-                        crackingDuration = rCount * 2;
-                        document.getElementById(`cracking_price_desc-${index}`).innerText = `تقويم مناطق مخصصة (${rCount})`;
+                        let totalCrackingReps = 0;
+                        let totalCrackingCount = 0;
+                        att.selectedCrackingRegions.forEach(rNum => {
+                            if (repsMap[rNum]) totalCrackingReps += repsMap[rNum];
+                            if (countMap[rNum]) totalCrackingCount += countMap[rNum];
+                        });
+
+                        crackingPrice = totalCrackingCount * 12.00;
+                        crackingDuration = totalCrackingReps * 0.1;
+                        const labelStyle = crackingStyle === 'intensive' ? 'مكثف' : 'اقتصادي';
+                        document.getElementById(`cracking_price_desc-${index}`).innerText = `تقويم مناطق مخصصة (${att.selectedCrackingRegions.size}) - ${labelStyle}`;
                         document.getElementById(`cracking_price_value-${index}`).innerText = crackingPrice.toFixed(2) + ' ج.م';
                     } else {
                         document.getElementById(`cracking_price_desc-${index}`).innerText = 'بدون تقويم';

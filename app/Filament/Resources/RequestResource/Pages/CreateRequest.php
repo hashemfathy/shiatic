@@ -42,7 +42,8 @@ class CreateRequest extends CreateRecord
             $data['hijama_type'] ?? 'none',
             $data['hijama_style'] ?? 'intensive',
             $data['hijama_regions'] ?? [],
-            $regionRepetitions
+            $regionRepetitions,
+            $data['cracking_style'] ?? 'intensive'
         );
 
         $data['service_type'] = $built['service_type'];

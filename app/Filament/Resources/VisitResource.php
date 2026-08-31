@@ -293,6 +293,24 @@ class VisitResource extends Resource
                                     $set('cracking_type', $parsed['cracking_type'] ?: 'none');
                                 }
                             }),
+                        Forms\Components\Radio::make('cracking_style')
+                            ->label('باقة تقويم العمود الفقري')
+                            ->options([
+                                'intensive' => 'مكثف',
+                                'economy' => 'اقتصادي',
+                            ])
+                            ->inline()
+                            ->reactive()
+                            ->visible(fn (callable $get) => $get('cracking_type') !== 'none')
+                            ->afterStateUpdated(function (callable $set, callable $get) {
+                                self::updateSessionRepeaterPrices($set, $get);
+                            })
+                            ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
+                                if ($record && $record->request) {
+                                    $parsed = \App\Filament\Resources\RequestResource::parseDescription($record->request->description);
+                                    $set('cracking_style', $parsed['cracking_style'] ?: 'intensive');
+                                }
+                            }),
                         Forms\Components\Select::make('cracking_regions')
                             ->label('مناطق التقويم المحددة')
                             ->multiple()
@@ -300,6 +318,8 @@ class VisitResource extends Resource
                                 1 => 'منطقة 1',
                                 2 => 'منطقة 2',
                                 3 => 'منطقة 3',
+                                4 => 'منطقة 4',
+                                5 => 'منطقة 5',
                             ])
                             ->reactive()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
@@ -428,6 +448,7 @@ class VisitResource extends Resource
                                     'massage_style' => $get('massage_style') ?? 'intensive',
                                     'massage_intensity' => $get('massage_intensity') ?? 'medium',
                                     'cracking_type' => $get('cracking_type') ?? 'none',
+                                    'cracking_style' => $get('cracking_style') ?? 'intensive',
                                     'cracking_regions' => $get('cracking_regions') ?? [],
                                     'hijama_type' => $get('hijama_type') ?? 'none',
                                     'hijama_style' => $get('hijama_style') ?? 'intensive',
@@ -513,6 +534,7 @@ class VisitResource extends Resource
                                     'massage_style' => $get('massage_style') ?? 'intensive',
                                     'massage_intensity' => $get('massage_intensity') ?? 'medium',
                                     'cracking_type' => $get('cracking_type') ?? 'none',
+                                    'cracking_style' => $get('cracking_style') ?? 'intensive',
                                     'cracking_regions' => $get('cracking_regions') ?? [],
                                     'hijama_type' => $get('hijama_type') ?? 'none',
                                     'hijama_style' => $get('hijama_style') ?? 'intensive',
@@ -527,13 +549,11 @@ class VisitResource extends Resource
                                     ->content(function (callable $get) {
                                         $selected = array_map('intval', (array)($get('cracking_regions') ?? []));
                                         $crackingRegionCoords = [
-                                            1 => [['top' => 14.9, 'left' => 49.0]],
-                                            2 => [['top' => 37.6, 'left' => 49.0]],
-                                            3 => [
-                                                ['top' => 26.9, 'left' => 23.5],
-                                                ['top' => 26.9, 'left' => 75.5],
-                                                ['top' => 59.0, 'left' => 50.0]
-                                            ]
+                                            1 => [['top' => 17.5, 'left' => 50.0]],
+                                            2 => [['top' => 27.8, 'left' => 29.0], ['top' => 27.8, 'left' => 71.0]],
+                                            3 => [['top' => 26.0, 'left' => 50.0]],
+                                            4 => [['top' => 36.5, 'left' => 50.0]],
+                                            5 => [['top' => 63.8, 'left' => 50.0]]
                                         ];
 
                                         $hotspotsHtml = '';
@@ -995,6 +1015,7 @@ class VisitResource extends Resource
                     'massage_style' => $get('../../massage_style') ?? $parsed['massage_style'] ?? 'intensive',
                     'massage_intensity' => $get('../../massage_intensity') ?? $parsed['massage_intensity'] ?? 'medium',
                     'cracking_type' => $crackingType,
+                    'cracking_style' => $get('../../cracking_style') ?? $parsed['cracking_style'] ?? 'intensive',
                     'cracking_regions' => $crackingRegions,
                     'hijama_type' => $hijamaType,
                     'hijama_style' => $get('../../hijama_style') ?? $parsed['hijama_style'] ?? 'intensive',
@@ -1034,6 +1055,7 @@ class VisitResource extends Resource
             'massage_style' => $get('massage_style') ?? 'intensive',
             'massage_intensity' => $get('massage_intensity') ?? 'medium',
             'cracking_type' => $get('cracking_type') ?? 'none',
+            'cracking_style' => $get('cracking_style') ?? 'intensive',
             'cracking_regions' => $get('cracking_regions') ?? [],
             'hijama_type' => $get('hijama_type') ?? 'none',
             'hijama_style' => $get('hijama_style') ?? 'intensive',
@@ -1091,7 +1113,8 @@ class VisitResource extends Resource
             $data['hijama_type'] ?? 'none',
             $data['hijama_style'] ?? 'intensive',
             $data['hijama_regions'] ?? [],
-            $regionRepetitions
+            $regionRepetitions,
+            $data['cracking_style'] ?? 'intensive'
         );
 
         $request->update([

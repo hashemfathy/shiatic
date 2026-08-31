@@ -44,7 +44,7 @@ class BookingController extends Controller
             'attendees.*.massage_intensity' => 'nullable|string|in:medium,hard',
             'attendees.*.cracking_type' => 'nullable|string|in:none,whole_body,regions',
             'attendees.*.cracking_regions' => 'nullable|array',
-            'attendees.*.cracking_regions.*' => 'integer|between:1,3',
+            'attendees.*.cracking_regions.*' => 'integer|between:1,5',
             'attendees.*.hijama_type' => 'nullable|string|in:none,whole_back,whole_front,regions',
             'attendees.*.hijama_style' => 'nullable|string|in:intensive,economy',
             'attendees.*.hijama_regions' => 'nullable|array',
@@ -80,6 +80,7 @@ class BookingController extends Controller
             $treatmentStyle = $attData['treatment_style'] ?? 'intensive';
             $massageIntensity = $attData['massage_intensity'] ?? 'medium';
             $crackingType = $attData['cracking_type'] ?? 'none';
+            $crackingStyle = $attData['cracking_style'] ?? 'intensive';
             $crackingRegions = $attData['cracking_regions'] ?? [];
             $hijamaType = $attData['hijama_type'] ?? 'none';
             $hijamaStyle = $attData['hijama_style'] ?? 'intensive';
@@ -135,6 +136,7 @@ class BookingController extends Controller
                 'massage_style' => $treatmentStyle,
                 'massage_intensity' => $massageIntensity,
                 'cracking_type' => $crackingType,
+                'cracking_style' => $crackingStyle,
                 'cracking_regions' => $crackingRegions,
                 'hijama_type' => $hijamaType,
                 'hijama_style' => $hijamaStyle,
@@ -156,7 +158,8 @@ class BookingController extends Controller
                 $hijamaType,
                 $hijamaStyle,
                 $hijamaRegions,
-                $regionRepetitions
+                $regionRepetitions,
+                $crackingStyle
             );
 
             $processedAttendees[] = [

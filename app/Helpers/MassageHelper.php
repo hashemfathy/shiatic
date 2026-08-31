@@ -298,6 +298,7 @@ class MassageHelper
         $massageStyle = $record->massage_style ?: 'intensive';
         $massageIntensity = $record->massage_intensity ?: 'medium';
         $crackingType = $record->cracking_type ?: 'none';
+        $crackingStyle = $record->cracking_style ?? 'intensive';
         $crackingRegions = $record->cracking_regions ?: [];
         $hijamaType = $record->hijama_type ?: 'none';
         $hijamaStyle = $record->hijama_style ?: 'intensive';
@@ -325,6 +326,7 @@ class MassageHelper
             if (empty($massageStyle) && !empty($parsed['massage_style'])) $massageStyle = $parsed['massage_style'];
             if (empty($massageIntensity) && !empty($parsed['massage_intensity'])) $massageIntensity = $parsed['massage_intensity'];
             if ($crackingType === 'none' && $parsed['cracking_type'] !== 'none') $crackingType = $parsed['cracking_type'];
+            if (empty($crackingStyle) && !empty($parsed['cracking_style'])) $crackingStyle = $parsed['cracking_style'];
             if (empty($crackingRegions) && !empty($parsed['cracking_regions'])) $crackingRegions = $parsed['cracking_regions'];
             if ($hijamaType === 'none' && $parsed['hijama_type'] !== 'none') $hijamaType = $parsed['hijama_type'];
             if (empty($hijamaStyle) && !empty($parsed['hijama_style'])) $hijamaStyle = $parsed['hijama_style'];
@@ -393,9 +395,21 @@ class MassageHelper
         $crackingPrice = 0;
         if ($crackingType !== 'none') {
             if ($crackingType === 'whole_body') {
-                $crackingPrice = 350;
+                if ($crackingStyle === 'intensive') {
+                    $crackingPrice = 600.00;
+                } else {
+                    $crackingPrice = 450.00;
+                }
             } else {
-                $crackingPrice = count($crackingRegions) * 150;
+                $crackingCountMap = \App\Helpers\CrackingHelper::getRegionTechniquesCount($crackingStyle);
+                $totalCrackingCount = 0;
+                foreach ($crackingRegions as $rNum) {
+                    $rNum = (int)$rNum;
+                    if (isset($crackingCountMap[$rNum])) {
+                        $totalCrackingCount += $crackingCountMap[$rNum];
+                    }
+                }
+                $crackingPrice = $totalCrackingCount * 12.00;
             }
         }
 
