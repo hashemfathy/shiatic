@@ -39,7 +39,30 @@ class SessionsRelationManager extends RelationManager
                     ->label('date')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('visit.hour')
-                    ->label('hour'),
+                    ->label('الساعة')
+                    ->formatStateUsing(function ($state) {
+                        if (is_null($state) || $state === '') return null;
+                        $floatVal = (float)$state;
+                        $hrs = (int)floor($floatVal);
+                        $mins = (int)round(($floatVal - $hrs) * 60);
+                        if ($mins >= 60) {
+                            $hrs += 1;
+                            $mins -= 60;
+                        }
+                        if ($hrs >= 1 && $hrs <= 8) {
+                            $hrs += 12;
+                        }
+                        $displayHrs = $hrs % 12;
+                        if ($displayHrs === 0) {
+                            $displayHrs = 12;
+                        }
+                        $amPm = (($hrs % 24) >= 12) ? 'PM' : 'AM';
+                        $label = sprintf('%02d:%02d %s', $displayHrs, $mins, $amPm);
+                        if ($hrs >= 24) {
+                            $label .= ' (اليوم التالي)';
+                        }
+                        return $label;
+                    }),
             ])->defaultSort('id','desc')
             ->filters([
                 //

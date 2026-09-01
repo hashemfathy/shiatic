@@ -25,12 +25,26 @@ class VisitsRelationManager extends RelationManager
                 Forms\Components\DatePicker::make('date')
                     ->required()
                     ->reactive(),
-                Forms\Components\TextInput::make('hour')
+                Forms\Components\TimePicker::make('hour')
+                    ->label('الساعة')
                     ->required()
-                    ->numeric()
-                    ->step(0.5)
-                    ->minValue(1)
-                    ->maxValue(12),
+                    ->formatStateUsing(function ($state) {
+                        if (is_null($state) || $state === '') return null;
+                        $floatVal = (float)$state;
+                        $hrs = (int)floor($floatVal);
+                        $mins = (int)round(($floatVal - $hrs) * 60);
+                        if ($mins >= 60) {
+                            $hrs += 1;
+                            $mins -= 60;
+                        }
+                        return sprintf('%02d:%02d', $hrs, $mins);
+                    })
+                    ->dehydrateStateUsing(function ($state) {
+                        if (is_null($state) || $state === '') return null;
+                        $parts = explode(':', $state);
+                        if (count($parts) < 2) return (float)$state;
+                        return (float)$parts[0] + ((float)$parts[1] / 60);
+                    }),
                 
                 Forms\Components\TextInput::make('improvement_percentage')
                     ->numeric()
@@ -289,6 +303,30 @@ class VisitsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('date')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('hour')
+                    ->label('الساعة')
+                    ->formatStateUsing(function ($state) {
+                        if (is_null($state) || $state === '') return null;
+                        $floatVal = (float)$state;
+                        $hrs = (int)floor($floatVal);
+                        $mins = (int)round(($floatVal - $hrs) * 60);
+                        if ($mins >= 60) {
+                            $hrs += 1;
+                            $mins -= 60;
+                        }
+                        if ($hrs >= 1 && $hrs <= 8) {
+                            $hrs += 12;
+                        }
+                        $displayHrs = $hrs % 12;
+                        if ($displayHrs === 0) {
+                            $displayHrs = 12;
+                        }
+                        $amPm = (($hrs % 24) >= 12) ? 'PM' : 'AM';
+                        $label = sprintf('%02d:%02d %s', $displayHrs, $mins, $amPm);
+                        if ($hrs >= 24) {
+                            $label .= ' (اليوم التالي)';
+                        }
+                        return $label;
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client.name')
                     ->sortable(),

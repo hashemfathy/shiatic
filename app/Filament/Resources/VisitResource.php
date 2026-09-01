@@ -70,12 +70,26 @@ class VisitResource extends Resource
                             ->required()
                             ->reactive(),
 
-                        Forms\Components\TextInput::make('hour')
+                        Forms\Components\TimePicker::make('hour')
+                            ->label('الساعة')
                             ->required()
-                            ->numeric()
-                            ->step(0.5)
-                            ->minValue(1)
-                            ->maxValue(24),
+                            ->formatStateUsing(function ($state) {
+                                if (is_null($state) || $state === '') return null;
+                                $floatVal = (float)$state;
+                                $hrs = (int)floor($floatVal);
+                                $mins = (int)round(($floatVal - $hrs) * 60);
+                                if ($mins >= 60) {
+                                    $hrs += 1;
+                                    $mins -= 60;
+                                }
+                                return sprintf('%02d:%02d', $hrs, $mins);
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                if (is_null($state) || $state === '') return null;
+                                $parts = explode(':', $state);
+                                if (count($parts) < 2) return (float)$state;
+                                return (float)$parts[0] + ((float)$parts[1] / 60);
+                            }),
                     ])->columns(2),
 
                 // Section 2: Visit Details (Allow editing complaint & notes)
@@ -865,6 +879,29 @@ class VisitResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('hour')
                     ->label('الساعة')
+                    ->formatStateUsing(function ($state) {
+                        if (is_null($state) || $state === '') return null;
+                        $floatVal = (float)$state;
+                        $hrs = (int)floor($floatVal);
+                        $mins = (int)round(($floatVal - $hrs) * 60);
+                        if ($mins >= 60) {
+                            $hrs += 1;
+                            $mins -= 60;
+                        }
+                        if ($hrs >= 1 && $hrs <= 8) {
+                            $hrs += 12;
+                        }
+                        $displayHrs = $hrs % 12;
+                        if ($displayHrs === 0) {
+                            $displayHrs = 12;
+                        }
+                        $amPm = (($hrs % 24) >= 12) ? 'PM' : 'AM';
+                        $label = sprintf('%02d:%02d %s', $displayHrs, $mins, $amPm);
+                        if ($hrs >= 24) {
+                            $label .= ' (اليوم التالي)';
+                        }
+                        return $label;
+                    })
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('date')
@@ -913,7 +950,38 @@ class VisitResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->where('date', today()->toDateString())),
                 Filter::make('This Month')
                     ->query(fn (Builder $query): Builder => $query->whereYear('date', Carbon::now()->year)
-                                                            ->whereMonth('date', Carbon::now()->month))
+                                                            ->whereMonth('date', Carbon::now()->month)),
+                Tables\Filters\Filter::make('date_filter')
+                    ->label('الفلترة بالتاريخ')
+                    ->form([
+                        Forms\Components\DatePicker::make('from_date')
+                            ->label('من تاريخ'),
+                        Forms\Components\DatePicker::make('to_date')
+                            ->label('إلى تاريخ'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from_date'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('date', '>=', $date),
+                            )
+                            ->when(
+                                $data['to_date'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('date', '<=', $date),
+                            );
+                    }),
+                Tables\Filters\SelectFilter::make('employee_id')
+                    ->label('المختص')
+                    ->options(\App\Models\Employee::pluck('name', 'id'))
+                    ->default(fn () => \App\Models\Employee::where('name', auth()->user()?->name)->first()?->id)
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn (Builder $query, $employeeId): Builder => $query->whereHas('sessions', function (Builder $q) use ($employeeId) {
+                                $q->where('employee_id', $employeeId);
+                            })
+                        );
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
