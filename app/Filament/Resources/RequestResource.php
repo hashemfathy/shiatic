@@ -333,6 +333,19 @@ class RequestResource extends Resource
                             ->content(fn (callable $get) => \App\Helpers\CrackingHelper::renderTechniquesTableForForm($get)),
                     ])
                     ->columnSpanFull(),
+                Forms\Components\Section::make('التفاصيل والتكنيكات للسيشن العلاجية (Therapeutic Session Details & Techniques)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get) => $get('booking_type') === 'علاجية')
+                    ->schema([
+                        Forms\Components\Placeholder::make('therapeutic_details_display')
+                            ->label('')
+                            ->content(function ($record) {
+                                if (!$record) return '-';
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticDetails($record);
+                            }),
+                    ])
+                    ->columnSpanFull(),
                 Forms\Components\Section::make('أفراد المجموعة المشتركة بالحجز')
                     ->visible(fn ($record) => $record && ($record->parent_id || $record->children()->exists()))
                     ->schema([
@@ -650,8 +663,11 @@ class RequestResource extends Resource
                                             ->label('نوع الخدمة')
                                             ->options([
                                                 'مساج' => 'مساج (Massage)',
+                                                'مساج علاجي' => 'مساج علاجي (Therapeutic Massage)',
                                                 'تقويم' => 'تقويم (Cracking)',
+                                                'كيروبراكتيك علاجي' => 'كيروبراكتيك علاجي (Therapeutic Chiropractic)',
                                                 'حجامة' => 'حجامة (Hijama)',
+                                                'تأهيل' => 'تأهيل حركي (Rehabilitation)',
                                             ])
                                             ->required(),
                                         Forms\Components\Select::make('employee_id')
@@ -855,7 +871,14 @@ class RequestResource extends Resource
 
                         $defaultSessions = [];
                         foreach ($services as $service) {
-                            $serviceBase = $basePrices[($service === 'مساج' ? 'massage' : ($service === 'تقويم' ? 'cracking' : 'hijama'))] ?? 0;
+                            $serviceKey = match ($service) {
+                                'مساج', 'مساج علاجي' => 'massage',
+                                'تقويم', 'كيروبراكتيك علاجي', 'كيروبراكتيك' => 'cracking',
+                                'حجامة' => 'hijama',
+                                'تأهيل' => 'rehab',
+                                default => 'massage',
+                            };
+                            $serviceBase = $basePrices[$serviceKey] ?? 0;
                             $sessionPrice = $sumBase > 0 ? ($serviceBase / $sumBase) * $finalPrice : $finalPrice / count($services);
 
                             $defaultSessions[] = [
@@ -916,7 +939,7 @@ class RequestResource extends Resource
                             'due_from' => $data['due_from'] > 0 ? $data['due_from'] : null,
                             'due_to' => $data['due_to'] > 0 ? $data['due_to'] : null,
                             'discount_percentage' => $data['discount_percentage'],
-                            'type' => 'وقائية',
+                            'type' => $record->booking_type ?? 'وقائية',
                             'coupon_code' => $data['coupon_code'] ?? null,
                             'coupon_discount' => $data['coupon_discount'] ?? 0,
                         ]);
@@ -932,12 +955,29 @@ class RequestResource extends Resource
                             $sumBase = array_sum($basePrices);
 
                             foreach ($services as $service) {
-                                $sessionPrice = $basePrices[($service === 'مساج' ? 'massage' : ($service === 'تقويم' ? 'cracking' : 'hijama'))] ?? 0;
+                                $serviceKey = match ($service) {
+                                    'مساج', 'مساج علاجي' => 'massage',
+                                    'تقويم', 'كيروبراكتيك علاجي', 'كيروبراكتيك' => 'cracking',
+                                    'حجامة' => 'hijama',
+                                    'تأهيل' => 'rehab',
+                                    default => 'massage',
+                                };
+                                $sessionPrice = $basePrices[$serviceKey] ?? 0;
+
+                                $sessionType = match ($service) {
+                                    'مساج' => ($record->booking_type === 'علاجية' ? 'مساج علاجي' : 'مساج وقائي (جزئي)'),
+                                    'مساج علاجي' => 'مساج علاجي',
+                                    'تقويم' => ($record->booking_type === 'علاجية' ? 'كيروبراكتيك علاجي' : 'كيروبراكتيك وقائي'),
+                                    'كيروبراكتيك علاجي' => 'كيروبراكتيك علاجي',
+                                    'حجامة' => '(كاس)حجامة تشريطية',
+                                    'تأهيل' => 'تأهيل حركي',
+                                    default => $service,
+                                };
 
                                 \App\Models\Session::create([
                                     'visit_id' => $visit->id,
                                     'employee_id' => null,
-                                    'type' => $service === 'مساج' ? 'مساج وقائي (جزئي)' : ($service === 'تقويم' ? 'كيروبراكتيك وقائي' : '(كاس)حجامة تشريطية'),
+                                    'type' => $sessionType,
                                     'price' => round($sessionPrice, 2),
                                     'time_or_num' => 1,
                                     'notes' => $data['visit_complaint'],
@@ -945,10 +985,20 @@ class RequestResource extends Resource
                             }
                         } else {
                             foreach ($sessionsData as $sessionItem) {
+                                $sessionType = match ($sessionItem['type']) {
+                                    'مساج' => ($record->booking_type === 'علاجية' ? 'مساج علاجي' : 'مساج وقائي (جزئي)'),
+                                    'مساج علاجي' => 'مساج علاجي',
+                                    'تقويم' => ($record->booking_type === 'علاجية' ? 'كيروبراكتيك علاجي' : 'كيروبراكتيك وقائي'),
+                                    'كيروبراكتيك علاجي' => 'كيروبراكتيك علاجي',
+                                    'حجامة' => '(كاس)حجامة تشريطية',
+                                    'تأهيل' => 'تأهيل حركي',
+                                    default => $sessionItem['type'],
+                                };
+
                                 \App\Models\Session::create([
                                     'visit_id' => $visit->id,
                                     'employee_id' => $sessionItem['employee_id'],
-                                    'type' => $sessionItem['type'] === 'مساج' ? 'مساج وقائي (جزئي)' : ($sessionItem['type'] === 'تقويم' ? 'كيروبراكتيك وقائي' : '(كاس)حجامة تشريطية'),
+                                    'type' => $sessionType,
                                     'price' => $sessionItem['price'] ?? 0,
                                     'time_or_num' => 1,
                                     'notes' => $data['visit_complaint'],

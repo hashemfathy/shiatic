@@ -30,6 +30,12 @@ class MassageHelper
             return new \Illuminate\Support\HtmlString('لم يتم العثور على حجز (طلب) مساج مطابق لعرض التكنيكات.');
         }
 
+        if ($request->booking_type === 'علاجية') {
+            $details = \App\Helpers\TherapeuticMassageHelper::renderTherapeuticDetails($request);
+            $techniques = \App\Helpers\TherapeuticMassageHelper::renderDetailedTechniquesTable($request);
+            return new \Illuminate\Support\HtmlString($details->toHtml() . $techniques->toHtml());
+        }
+
         $isMassage = str_contains($request->service_type ?? '', 'مساج');
         if (!$isMassage) {
             return new \Illuminate\Support\HtmlString('هذا الحجز لا يحتوي على خدمة مساج.');
@@ -280,16 +286,47 @@ class MassageHelper
     {
         $bookingType = $record->booking_type ?? 'وقائية';
         if ($bookingType !== 'وقائية') {
-            $price = 0;
             if ($bookingType === 'علاجية') {
-                $price = 600;
-            } elseif ($bookingType === 'رياضية') {
-                $price = 800;
+                $desc = $record->description ?? $record->complaint ?? '';
+                $massagePrice = 0;
+                $chiroPrice = 0;
+                $hijamaPrice = 0;
+                $rehabPrice = 0;
+
+                if (preg_match('/المساج العلاجي\s*\[[^\]]*السعر:\s*([0-9.]+)/u', $desc, $m)) {
+                    $massagePrice = (float)$m[1];
+                }
+                if (preg_match('/الكيروبراكتيك العلاجي\s*\[[^\]]*السعر:\s*([0-9.]+)/u', $desc, $m)) {
+                    $chiroPrice = (float)$m[1];
+                }
+                if (preg_match('/الحجامة\s*\[[^\]]*السعر:\s*([0-9.]+)/u', $desc, $m)) {
+                    $hijamaPrice = (float)$m[1];
+                }
+                if (preg_match('/التأهيل\s*\[[^\]]*السعر:\s*([0-9.]+)/u', $desc, $m)) {
+                    $rehabPrice = (float)$m[1];
+                }
+
+                if ($massagePrice == 0 && $chiroPrice == 0 && $hijamaPrice == 0 && $rehabPrice == 0) {
+                    $total = (float)($record->total_price ?? 600);
+                    $massagePrice = round($total * 0.40, 2);
+                    $chiroPrice = round($total * 0.40, 2);
+                    $rehabPrice = round($total * 0.20, 2);
+                }
+
+                return [
+                    'massage' => $massagePrice,
+                    'cracking' => $chiroPrice,
+                    'hijama' => $hijamaPrice,
+                    'rehab' => $rehabPrice,
+                ];
             }
+
+            $price = 800; // رياضية
             return [
                 'massage' => $price,
                 'cracking' => 0,
                 'hijama' => 0,
+                'rehab' => 0,
             ];
         }
 

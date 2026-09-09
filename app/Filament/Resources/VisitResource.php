@@ -95,10 +95,10 @@ class VisitResource extends Resource
                 // Section 2: Visit Details (Allow editing complaint & notes)
                 Forms\Components\Section::make('تفاصيل الزيارة')
                     ->schema([
-                        Forms\Components\TextInput::make('complaint')
+                        Forms\Components\Textarea::make('complaint')
                             ->label('الشكوى / تفاصيل الخدمة')
                             ->required()
-                            ->maxLength(255),
+                            ->rows(3),
                         Forms\Components\Textarea::make('notes')
                             ->label('الملاحظات')
                             ->rows(3),
@@ -195,11 +195,26 @@ class VisitResource extends Resource
                     ])
                     ->columnSpanFull(),
 
-                // Virtual Form Sections for editing Request details:
+                // Section: Therapeutic Details & Pain Maps (Visible for therapeutic visits)
+                Forms\Components\Section::make('🗺️ خرائط ومناطق الألم للسيشن العلاجية (Therapeutic Pain Maps & Details)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get, ?Visit $record) => $get('type') === 'علاجية' || $record?->type === 'علاجية' || ($record?->request && $record->request->booking_type === 'علاجية'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('therapeutic_body_maps_display')
+                            ->label('')
+                            ->content(function (?Visit $record) {
+                                if (!$record) return '-';
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticBodyMaps($record);
+                            }),
+                    ])
+                    ->columnSpanFull(),
+
+                // Virtual Form Sections for editing Request details (Preventative visits):
                 Forms\Components\Section::make('💆‍♂️ المساج (Massage)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get) => $get('request_id') !== null)
+                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
                     ->schema([
                         Forms\Components\CheckboxList::make('packages')
                             ->label('الباقات المطلوبة')
@@ -284,7 +299,7 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('⚡ تقويم عمود فقري (Cracking)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get) => $get('request_id') !== null)
+                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
                     ->schema([
                         Forms\Components\Radio::make('cracking_type')
                             ->label('نوع تقويم العمود الفقري')
@@ -359,7 +374,7 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('🩸 الحجامة (Hijama / Cupping)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get) => $get('request_id') !== null)
+                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
                     ->schema([
                         Forms\Components\Radio::make('hijama_type')
                             ->label('نوع الحجامة')
@@ -449,9 +464,9 @@ class VisitResource extends Resource
                             }),
                     ]),
 
-                // Section 5: Body Maps
+                // Section 5: Body Maps (Preventative)
                 Forms\Components\Grid::make(3)
-                    ->visible(fn (callable $get) => $get('request_id') !== null)
+                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
                     ->schema([
                         Forms\Components\Section::make('خريطة المساج (Massage Chart)')
                             ->visible(function (callable $get) {
@@ -693,6 +708,10 @@ class VisitResource extends Resource
                                 Forms\Components\Select::make('type')
                                     ->label('نوع الخدمة')
                                     ->options([
+                                        'مساج علاجي' => 'مساج علاجي',
+                                        'تأهيل حركي' => 'تأهيل حركي',
+                                        'تأهيل' => 'تأهيل',
+                                        'كيروبراكتيك علاجي' => 'كيروبراكتيك علاجي',
                                         'مساج' => 'مساج (Massage)',
                                         'تقويم' => 'تقويم (Cracking)',
                                         'حجامة' => 'حجامة (Hijama)',
@@ -915,6 +934,17 @@ class VisitResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('نوع السيشن')
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'علاجية' => 'danger',
+                        'وقائية' => 'success',
+                        'رياضية' => 'info',
+                        default => 'warning'
+                    })
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('request.is_urgent')
                     ->label('نوع الموعد')
                     ->badge()
@@ -945,6 +975,13 @@ class VisitResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('نوع السيشن')
+                    ->options([
+                        'وقائية' => 'وقائية',
+                        'علاجية' => 'علاجية',
+                        'رياضية' => 'رياضية',
+                    ]),
                 Filter::make('Today')
                     ->default()
                     ->query(fn (Builder $query): Builder => $query->where('date', today()->toDateString())),
@@ -1041,6 +1078,20 @@ class VisitResource extends Resource
         if ($requestId) {
             $request = \App\Models\Request::find($requestId);
             if ($request) {
+                if ($request->booking_type === 'علاجية') {
+                    $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($request);
+                    if (str_contains($sessionType, 'مساج')) {
+                        return round($basePrices['massage'] ?? 0, 2);
+                    } elseif (str_contains($sessionType, 'كيروبراكتيك') || str_contains($sessionType, 'تقويم')) {
+                        return round($basePrices['cracking'] ?? 0, 2);
+                    } elseif (str_contains($sessionType, 'حجامة')) {
+                        return round($basePrices['hijama'] ?? 0, 2);
+                    } elseif (str_contains($sessionType, 'تأهيل')) {
+                        return round($basePrices['rehab'] ?? 0, 2);
+                    }
+                    return 0;
+                }
+
                 $parsed = \App\Filament\Resources\RequestResource::parseDescription($request->description);
                 $packages = $get('../../packages') ?? $request->packages ?? [];
 
@@ -1097,17 +1148,34 @@ class VisitResource extends Resource
                 $isCracking = (str_contains($sessionType, 'كيروبراكتيك') || str_contains($sessionType, 'تمارين') || str_contains($sessionType, 'شيروث') || str_contains($sessionType, 'توك سين') || str_contains($sessionType, 'تصريف ليمفاوي') || str_contains($sessionType, 'ابرة') || str_contains($sessionType, 'تقويم'));
                 $isHijama = (str_contains($sessionType, 'حجامة') || str_contains($sessionType, 'ستون'));
 
+                $isRehab = str_contains($sessionType, 'تأهيل');
+
                 if ($isMassage) {
                     $serviceBase = $basePrices['massage'] ?? 0;
                 } elseif ($isCracking) {
                     $serviceBase = $basePrices['cracking'] ?? 0;
                 } elseif ($isHijama) {
                     $serviceBase = $basePrices['hijama'] ?? 0;
+                } elseif ($isRehab) {
+                    $serviceBase = $basePrices['rehab'] ?? 0;
                 }
 
                 return round($serviceBase, 2);
             }
         }
+
+        $fallbackPrices = [
+            'مساج علاجي' => 160,
+            'كيروبراكتيك علاجي' => 200,
+            'حجامة' => 50,
+            '(كاس)حجامة تشريطية' => 50,
+            'تأهيل حركي' => 120,
+            'تأهيل' => 120,
+        ];
+        if (isset($fallbackPrices[$sessionType])) {
+            return $fallbackPrices[$sessionType];
+        }
+
         return 0;
     }
 
@@ -1115,6 +1183,29 @@ class VisitResource extends Resource
     {
         $sessions = $get('Sessions') ?? [];
         if (empty($sessions)) return;
+
+        $requestId = $get('request_id');
+        $request = $requestId ? \App\Models\Request::find($requestId) : null;
+        if ($request && $request->booking_type === 'علاجية') {
+            $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($request);
+            foreach ($sessions as $uuid => $session) {
+                $type = $session['type'] ?? '';
+                $price = 0;
+                if (str_contains($type, 'مساج')) {
+                    $price = $basePrices['massage'] ?? 0;
+                } elseif (str_contains($type, 'كيروبراكتيك') || str_contains($type, 'تقويم')) {
+                    $price = $basePrices['cracking'] ?? 0;
+                } elseif (str_contains($type, 'حجامة')) {
+                    $price = $basePrices['hijama'] ?? 0;
+                } elseif (str_contains($type, 'تأهيل')) {
+                    $price = $basePrices['rehab'] ?? 0;
+                }
+                $sessions[$uuid]['price'] = round($price, 2);
+            }
+            $set('Sessions', $sessions);
+            self::updateVisitTotals($set, $get);
+            return;
+        }
 
         $tempRecord = (object)[
             'booking_type' => 'وقائية',
@@ -1138,6 +1229,7 @@ class VisitResource extends Resource
             $isMassage = (str_contains($type, 'مساج') || str_contains($type, 'تنشيط عضلي'));
             $isCracking = (str_contains($type, 'كيروبراكتيك') || str_contains($type, 'تمارين') || str_contains($type, 'شيروث') || str_contains($type, 'توك سين') || str_contains($type, 'تصريف ليمفاوي') || str_contains($type, 'ابرة') || str_contains($type, 'تقويم'));
             $isHijama = (str_contains($type, 'حجامة') || str_contains($type, 'ستون'));
+            $isRehab = str_contains($type, 'تأهيل');
 
             if ($isMassage) {
                 $price = $basePrices['massage'] ?? 0;
@@ -1145,6 +1237,8 @@ class VisitResource extends Resource
                 $price = $basePrices['cracking'] ?? 0;
             } elseif ($isHijama) {
                 $price = $basePrices['hijama'] ?? 0;
+            } elseif ($isRehab) {
+                $price = $basePrices['rehab'] ?? 0;
             }
             $sessions[$uuid]['price'] = round($price, 2);
         }

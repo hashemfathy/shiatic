@@ -25,6 +25,10 @@ class BookingController extends Controller
     // Store the booking request
     public function store(Request $request)
     {
+        if ($request->input('active_tab') === 'علاجية' || $request->input('booking_type') === 'علاجية') {
+            return $this->storeTherapeutic($request);
+        }
+
         $request->validate([
             'date' => 'required|date',
             'time' => 'required|string',
@@ -322,6 +326,252 @@ class BookingController extends Controller
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to send group request email notification: ' . $e->getMessage());
+        }
+
+        return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب الحجز بنجاح وسنتواصل معك قريباً!');
+    }
+
+    protected function storeTherapeutic(Request $request)
+    {
+        $request->validate([
+            'therapeutic_name' => 'required|string|max:255',
+            'therapeutic_phone' => 'required|string|max:255',
+            'therapeutic_gender' => 'required|string|in:male,female',
+            'therapeutic_weight' => 'required|numeric|min:30|max:300',
+            'therapeutic_blood_type' => 'nullable|string',
+            'therapeutic_protocol' => 'required|string|in:intensive,economy',
+        ]);
+
+        $bookingDate = $request->input('therapeutic_date') ?? $request->input('date');
+        $bookingTime = $request->input('therapeutic_time') ?? $request->input('time');
+        $isUrgent = $request->boolean('therapeutic_is_urgent', false) || $request->boolean('is_urgent', false);
+        $userAgreement = $request->input('therapeutic_user_agreement') ?? $request->input('user_agreement');
+
+        if (!$bookingDate) {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_date' => 'يرجى اختيار تاريخ موعد السيشن.']);
+        }
+        if (!$bookingTime) {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_time' => 'يرجى اختيار وقت السيشن المتاح.']);
+        }
+        if ($userAgreement !== 'موافق') {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_user_agreement' => 'يجب الموافقة على شروط الحجز والمقدم المالي لتأكيد الحجز.']);
+        }
+
+        $today = date('Y-m-d');
+        if ($bookingDate < $today) {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_date' => 'لا يمكن حجز موعد في الماضي.']);
+        }
+
+        $bookingTimestamp = strtotime($bookingDate . ' ' . $bookingTime);
+        if (($bookingTimestamp - time()) < (40 * 60)) {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_time' => 'يجب أن يكون موعد الحجز بعد 40 دقيقة من الآن على الأقل.']);
+        }
+
+        $name = $request->input('therapeutic_name');
+        $phone = $request->input('therapeutic_phone');
+        $gender = $request->input('therapeutic_gender');
+        $weight = (float)$request->input('therapeutic_weight');
+        $bloodType = $request->input('therapeutic_blood_type', 'A');
+        $protocol = $request->input('therapeutic_protocol', 'intensive');
+
+        $severeInput = $request->input('therapeutic_severe_regions', '');
+        $moderateInput = $request->input('therapeutic_moderate_regions', '');
+
+        $severeRegions = array_filter(array_map('intval', explode(',', $severeInput)));
+        $moderateRegions = array_filter(array_map('intval', explode(',', $moderateInput)));
+
+        // 1. Calculate Massage
+        $massageCalc = \App\Helpers\TherapeuticMassageHelper::calculate($bloodType, $weight, $severeRegions, $moderateRegions, $protocol);
+
+        // 2. Calculate Chiropractic
+        $allPainRegions = array_unique(array_merge($severeRegions, $moderateRegions));
+        $chiroCalc = \App\Helpers\TherapeuticChiropracticHelper::calculate($allPainRegions, $protocol);
+
+        // 3. Calculate Hijama
+        $intensiveCupsMap = [
+            1 => 3, 2 => 1, 3 => 2, 4 => 4, 5 => 3, 6 => 1, 7 => 2, 8 => 4, 9 => 2, 10 => 2,
+            11 => 3, 12 => 3, 13 => 2, 14 => 2, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 3, 20 => 1,
+            21 => 2, 22 => 3, 23 => 2, 24 => 2, 25 => 3, 26 => 2, 27 => 2, 28 => 3, 29 => 3, 30 => 3,
+            31 => 2, 32 => 2, 33 => 1, 34 => 2, 35 => 1, 36 => 2, 37 => 2, 38 => 2, 39 => 2
+        ];
+        $economyCupsMap = [
+            1 => 2, 2 => 1, 3 => 1, 4 => 2, 5 => 2, 6 => 1, 7 => 1, 8 => 2, 9 => 2, 10 => 1,
+            11 => 1, 12 => 1, 13 => 1, 14 => 1, 15 => 1, 16 => 1, 17 => 1, 18 => 1, 19 => 1, 20 => 1,
+            21 => 1, 22 => 1, 23 => 1, 24 => 1, 25 => 1, 26 => 1, 27 => 1, 28 => 1, 29 => 1, 30 => 1,
+            31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 1, 38 => 1, 39 => 1
+        ];
+        $cupsMap = ($protocol === 'intensive') ? $intensiveCupsMap : $economyCupsMap;
+        $totalCups = 0;
+        foreach ($severeRegions as $r) {
+            $totalCups += $cupsMap[$r] ?? 1;
+        }
+
+        $hijamaPrice = 0;
+        $hijamaDuration = 0;
+        if ($totalCups > 0) {
+            $cupPrice = 45;
+            if ($totalCups > 20) $cupPrice = 35;
+            elseif ($totalCups >= 16) $cupPrice = 37;
+            elseif ($totalCups >= 11) $cupPrice = 40;
+            $hijamaPrice = $totalCups * $cupPrice;
+            $hijamaDuration = 10 + $totalCups;
+        }
+
+        // 4. Calculate Rehabilitation
+        $hasAnyPain = (count($severeRegions) > 0 || count($moderateRegions) > 0);
+        $rehabDuration = 0;
+        $rehabPrice = 0;
+        if ($hasAnyPain) {
+            $rehabDuration = ($protocol === 'intensive') ? 10 : 5;
+            $rehabPrice = $rehabDuration * 12;
+        }
+
+        $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration'] + $hijamaDuration + $rehabDuration);
+        $totalSessionPrice = $massageCalc['total_price'] + $chiroCalc['total_price'] + $hijamaPrice + $rehabPrice;
+
+        $urgentFee = 0;
+        if ($isUrgent) {
+            $urgentFee = (int)\App\Models\Setting::get('urgent_booking_fee', 200);
+        }
+
+        // Blocked day check
+        if (!$isUrgent) {
+            $matchingBlockedDays = \App\Models\BlockedDay::getMatchingBlockedDays($bookingDate);
+            $isBlocked = false;
+            $startMin = $this->timeToMinutes($bookingTime);
+            $endMin = $startMin + $totalDuration;
+
+            foreach ($matchingBlockedDays as $bd) {
+                if (is_null($bd->start_time) && is_null($bd->end_time)) {
+                    $isBlocked = true;
+                    break;
+                } else {
+                    $bStart = $this->timeToMinutes($bd->start_time);
+                    $bEnd = $this->timeToMinutes($bd->end_time);
+                    if (max($startMin, $bStart) < min($endMin, $bEnd)) {
+                        $isBlocked = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($isBlocked) {
+                return redirect()->back()->withInput()->withErrors(['therapeutic_date' => 'عذراً، هذا الوقت/التاريخ غير متاح للحجز (إجازة مغلقة).']);
+            }
+        }
+
+        // Capacity check
+        $startMin = $this->timeToMinutes($bookingTime);
+        if (!$this->isSlotAvailable($bookingDate, [['gender' => $gender, 'duration' => $totalDuration]], $startMin)) {
+            return redirect()->back()->withInput()->withErrors(['therapeutic_time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة.']);
+        }
+
+        // Coupon discount
+        $couponCode = $request->input('therapeutic_coupon_code') ?? $request->input('coupon_code');
+        $coupon = null;
+        $couponDiscount = 0;
+        if ($couponCode) {
+            $coupon = \App\Models\Coupon::where('code', trim($couponCode))->first();
+            if (!$coupon) {
+                $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper(trim($couponCode))])->first();
+            }
+            if ($coupon && $coupon->isValidFor($bookingDate, $totalSessionPrice)) {
+                $couponDiscount = $coupon->calculateDiscountFor($totalSessionPrice);
+            }
+        }
+
+        $finalTotalPrice = max(0, $totalSessionPrice + $urgentFee - $couponDiscount);
+        $deposit = ceil($finalTotalPrice * 0.40);
+
+        // Build detailed description for Filament
+        $descParts = [];
+        $protocolLabel = ($protocol === 'intensive') ? 'مكثف' : 'اقتصادي';
+        $descParts[] = "نوع الجلسة: سيشن علاجية [البروتوكول: {$protocolLabel}]";
+        $descParts[] = "بيانات المريض: فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+        $severeStr = !empty($severeRegions) ? implode(', ', $severeRegions) : 'لا يوجد';
+        $moderateStr = !empty($moderateRegions) ? implode(', ', $moderateRegions) : 'لا يوجد';
+        $descParts[] = "مناطق الألم: شديد [{$severeStr}] | متوسط [{$moderateStr}]";
+        $descParts[] = "المساج العلاجي [التكنيك: {$massageCalc['technique']} | عدد التكنيكات: {$massageCalc['total_techniques']} | السعر: {$massageCalc['total_price']} ج.م | المدة: {$massageCalc['duration']} دقيقة]";
+        $chiroGroupsStr = !empty($chiroCalc['active_groups_names']) ? implode(' + ', $chiroCalc['active_groups_names']) : 'لا يوجد';
+        $descParts[] = "الكيروبراكتيك العلاجي [المناطق: {$chiroGroupsStr} | عدد التكنيكات: {$chiroCalc['total_techniques']} | السعر: {$chiroCalc['total_price']} ج.م | المدة: {$chiroCalc['duration']} دقيقة]";
+        if ($totalCups > 0) {
+            $descParts[] = "الحجامة [عدد الكاسات: {$totalCups} كاس على مناطق الألم الشديد | السعر: {$hijamaPrice} ج.م | المدة: {$hijamaDuration} دقيقة]";
+        }
+        if ($rehabDuration > 0) {
+            $descParts[] = "التأهيل [برنامج تمارين تأهيلية | السعر: {$rehabPrice} ج.م | المدة: {$rehabDuration} دقيقة]";
+        }
+        if ($isUrgent) {
+            $descParts[] = "الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+        }
+        if ($couponDiscount > 0 && $coupon) {
+            $descParts[] = "كوبون الخصم [الكود: {$coupon->code} | الخصم: {$couponDiscount} ج.م]";
+        }
+
+        $fullDescription = implode(' | ', $descParts);
+
+        $serviceTypeParts = ['مساج علاجي', 'كيروبراكتيك علاجي'];
+        if ($totalCups > 0) $serviceTypeParts[] = 'حجامة';
+        if ($rehabDuration > 0) $serviceTypeParts[] = 'تأهيل';
+        $serviceType = implode(' + ', $serviceTypeParts);
+
+        $booking = BookingRequest::create([
+            'name' => $name,
+            'phone' => $phone,
+            'gender' => $gender,
+            'booking_type' => 'علاجية',
+            'service_type' => $serviceType,
+            'packages' => [$protocol],
+            'total_price' => $finalTotalPrice,
+            'total_duration' => $totalDuration,
+            'description' => $fullDescription,
+            'date' => $bookingDate,
+            'time' => $bookingTime,
+            'status' => 'pending',
+            'deposit' => $deposit,
+            'user_agreement' => $userAgreement,
+            'is_urgent' => $isUrgent,
+            'coupon_code' => $coupon ? $coupon->code : null,
+            'coupon_discount' => $couponDiscount,
+        ]);
+
+        if ($coupon && $couponDiscount > 0) {
+            $coupon->increment('uses');
+        }
+
+        // Save regions with repetitions
+        $bloodTypeKey = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'A';
+        $bracket = \App\Helpers\TherapeuticMassageHelper::getWeightBracket($weight);
+        $sevRepMap = \App\Helpers\TherapeuticMassageHelper::$severeTechniqueMap[$bloodTypeKey][$bracket] ?? [];
+        $modRepMap = \App\Helpers\TherapeuticMassageHelper::$moderateTechniqueMap ?? [];
+
+        foreach ($severeRegions as $rNum) {
+            $booking->regions()->create([
+                'region_number' => $rNum,
+                'repetitions' => $sevRepMap[$rNum] ?? 1,
+            ]);
+        }
+        foreach ($moderateRegions as $rNum) {
+            $booking->regions()->create([
+                'region_number' => $rNum,
+                'repetitions' => $modRepMap[$rNum] ?? 1,
+            ]);
+        }
+
+        try {
+            $recipient = config('mail.to_address') ?? config('mail.from.address');
+            if ($recipient && env('RESEND_API_KEY')) {
+                \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . env('RESEND_API_KEY'),
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.resend.com/emails', [
+                    'from' => config('mail.from.address') ?? 'onboarding@resend.dev',
+                    'to' => $recipient,
+                    'subject' => 'طلب حجز سيشن علاجية جديدة - ' . $booking->name,
+                    'html' => view('emails.new_request', ['bookingRequest' => $booking])->render(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send therapeutic request email notification: ' . $e->getMessage());
         }
 
         return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب الحجز بنجاح وسنتواصل معك قريباً!');

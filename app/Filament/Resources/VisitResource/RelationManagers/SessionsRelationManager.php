@@ -20,6 +20,9 @@ class SessionsRelationManager extends RelationManager
             ->schema([
                     Forms\Components\Select::make('type')
                         ->options([
+                                "مساج علاجي" => "مساج علاجي",
+                                "تأهيل حركي" => "تأهيل حركي",
+                                "تأهيل" => "تأهيل",
                                 "كيروبراكتيك علاجي" => "كيروبراكتيك علاجي",
                                 "كيروبراكتيك وقائي" => "كيروبراكتيك وقائي",
                                 "كيروبراكتيك علاجي مكثف" => "كيروبراكتيك علاجي مكثف",
@@ -63,6 +66,9 @@ class SessionsRelationManager extends RelationManager
                                 $timeOrNum = $get('time_or_num') ?? 1;
 
                                 $prices = [
+                                    "مساج علاجي" => 200,
+                                    "تأهيل حركي" => 120,
+                                    "تأهيل" => 120,
                                     "كيروبراكتيك علاجي" => 200,
                                     "كيروبراكتيك وقائي" => 150,
                                     "كيروبراكتيك علاجي مكثف" => 350,
