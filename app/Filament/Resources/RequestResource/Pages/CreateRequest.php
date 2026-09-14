@@ -15,6 +15,46 @@ class CreateRequest extends CreateRecord
         $bookings = $data['dates_times'] ?? [];
         $record = null;
 
+        if (($data['booking_type'] ?? 'وقائية') === 'علاجية') {
+            $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+                $data['therapeutic_protocol'] ?? 'intensive',
+                $data['therapeutic_blood_type'] ?? 'O',
+                (float)($data['therapeutic_weight'] ?? 75),
+                (int)($data['therapeutic_age'] ?? 30),
+                (array)($data['therapeutic_severe_regions'] ?? []),
+                (array)($data['therapeutic_moderate_regions'] ?? []),
+                (bool)($data['is_urgent'] ?? false),
+                $data['coupon_code'] ?? null,
+                (float)($data['coupon_discount'] ?? 0)
+            );
+
+            $data['total_price'] = $calc['total_price'];
+            $data['total_duration'] = $calc['total_duration'];
+            $data['deposit'] = $calc['deposit'];
+            $data['service_type'] = $calc['service_type'];
+            $data['packages'] = $calc['packages'];
+            $data['description'] = $calc['description'];
+
+            if (empty($bookings)) {
+                $record = static::getModel()::create($data);
+                $this->syncTherapeuticRegions($record, $data);
+                return $record;
+            }
+
+            foreach ($bookings as $booking) {
+                $recordData = $data;
+                unset($recordData['dates_times']);
+                $recordData['date'] = $booking['date'];
+                $recordData['time'] = $booking['time'];
+                $recordData['deposit'] = $booking['deposit'] ?? $calc['deposit'];
+                
+                $record = static::getModel()::create($recordData);
+                $this->syncTherapeuticRegions($record, $data);
+            }
+
+            return $record;
+        }
+
         $packages = $data['packages'] ?? [];
         $style = 'economy';
         if (in_array('intensive', $packages)) {
@@ -69,6 +109,33 @@ class CreateRequest extends CreateRecord
         }
 
         return $record;
+    }
+
+    protected function syncTherapeuticRegions($record, array $data): void
+    {
+        $bloodTypeKey = in_array(strtoupper($data['therapeutic_blood_type'] ?? 'O'), ['A', 'B', 'AB', 'O']) ? strtoupper($data['therapeutic_blood_type']) : 'O';
+        $bracket = \App\Helpers\TherapeuticMassageHelper::getWeightBracket((float)($data['therapeutic_weight'] ?? 75));
+        $sevRepMap = \App\Helpers\TherapeuticMassageHelper::$severeTechniqueMap[$bloodTypeKey][$bracket] ?? [];
+        $modRepMap = \App\Helpers\TherapeuticMassageHelper::$moderateTechniqueMap ?? [];
+
+        $severeRegions = (array)($data['therapeutic_severe_regions'] ?? []);
+        $moderateRegions = (array)($data['therapeutic_moderate_regions'] ?? []);
+
+        $record->regions()->delete();
+        foreach ($severeRegions as $rNum) {
+            $rNum = (int)$rNum;
+            $record->regions()->create([
+                'region_number' => $rNum,
+                'repetitions' => $sevRepMap[$rNum] ?? 1,
+            ]);
+        }
+        foreach ($moderateRegions as $rNum) {
+            $rNum = (int)$rNum;
+            $record->regions()->create([
+                'region_number' => $rNum,
+                'repetitions' => $modRepMap[$rNum] ?? 1,
+            ]);
+        }
     }
 
     protected function syncRegions($record, array $massageRegions, string $style): void

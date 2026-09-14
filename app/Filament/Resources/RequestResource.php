@@ -142,6 +142,148 @@ class RequestResource extends Resource
                     ->collapsed(false)
                     ->visible(fn (callable $get) => $get('booking_type') !== null),
 
+                Forms\Components\Section::make('🩺 تفاصيل الجلسة العلاجية ومناطق الألم (Therapeutic Session Details & Pain Regions)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get) => $get('booking_type') === 'علاجية')
+                    ->schema([
+                        Forms\Components\Radio::make('therapeutic_protocol')
+                            ->label('البروتوكول العلاجي')
+                            ->options([
+                                'intensive' => 'البروتوكول المكثف (Intensive Protocol)',
+                                'economy' => 'البروتوكول الاقتصادي (Economy Protocol)',
+                            ])
+                            ->default('intensive')
+                            ->inline()
+                            ->reactive()
+                            ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticTotals($set, $get)),
+
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('therapeutic_blood_type')
+                                    ->label('فصيلة الدم')
+                                    ->options([
+                                        'A' => 'فصيلة A',
+                                        'B' => 'فصيلة B',
+                                        'AB' => 'فصيلة AB',
+                                        'O' => 'فصيلة O',
+                                    ])
+                                    ->default('O')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('therapeutic_weight')
+                                    ->label('الوزن (كجم)')
+                                    ->numeric()
+                                    ->default(75)
+                                    ->suffix('كجم')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('therapeutic_age')
+                                    ->label('السن')
+                                    ->numeric()
+                                    ->default(30)
+                                    ->suffix('سنة')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticTotals($set, $get)),
+                            ]),
+
+                        Forms\Components\Select::make('therapeutic_severe_regions')
+                            ->label('🔴 مناطق شديدة الألم (Severe Pain Regions)')
+                            ->multiple()
+                            ->options(array_combine(range(1, 39), array_map(fn($n) => "المنطقة رقم {$n}", range(1, 39))))
+                            ->searchable()
+                            ->reactive()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $moderate = $get('therapeutic_moderate_regions') ?: [];
+                                if (is_array($state) && is_array($moderate)) {
+                                    $filteredMod = array_values(array_diff($moderate, $state));
+                                    if (count($filteredMod) !== count($moderate)) {
+                                        $set('therapeutic_moderate_regions', $filteredMod);
+                                    }
+                                }
+                                self::updateTherapeuticTotals($set, $get);
+                            }),
+
+                        Forms\Components\Select::make('therapeutic_moderate_regions')
+                            ->label('🟠 مناطق متوسطة الألم (Moderate Pain Regions)')
+                            ->multiple()
+                            ->options(array_combine(range(1, 39), array_map(fn($n) => "المنطقة رقم {$n}", range(1, 39))))
+                            ->searchable()
+                            ->reactive()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $severe = $get('therapeutic_severe_regions') ?: [];
+                                if (is_array($state) && is_array($severe)) {
+                                    $filteredSev = array_values(array_diff($severe, $state));
+                                    if (count($filteredSev) !== count($severe)) {
+                                        $set('therapeutic_severe_regions', $filteredSev);
+                                    }
+                                }
+                                self::updateTherapeuticTotals($set, $get);
+                            }),
+
+                        Forms\Components\Placeholder::make('therapeutic_live_summary')
+                            ->label('ملخص حسابات الجلسة العلاجية والتكنيكات')
+                            ->content(function (callable $get) {
+                                $protocol = $get('therapeutic_protocol') ?: 'intensive';
+                                $bloodType = $get('therapeutic_blood_type') ?: 'O';
+                                $weight = (float)($get('therapeutic_weight') ?: 75);
+                                $age = (int)($get('therapeutic_age') ?: 30);
+                                $severe = (array)($get('therapeutic_severe_regions') ?: []);
+                                $moderate = (array)($get('therapeutic_moderate_regions') ?: []);
+
+                                if (empty($severe) && empty($moderate)) {
+                                    return new \Illuminate\Support\HtmlString('<div style="color: #94a3b8; font-size: 0.9rem;">الرجاء اختيار مناطق الألم الشديد أو المتوسط لحساب تفاصيل الجلسة.</div>');
+                                }
+
+                                $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+                                    $protocol,
+                                    $bloodType,
+                                    $weight,
+                                    $age,
+                                    $severe,
+                                    $moderate,
+                                    (bool)$get('is_urgent'),
+                                    $get('coupon_code'),
+                                    (float)($get('coupon_discount') ?: 0)
+                                );
+
+                                $chiroNames = $calc['chiro']['active_group_names'] ?? [];
+                                $chiroNamesStr = !empty($chiroNames) ? implode(' + ', $chiroNames) : 'لا يوجد';
+
+                                $html = "<div style='background: #18181b; padding: 1rem; border-radius: 8px; border: 1px solid #3f3f46; color: #fff; font-size: 0.9rem; direction: rtl; line-height: 1.8;'>";
+                                $html .= "<div style='color: #ff9d42; font-weight: bold; margin-bottom: 0.5rem;'>📋 ملخص البروتوكول العلاجي (" . ($protocol === 'intensive' ? 'المكثف' : 'الاقتصادي') . "):</div>";
+                                $html .= "<div>💆‍♂️ <b>المساج العلاجي:</b> {$calc['massage']['total_techniques']} تكنيك | المدة: {$calc['massage']['duration']} دقيقة | السعر: {$calc['massage']['total_price']} ج.م</div>";
+                                $html .= "<div>⚡ <b>الكيروبراكتيك:</b> {$chiroNamesStr} ({$calc['chiro']['total_techniques']} تكنيك) | المدة: {$calc['chiro']['duration']} دقيقة | السعر: {$calc['chiro']['total_price']} ج.م</div>";
+                                if ($calc['rehab_duration'] > 0) {
+                                    $html .= "<div>🏃‍♂️ <b>برنامج التأهيل:</b> مدة {$calc['rehab_duration']} دقائق | السعر: {$calc['rehab_price']} ج.م</div>";
+                                }
+                                $html .= "<div style='margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #3f3f46; font-weight: bold; color: #38bdf8;'>⏱️ المدة الإجمالية: {$calc['total_duration']} دقيقة | 💰 السعر الإجمالي: {$calc['total_price']} ج.م</div>";
+                                $html .= "<div style='color: #a3e635; font-size: 0.85rem;'>📅 الخطة المتوقعة: {$calc['expected_sessions']}</div>";
+                                $html .= "</div>";
+
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                            ->columnSpanFull(),
+
+                        Forms\Components\Placeholder::make('therapeutic_body_maps_display')
+                            ->label('🗺️ خريطة مناطق الألم المحددة (تحديث فوري)')
+                            ->content(function (callable $get, ?\App\Models\Request $record) {
+                                $severe = (array)($get('therapeutic_severe_regions') ?? []);
+                                $moderate = (array)($get('therapeutic_moderate_regions') ?? []);
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticBodyMaps($record, $severe, $moderate);
+                            })
+                            ->columnSpanFull(),
+
+                        Forms\Components\Placeholder::make('therapeutic_live_techniques_display')
+                            ->label('📋 جدول التكنيكات المعتمدة لمناطق الألم المختارة (تحديث فوري)')
+                            ->content(function (callable $get, ?\App\Models\Request $record) {
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
+                            })
+                            ->columnSpanFull(),
+                    ]),
+
                 Forms\Components\Section::make('💆‍♂️ المساج (Massage)')
                     ->collapsible()
                     ->collapsed()
@@ -340,9 +482,8 @@ class RequestResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('therapeutic_details_display')
                             ->label('')
-                            ->content(function ($record) {
-                                if (!$record) return '-';
-                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticDetails($record);
+                            ->content(function (callable $get, $record) {
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
                             }),
                     ])
                     ->columnSpanFull(),
@@ -1664,11 +1805,48 @@ class RequestResource extends Resource
         ];
     }
 
+    public static function updateTherapeuticTotals(callable $set, callable $get)
+    {
+        $protocol = $get('therapeutic_protocol') ?: 'intensive';
+        $bloodType = $get('therapeutic_blood_type') ?: 'O';
+        $weight = (float)($get('therapeutic_weight') ?: 75);
+        $age = (int)($get('therapeutic_age') ?: 30);
+        $severe = (array)($get('therapeutic_severe_regions') ?: []);
+        $moderate = (array)($get('therapeutic_moderate_regions') ?: []);
+        $isUrgent = (bool)($get('is_urgent') ?: false);
+        $couponCode = $get('coupon_code');
+        $couponDiscount = (float)($get('coupon_discount') ?: 0);
+
+        $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+            $protocol,
+            $bloodType,
+            $weight,
+            $age,
+            $severe,
+            $moderate,
+            $isUrgent,
+            $couponCode,
+            $couponDiscount
+        );
+
+        $set('total_price', $calc['total_price']);
+        $set('total_duration', $calc['total_duration']);
+        $set('deposit', $calc['deposit']);
+        $set('service_type', $calc['service_type']);
+        $set('packages', $calc['packages']);
+        $set('description', $calc['description']);
+    }
+
     public static function updateTotals(callable $set, callable $get)
     {
         $bookingType = $get('booking_type') ?: 'وقائية';
         
         if ($bookingType !== 'وقائية') {
+            if ($bookingType === 'علاجية') {
+                self::updateTherapeuticTotals($set, $get);
+                return;
+            }
+
             $set('packages', []);
             $set('massage_regions', []);
             $set('massage_style', null);

@@ -33,7 +33,8 @@ class MassageHelper
         if ($request->booking_type === 'علاجية') {
             $details = \App\Helpers\TherapeuticMassageHelper::renderTherapeuticDetails($request);
             $techniques = \App\Helpers\TherapeuticMassageHelper::renderDetailedTechniquesTable($request);
-            return new \Illuminate\Support\HtmlString($details->toHtml() . $techniques->toHtml());
+            $chiroTable = \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($request);
+            return new \Illuminate\Support\HtmlString($details->toHtml() . $techniques->toHtml() . $chiroTable->toHtml());
         }
 
         $isMassage = str_contains($request->service_type ?? '', 'مساج');
@@ -71,6 +72,9 @@ class MassageHelper
     public static function renderTechniquesTableForForm(callable $get)
     {
         $bookingType = $get('booking_type') ?: 'وقائية';
+        if ($bookingType === 'علاجية') {
+            return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get);
+        }
         if ($bookingType !== 'وقائية') {
             return new \Illuminate\Support\HtmlString('هذا الحجز لا يحتوي على خدمة مساج.');
         }

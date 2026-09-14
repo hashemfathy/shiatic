@@ -30,6 +30,10 @@ class CrackingHelper
             return new \Illuminate\Support\HtmlString('لم يتم العثور على حجز (طلب) كيروبراكتيك مطابق لعرض التكنيكات.');
         }
 
+        if ($request->booking_type === 'علاجية') {
+            return \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($request);
+        }
+
         $isCracking = $request->cracking_type && $request->cracking_type !== 'none';
         if (!$isCracking) {
             return new \Illuminate\Support\HtmlString('هذا الحجز لا يحتوي على خدمة كيروبراكتيك.');

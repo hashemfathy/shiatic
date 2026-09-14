@@ -104,6 +104,45 @@ class VisitResource extends Resource
                             ->rows(3),
                     ])->columns(1),
 
+                // Group Booking Members Section
+                Forms\Components\Section::make('👥 أفراد المجموعة والمرافقين (Group Members)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get, ?Visit $record) => ($record?->request && ($record->request->parent_id || $record->request->children()->exists())) || ($get('request_id') && \App\Models\Request::where('id', $get('request_id'))->where(fn ($q) => $q->whereNotNull('parent_id')->orWhereHas('children'))->exists()))
+                    ->schema([
+                        Forms\Components\Placeholder::make('visit_group_members_list')
+                            ->label('')
+                            ->content(function (callable $get, ?Visit $record) {
+                                $requestId = $record?->request_id ?? $get('request_id');
+                                if (!$requestId) return '-';
+                                $req = \App\Models\Request::with(['parent', 'children'])->find($requestId);
+                                if (!$req) return '-';
+                                
+                                $leader = $req->parent_id ? $req->parent : $req;
+                                if (!$leader) return '-';
+                                $members = collect([$leader])->concat($leader->children);
+                                
+                                $html = '<div style="line-height: 1.6; font-size: 0.95rem; direction: rtl; text-align: right;">';
+                                foreach ($members as $member) {
+                                    $isCurrent = $member->id === $req->id;
+                                    $style = $isCurrent ? 'font-weight: bold; background: #3f3f46; border-right: 4px solid #ff9d42;' : 'background: #27272a; border-right: 4px solid #71717a;';
+                                    $html .= "<div style=\"margin-bottom: 0.5rem; padding: 0.75rem; {$style} border-radius: 6px; color: #fff;\">";
+                                    $html .= e($member->name) . " (" . ($member->gender === 'female' ? 'أنثى' : 'ذكر') . ") - الهاتف: " . e($member->phone);
+                                    $html .= " | الخدمة: " . e($member->service_type ?: 'غير محدد') . " | السعر: " . e($member->total_price) . " ج.م";
+                                    if ($member->id === $leader->id) {
+                                        $html .= " <span style=\"background: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;\">قائد المجموعة</span>";
+                                    }
+                                    if ($isCurrent) {
+                                        $html .= " <span style=\"background: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;\">الزيارة الحالية</span>";
+                                    }
+                                    $html .= '</div>';
+                                }
+                                $html .= '</div>';
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
+                    ])
+                    ->columnSpanFull(),
+
                 // Section 3: Booking Prices & Techniques (Read-only dynamic section)
                 Forms\Components\Section::make('أسعار خدمات الحجز والتكنيكات')
                     ->label(fn () => auth()->user()?->type === 'specialist' ? 'تكنيكات الحجز' : 'أسعار خدمات الحجز والتكنيكات')
@@ -113,14 +152,111 @@ class VisitResource extends Resource
                             ->label('')
                             ->content(function (callable $get, ?Visit $record) {
                                 $requestId = $record?->request_id ?? $get('request_id');
-                                if (!$requestId) return 'لا توجد تفاصيل حجز.';
-                                $request = \App\Models\Request::find($requestId);
+                                $request = $requestId ? \App\Models\Request::find($requestId) : null;
+                                $isTherapeutic = ($get('type') === 'علاجية' || $record?->type === 'علاجية' || ($request && $request->booking_type === 'علاجية'));
+
+                                if ($isTherapeutic) {
+                                    $protocol = $get('therapeutic_protocol') ?: 'intensive';
+                                    $bloodType = $get('therapeutic_blood_type') ?: 'O';
+                                    $weight = (float)($get('therapeutic_weight') ?: 75);
+                                    $age = (int)($get('therapeutic_age') ?: 30);
+                                    $severe = (array)($get('therapeutic_severe_regions') ?: []);
+                                    $moderate = (array)($get('therapeutic_moderate_regions') ?: []);
+                                    $isUrgent = (bool)($get('is_urgent') ?: ($request?->is_urgent ?? false));
+                                    $couponCode = $get('coupon_code') ?? $record?->coupon_code;
+                                    $couponDiscount = (float)($get('coupon_discount') ?? $record?->coupon_discount ?? 0);
+
+                                    $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+                                        $protocol,
+                                        $bloodType,
+                                        $weight,
+                                        $age,
+                                        $severe,
+                                        $moderate,
+                                        $isUrgent,
+                                        $couponCode,
+                                        $couponDiscount
+                                    );
+
+                                    $massagePrice = $calc['massage']['total_price'] ?? 0;
+                                    $crackingPrice = $calc['chiro']['total_price'] ?? 0;
+                                    $rehabPrice = $calc['rehab_price'] ?? 0;
+                                    $urgentFee = $calc['urgent_fee'] ?? 0;
+                                    $finalPrice = $calc['total_price'] ?? 0;
+
+                                    $urgentFeeBox = '';
+                                    if ($urgentFee > 0) {
+                                        $urgentFeeBox = "
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #ff8c00; font-size: 0.85rem; margin-bottom: 0.25rem;'>🔥 رسوم مستعجل</div>
+                                                <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$urgentFee} EGP</div>
+                                            </div>
+                                        ";
+                                    }
+
+                                    $rehabBox = '';
+                                    if ($rehabPrice > 0) {
+                                        $rehabBox = "
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏃‍♂️ سعر التأهيل</div>
+                                                <div style='color: #06b6d4; font-size: 1.25rem; font-weight: bold;'>{$rehabPrice} EGP</div>
+                                            </div>
+                                        ";
+                                    }
+
+                                    $couponBox = '';
+                                    if ($couponDiscount > 0) {
+                                        $couponBox = "
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #10b981; font-size: 0.85rem; margin-bottom: 0.25rem;'>🎟️ كوبون ({$couponCode})</div>
+                                                <div style='color: #10b981; font-size: 1.25rem; font-weight: bold;'>-{$couponDiscount} EGP</div>
+                                            </div>
+                                        ";
+                                    }
+
+                                    $pricingHtml = '';
+                                    if (auth()->user()?->type !== 'specialist') {
+                                        $pricingHtml = "
+                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                                <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ سعر المساج</div>
+                                                    <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$massagePrice} EGP</div>
+                                                </div>
+                                                <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ سعر الكيروبراكتيك</div>
+                                                    <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingPrice} EGP</div>
+                                                </div>
+                                                {$rehabBox}
+                                                {$urgentFeeBox}
+                                                {$couponBox}
+                                                <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                                    <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
+                                                    <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
+                                                </div>
+                                            </div>
+                                        ";
+                                    }
+
+                                    $techniquesTable = \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
+                                    $techniquesHtml = $techniquesTable instanceof \Illuminate\Contracts\Support\Htmlable
+                                        ? $techniquesTable->toHtml()
+                                        : $techniquesTable;
+
+                                    return new \Illuminate\Support\HtmlString("
+                                        <div style='direction: rtl; text-align: right;'>
+                                            {$pricingHtml}
+                                            {$techniquesHtml}
+                                        </div>
+                                    ");
+                                }
+
                                 if (!$request) return 'لا توجد تفاصيل حجز.';
 
                                 $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($request);
                                 $massagePrice = $basePrices['massage'] ?? 0;
                                 $crackingPrice = $basePrices['cracking'] ?? 0;
                                 $hijamaPrice = $basePrices['hijama'] ?? 0;
+                                $rehabPrice = $basePrices['rehab'] ?? 0;
                                 
                                 $urgentFee = $request->is_urgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
                                 $totalBase = array_sum($basePrices) + $urgentFee;
@@ -136,6 +272,16 @@ class VisitResource extends Resource
                                         <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                             <div style='color: #ff8c00; font-size: 0.85rem; margin-bottom: 0.25rem;'>🔥 رسوم مستعجل</div>
                                             <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$urgentFee} EGP</div>
+                                        </div>
+                                    ";
+                                }
+
+                                $rehabBox = '';
+                                if ($rehabPrice > 0) {
+                                    $rehabBox = "
+                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                            <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏃‍♂️ سعر التأهيل</div>
+                                            <div style='color: #06b6d4; font-size: 1.25rem; font-weight: bold;'>{$rehabPrice} EGP</div>
                                         </div>
                                     ";
                                 }
@@ -167,6 +313,7 @@ class VisitResource extends Resource
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 سعر الحجامة</div>
                                                 <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaPrice} EGP</div>
                                             </div>
+                                            {$rehabBox}
                                             {$urgentFeeBox}
                                             {$couponBox}
                                             <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
@@ -201,11 +348,140 @@ class VisitResource extends Resource
                     ->collapsed(false)
                     ->visible(fn (callable $get, ?Visit $record) => $get('type') === 'علاجية' || $record?->type === 'علاجية' || ($record?->request && $record->request->booking_type === 'علاجية'))
                     ->schema([
+                        Forms\Components\Radio::make('therapeutic_protocol')
+                            ->label('البروتوكول العلاجي')
+                            ->options([
+                                'intensive' => 'البروتوكول المكثف (Intensive Protocol)',
+                                'economy' => 'البروتوكول الاقتصادي (Economy Protocol)',
+                            ])
+                            ->default('intensive')
+                            ->inline()
+                            ->reactive()
+                            ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                if ($record) {
+                                    $desc = $record->request?->description ?: $record->complaint;
+                                    $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                    $set('therapeutic_protocol', $parsed['protocol'] ?? ($record->request?->packages[0] ?? 'intensive'));
+                                }
+                            })
+                            ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticVisitTotals($set, $get)),
+
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('therapeutic_blood_type')
+                                    ->label('فصيلة الدم')
+                                    ->options([
+                                        'A' => 'فصيلة A',
+                                        'B' => 'فصيلة B',
+                                        'AB' => 'فصيلة AB',
+                                        'O' => 'فصيلة O',
+                                    ])
+                                    ->default('O')
+                                    ->reactive()
+                                    ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                        if ($record) {
+                                            $desc = $record->request?->description ?: $record->complaint;
+                                            $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                            $set('therapeutic_blood_type', $parsed['blood_type'] ?? 'O');
+                                        }
+                                    })
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticVisitTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('therapeutic_weight')
+                                    ->label('الوزن (كجم)')
+                                    ->numeric()
+                                    ->default(75)
+                                    ->suffix('كجم')
+                                    ->reactive()
+                                    ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                        if ($record) {
+                                            $desc = $record->request?->description ?: $record->complaint;
+                                            $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                            $set('therapeutic_weight', $parsed['weight'] ?? 75);
+                                        }
+                                    })
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticVisitTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('therapeutic_age')
+                                    ->label('السن')
+                                    ->numeric()
+                                    ->default(30)
+                                    ->suffix('سنة')
+                                    ->reactive()
+                                    ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                        if ($record) {
+                                            $desc = $record->request?->description ?: $record->complaint;
+                                            $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                            $set('therapeutic_age', $parsed['age'] ?? 30);
+                                        }
+                                    })
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateTherapeuticVisitTotals($set, $get)),
+                            ]),
+
+                        Forms\Components\Select::make('therapeutic_severe_regions')
+                            ->label('🔴 مناطق شديدة الألم (Severe Pain Regions)')
+                            ->multiple()
+                            ->options(array_combine(range(1, 39), array_map(fn($n) => "المنطقة رقم {$n}", range(1, 39))))
+                            ->searchable()
+                            ->reactive()
+                            ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                if ($record) {
+                                    $desc = $record->request?->description ?: $record->complaint;
+                                    $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                    $severe = $parsed['severe_regions'] ?? [];
+                                    if (empty($severe) && empty($parsed['moderate_regions'] ?? []) && $record->request) {
+                                        $severe = $record->request->regions()->pluck('region_number')->toArray();
+                                    }
+                                    $set('therapeutic_severe_regions', array_values(array_map('intval', $severe)));
+                                }
+                            })
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $moderate = $get('therapeutic_moderate_regions') ?: [];
+                                if (is_array($state) && is_array($moderate)) {
+                                    $filteredMod = array_values(array_diff($moderate, $state));
+                                    if (count($filteredMod) !== count($moderate)) {
+                                        $set('therapeutic_moderate_regions', $filteredMod);
+                                    }
+                                }
+                                self::updateTherapeuticVisitTotals($set, $get);
+                            }),
+
+                        Forms\Components\Select::make('therapeutic_moderate_regions')
+                            ->label('🟠 مناطق متوسطة الألم (Moderate Pain Regions)')
+                            ->multiple()
+                            ->options(array_combine(range(1, 39), array_map(fn($n) => "المنطقة رقم {$n}", range(1, 39))))
+                            ->searchable()
+                            ->reactive()
+                            ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
+                                if ($record) {
+                                    $desc = $record->request?->description ?: $record->complaint;
+                                    $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($desc);
+                                    $set('therapeutic_moderate_regions', array_values(array_map('intval', $parsed['moderate_regions'] ?? [])));
+                                }
+                            })
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $severe = $get('therapeutic_severe_regions') ?: [];
+                                if (is_array($state) && is_array($severe)) {
+                                    $filteredSev = array_values(array_diff($severe, $state));
+                                    if (count($filteredSev) !== count($severe)) {
+                                        $set('therapeutic_severe_regions', $filteredSev);
+                                    }
+                                }
+                                self::updateTherapeuticVisitTotals($set, $get);
+                            }),
+
                         Forms\Components\Placeholder::make('therapeutic_body_maps_display')
-                            ->label('')
-                            ->content(function (?Visit $record) {
-                                if (!$record) return '-';
-                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticBodyMaps($record);
+                            ->label('🗺️ خريطة مناطق الألم المحددة (تحديث فوري)')
+                            ->content(function (callable $get, ?Visit $record) {
+                                $severe = (array)($get('therapeutic_severe_regions') ?? []);
+                                $moderate = (array)($get('therapeutic_moderate_regions') ?? []);
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticBodyMaps($record, $severe, $moderate);
+                            }),
+
+                        Forms\Components\Placeholder::make('therapeutic_live_techniques_display')
+                            ->label('📋 جدول التكنيكات المعتمدة لمناطق الألم المختارة (تحديث فوري)')
+                            ->content(function (callable $get, ?Visit $record) {
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
                             }),
                     ])
                     ->columnSpanFull(),
@@ -895,7 +1171,18 @@ class VisitResource extends Resource
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('الاسم')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(function (Visit $record) {
+                        if (!$record->request) return null;
+                        if ($record->request->children()->exists()) {
+                            return '👥 حجز جماعي (قائد)';
+                        }
+                        if ($record->request->parent_id) {
+                            $leaderName = $record->request->parent?->name;
+                            return '🔗 حجز جماعي (مرافق' . ($leaderName ? ' مع: ' . $leaderName : '') . ')';
+                        }
+                        return null;
+                    }),
                 Tables\Columns\TextColumn::make('hour')
                     ->label('الساعة')
                     ->formatStateUsing(function ($state) {
@@ -1247,12 +1534,126 @@ class VisitResource extends Resource
         self::updateVisitTotals($set, $get);
     }
 
-    public static function syncRequestFromForm(array $data, ?\Illuminate\Database\Eloquent\Model $record = null)
+    public static function updateTherapeuticVisitTotals(callable $set, callable $get)
+    {
+        $protocol = $get('therapeutic_protocol') ?: 'intensive';
+        $bloodType = $get('therapeutic_blood_type') ?: 'O';
+        $weight = (float)($get('therapeutic_weight') ?: 75);
+        $age = (int)($get('therapeutic_age') ?: 30);
+        $severe = (array)($get('therapeutic_severe_regions') ?: []);
+        $moderate = (array)($get('therapeutic_moderate_regions') ?: []);
+        $isUrgent = (bool)($get('is_urgent') ?: false);
+        $couponCode = $get('coupon_code');
+        $couponDiscount = (float)($get('coupon_discount') ?: 0);
+
+        $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+            $protocol,
+            $bloodType,
+            $weight,
+            $age,
+            $severe,
+            $moderate,
+            $isUrgent,
+            $couponCode,
+            $couponDiscount
+        );
+
+        $set('complaint', $calc['description']);
+
+        $sessions = $get('Sessions') ?? [];
+        if (!empty($sessions)) {
+            $basePrices = [
+                'massage' => $calc['massage']['total_price'],
+                'cracking' => $calc['chiro']['total_price'],
+                'rehab' => $calc['rehab_price'],
+            ];
+
+            foreach ($sessions as $uuid => $session) {
+                $type = $session['type'] ?? '';
+                $price = 0;
+                if (str_contains($type, 'مساج')) {
+                    $price = $basePrices['massage'] ?? 0;
+                } elseif (str_contains($type, 'كيروبراكتيك') || str_contains($type, 'تقويم')) {
+                    $price = $basePrices['cracking'] ?? 0;
+                } elseif (str_contains($type, 'تأهيل')) {
+                    $price = $basePrices['rehab'] ?? 0;
+                }
+                $sessions[$uuid]['price'] = round($price, 2);
+            }
+            $set('Sessions', $sessions);
+        }
+
+        self::updateVisitTotals($set, $get);
+    }
+
+    public static function syncRequestFromForm(array &$data, ?\Illuminate\Database\Eloquent\Model $record = null)
     {
         $requestId = $record?->request_id ?? ($data['request_id'] ?? null);
-        if (!$requestId) return;
+        $request = $requestId ? \App\Models\Request::find($requestId) : null;
 
-        $request = \App\Models\Request::find($requestId);
+        $bookingType = $data['type'] ?? $record?->type ?? $request?->booking_type ?? 'وقائية';
+
+        if ($bookingType === 'علاجية') {
+            $protocol = $data['therapeutic_protocol'] ?? 'intensive';
+            $bloodType = $data['therapeutic_blood_type'] ?? 'O';
+            $weight = (float)($data['therapeutic_weight'] ?? 75);
+            $age = (int)($data['therapeutic_age'] ?? 30);
+            $severe = (array)($data['therapeutic_severe_regions'] ?? []);
+            $moderate = (array)($data['therapeutic_moderate_regions'] ?? []);
+
+            $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
+                $protocol,
+                $bloodType,
+                $weight,
+                $age,
+                $severe,
+                $moderate,
+                (bool)($request->is_urgent ?? false),
+                $data['coupon_code'] ?? $request?->coupon_code,
+                (float)($data['coupon_discount'] ?? $request?->coupon_discount ?? 0)
+            );
+
+            $data['complaint'] = $calc['description'];
+            if ($record) {
+                $record->update(['complaint' => $calc['description']]);
+            }
+
+            if ($request) {
+                $request->update([
+                    'packages' => [$protocol],
+                    'booking_type' => 'علاجية',
+                    'service_type' => $calc['service_type'],
+                    'description' => $calc['description'],
+                    'total_price' => $calc['total_price'],
+                    'total_duration' => $calc['total_duration'],
+                ]);
+
+                \App\Models\RequestRegion::where('request_id', $request->id)->delete();
+                $bloodTypeKey = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'O';
+                $bracket = \App\Helpers\TherapeuticMassageHelper::getWeightBracket($weight);
+                $sevRepMap = \App\Helpers\TherapeuticMassageHelper::$severeTechniqueMap[$bloodTypeKey][$bracket] ?? [];
+                $modRepMap = \App\Helpers\TherapeuticMassageHelper::$moderateTechniqueMap ?? [];
+
+                foreach ($severe as $rNum) {
+                    $rNum = (int)$rNum;
+                    \App\Models\RequestRegion::create([
+                        'request_id' => $request->id,
+                        'region_number' => $rNum,
+                        'repetitions' => $sevRepMap[$rNum] ?? 1,
+                    ]);
+                }
+                foreach ($moderate as $rNum) {
+                    $rNum = (int)$rNum;
+                    \App\Models\RequestRegion::create([
+                        'request_id' => $request->id,
+                        'region_number' => $rNum,
+                        'repetitions' => $modRepMap[$rNum] ?? 1,
+                    ]);
+                }
+            }
+            return;
+        }
+
         if (!$request) return;
 
         $regionRepetitions = [

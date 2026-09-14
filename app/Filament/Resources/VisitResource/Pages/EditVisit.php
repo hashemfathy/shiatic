@@ -20,7 +20,9 @@ class EditVisit extends EditRecord
         // Strip virtual fields
         $virtualFields = [
             'packages', 'massage_regions', 'massage_style', 'massage_intensity',
-            'cracking_type', 'cracking_regions', 'hijama_type', 'hijama_style', 'hijama_regions'
+            'cracking_type', 'cracking_regions', 'hijama_type', 'hijama_style', 'hijama_regions',
+            'therapeutic_protocol', 'therapeutic_blood_type', 'therapeutic_weight', 'therapeutic_age',
+            'therapeutic_severe_regions', 'therapeutic_moderate_regions'
         ];
         foreach ($virtualFields as $field) {
             unset($data[$field]);

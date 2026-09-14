@@ -330,12 +330,106 @@ class TherapeuticMassageHelper
             }
         }
 
+        $age = 30;
+        if (preg_match('/السن\s*\(([0-9]+)\)/u', $desc, $m)) {
+            $age = (int)$m[1];
+        }
+
         return [
             'protocol' => $protocol,
             'blood_type' => $bloodType,
             'weight' => $weight,
+            'age' => $age,
             'severe_regions' => $severeRegions,
             'moderate_regions' => $moderateRegions,
+        ];
+    }
+
+    /**
+     * Build therapeutic calculation and description
+     */
+    public static function buildTherapeuticDescription(
+        string $protocol = 'intensive',
+        string $bloodType = 'O',
+        float $weight = 75,
+        int $age = 30,
+        array $severeRegions = [],
+        array $moderateRegions = [],
+        bool $isUrgent = false,
+        ?string $couponCode = null,
+        float $couponDiscount = 0
+    ): array {
+        $protocol = in_array($protocol, ['intensive', 'economy']) ? $protocol : 'intensive';
+        $bloodType = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'O';
+        $severeRegions = array_values(array_filter(array_map('intval', $severeRegions)));
+        $moderateRegions = array_values(array_filter(array_map('intval', $moderateRegions)));
+
+        $massageCalc = self::calculate($bloodType, $weight, $severeRegions, $moderateRegions, $protocol);
+        $allPain = array_unique(array_merge($severeRegions, $moderateRegions));
+        $chiroCalc = \App\Helpers\TherapeuticChiropracticHelper::calculate($allPain, $protocol);
+
+        $hasAnyPain = (count($severeRegions) > 0 || count($moderateRegions) > 0);
+        $rehabDuration = ($hasAnyPain && $protocol === 'intensive') ? 5 : 0;
+        $rehabPrice = $rehabDuration * 12; // 60 EGP
+
+        $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration'] + $rehabDuration);
+        $baseTotal = $massageCalc['total_price'] + $chiroCalc['total_price'] + $rehabPrice;
+
+        $urgentFee = 0;
+        if ($isUrgent) {
+            $urgentFee = (int)\App\Models\Setting::get('urgent_booking_fee', 200);
+        }
+
+        $finalPrice = max(0, $baseTotal + $urgentFee - $couponDiscount);
+        $deposit = ceil($finalPrice * 0.40);
+
+        $descParts = [];
+        $protocolLabel = ($protocol === 'intensive') ? 'مكثف' : 'اقتصادي';
+        $descParts[] = "نوع الجلسة: سيشن علاجية [البروتوكول: {$protocolLabel}]";
+        $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+        $severeStr = !empty($severeRegions) ? implode(', ', $severeRegions) : 'لا يوجد';
+        $moderateStr = !empty($moderateRegions) ? implode(', ', $moderateRegions) : 'لا يوجد';
+        $descParts[] = "مناطق الألم: شديد [{$severeStr}] | متوسط [{$moderateStr}]";
+        $descParts[] = "المساج العلاجي [التكنيك: {$massageCalc['technique']} | عدد التكنيكات: {$massageCalc['total_techniques']} | السعر: {$massageCalc['total_price']} ج.م | المدة: {$massageCalc['duration']} دقيقة]";
+        $chiroNames = $chiroCalc['active_group_names'] ?? $chiroCalc['active_groups_names'] ?? [];
+        $chiroGroupsStr = !empty($chiroNames) ? implode(' + ', $chiroNames) : 'لا يوجد';
+        $descParts[] = "الكيروبراكتيك العلاجي [المناطق: {$chiroGroupsStr} | عدد التكنيكات: {$chiroCalc['total_techniques']} | السعر: {$chiroCalc['total_price']} ج.م | المدة: {$chiroCalc['duration']} دقيقة]";
+        if ($rehabDuration > 0) {
+            $descParts[] = "التأهيل [برنامج تمارين تأهيلية | السعر: {$rehabPrice} ج.م | المدة: {$rehabDuration} دقيقة]";
+        }
+        $hasSevere = count($severeRegions) > 0;
+        if ($protocol === 'intensive') {
+            $expectedSessionsPlan = $hasSevere ? '5 إلى 7 سيشن (ويفضل 3 سيشن أسبوعياً)' : '3 إلى 5 سيشن (ويفضل 2 سيشن أسبوعياً)';
+        } else {
+            $expectedSessionsPlan = $hasSevere ? '9 إلى 12 سيشن (ويفضل 3 سيشن أسبوعياً)' : '5 إلى 7 سيشن (ويفضل 2 سيشن أسبوعياً)';
+        }
+        $descParts[] = "الخطة المقترحة [عدد السيشن المتوقعة: {$expectedSessionsPlan}]";
+
+        if ($isUrgent) {
+            $descParts[] = "الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+        }
+        if ($couponDiscount > 0 && $couponCode) {
+            $descParts[] = "كوبون الخصم [الكود: {$couponCode} | الخصم: {$couponDiscount} ج.م]";
+        }
+
+        $serviceParts = ['مساج علاجي', 'كيروبراكتيك علاجي'];
+        if ($rehabDuration > 0) {
+            $serviceParts[] = 'تأهيل';
+        }
+
+        return [
+            'total_price' => $finalPrice,
+            'total_duration' => $totalDuration,
+            'deposit' => $deposit,
+            'service_type' => implode(' + ', $serviceParts),
+            'description' => implode(' | ', $descParts),
+            'packages' => [$protocol],
+            'massage' => $massageCalc,
+            'chiro' => $chiroCalc,
+            'rehab_duration' => $rehabDuration,
+            'rehab_price' => $rehabPrice,
+            'urgent_fee' => $urgentFee,
+            'expected_sessions' => $expectedSessionsPlan,
         ];
     }
 
@@ -376,6 +470,27 @@ class TherapeuticMassageHelper
             foreach ($typeData['moderate'][$bracket] as $row) {
                 if (in_array((int)$row['region'], $moderateRegions)) {
                     $moderateRows[] = $row;
+                }
+            }
+        }
+
+        // Fallback: If any moderate region was not found in moderate rows, check severe rows for it
+        if (!empty($moderateRegions)) {
+            $foundModRegions = array_map(fn($r) => (int)$r['region'], $moderateRows);
+            $missingInMod = array_values(array_diff($moderateRegions, $foundModRegions));
+            if (!empty($missingInMod) && isset($typeData['severe'][$bracket])) {
+                foreach ($typeData['severe'][$bracket] as $row) {
+                    if (in_array((int)$row['region'], $missingInMod)) {
+                        $fallbackRow = $row;
+                        $reps = $fallbackRow['reps'] ?? '20/15';
+                        if (str_contains($reps, '/')) {
+                            $parts = explode('/', $reps);
+                            $fallbackRow['reps'] = trim($parts[1] ?? $parts[0]);
+                        } else {
+                            $fallbackRow['reps'] = '15';
+                        }
+                        $moderateRows[] = $fallbackRow;
+                    }
                 }
             }
         }
@@ -476,12 +591,17 @@ class TherapeuticMassageHelper
         ");
     }
 
-    public static function renderTherapeuticBodyMaps($record)
+    public static function renderTherapeuticBodyMaps($record = null, ?array $customSevere = null, ?array $customModerate = null)
     {
-        $desc = $record->description ?? $record->complaint ?? '';
-        $parsed = self::parseTherapeuticDescription($desc);
-        $severeRegions = $parsed['severe_regions'];
-        $moderateRegions = $parsed['moderate_regions'];
+        if ($customSevere !== null || $customModerate !== null) {
+            $severeRegions = array_values(array_unique(array_filter(array_map('intval', (array)($customSevere ?? [])))));
+            $moderateRegions = array_values(array_unique(array_filter(array_map('intval', (array)($customModerate ?? [])))));
+        } else {
+            $desc = $record?->description ?? $record?->complaint ?? '';
+            $parsed = self::parseTherapeuticDescription($desc);
+            $severeRegions = $parsed['severe_regions'];
+            $moderateRegions = $parsed['moderate_regions'];
+        }
 
         $regionCoords = [
             1 => ['top' => 59, 'left' => 82.8], 2 => ['top' => 69.8, 'left' => 82.2], 3 => ['top' => 77.5, 'left' => 82.2],
@@ -503,45 +623,247 @@ class TherapeuticMassageHelper
         $severeHotspots = '';
         foreach ($regionCoords as $num => $coord) {
             $isSelected = in_array($num, $severeRegions);
-            $bg = $isSelected ? 'background: #ef4444; border-color: #fca5a5; color: #fff; font-weight: bold; box-shadow: 0 0 10px #ef4444;' : 'background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #94a3b8;';
-            $severeHotspots .= "<div style='position: absolute; top: {$coord['top']}%; left: {$coord['left']}%; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 11px; {$bg}'>{$num}</div>";
+            $stateClass = $isSelected ? 'selected' : 'unselected';
+            $severeHotspots .= "<div class='therapeutic-hotspot severe-hotspot {$stateClass}' style='top: {$coord['top']}%; left: {$coord['left']}%;' data-region='{$num}' onclick='toggleTherapeuticRegion(this, \"therapeutic_severe_regions\")' title='نقر لاختيار/إلغاء المنطقة {$num} (ألم شديد)'>{$num}</div>";
         }
 
         // Moderate hotspots
         $moderateHotspots = '';
         foreach ($regionCoords as $num => $coord) {
             $isSelected = in_array($num, $moderateRegions);
-            $bg = $isSelected ? 'background: #f59e0b; border-color: #fde68a; color: #fff; font-weight: bold; box-shadow: 0 0 10px #f59e0b;' : 'background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #94a3b8;';
-            $moderateHotspots .= "<div style='position: absolute; top: {$coord['top']}%; left: {$coord['left']}%; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 11px; {$bg}'>{$num}</div>";
+            $stateClass = $isSelected ? 'selected' : 'unselected';
+            $moderateHotspots .= "<div class='therapeutic-hotspot moderate-hotspot {$stateClass}' style='top: {$coord['top']}%; left: {$coord['left']}%;' data-region='{$num}' onclick='toggleTherapeuticRegion(this, \"therapeutic_moderate_regions\")' title='نقر لاختيار/إلغاء المنطقة {$num} (ألم متوسط)'>{$num}</div>";
         }
 
         $severeCount = count($severeRegions);
         $moderateCount = count($moderateRegions);
 
         return new \Illuminate\Support\HtmlString("
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 15px; direction: rtl;'>
-            <div style='background: #0f172a; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 15px; text-align: center;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>
-                    <span style='color: #ef4444; font-weight: bold; font-size: 1rem;'>🔴 خريطة مناطق الألم الشديد</span>
-                    <span style='background: #ef4444; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;'>{$severeCount} منطقة</span>
+        <div style='margin-top: 15px; direction: rtl; font-family: sans-serif;'>
+            <div style='background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 10px; padding: 10px 16px; margin-bottom: 15px; color: #94a3b8; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;'>
+                <div style='display: flex; align-items: center; gap: 8px;'>
+                    <span style='font-size: 1.2rem;'>👆</span>
+                    <span><b>اضغط مباشرة على أي رقم داخل الصورة</b> لتحديده أو إلغائه (أحمر للشديد 🔴 | برتقالي للمتوسط 🟠).</span>
                 </div>
-                <div style='position: relative; display: inline-block; max-width: 500px; width: 100%; aspect-ratio: 438 / 166.32;'>
-                    <img src='/images/body.jpg' alt='Severe Pain Chart' style='width: 100%; height: auto; border-radius: 8px; border: 1px solid #334155;' />
-                    {$severeHotspots}
+                <div style='font-size: 0.8rem; color: #38bdf8;'>
+                    ⚡ يتم تحديث القوائم والحسابات وجدول التكنيكات تلقائياً
                 </div>
             </div>
 
-            <div style='background: #0f172a; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 15px; text-align: center;'>
-                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>
-                    <span style='color: #f59e0b; font-weight: bold; font-size: 1rem;'>🟠 خريطة مناطق الألم المتوسط</span>
-                    <span style='background: #f59e0b; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;'>{$moderateCount} منطقة</span>
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;'>
+                <div style='background: #0f172a; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 15px; text-align: center;'>
+                    <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>
+                        <span style='color: #ef4444; font-weight: bold; font-size: 1rem;'>🔴 خريطة مناطق الألم الشديد (اضغط للتحديد)</span>
+                        <span style='background: #ef4444; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;'>{$severeCount} منطقة</span>
+                    </div>
+                    <div style='position: relative; display: inline-block; max-width: 500px; width: 100%;'>
+                        <img src='/images/body.jpg' alt='Severe Pain Chart' style='width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid #334155;' />
+                        {$severeHotspots}
+                    </div>
                 </div>
-                <div style='position: relative; display: inline-block; max-width: 500px; width: 100%; aspect-ratio: 438 / 166.32;'>
-                    <img src='/images/body.jpg' alt='Moderate Pain Chart' style='width: 100%; height: auto; border-radius: 8px; border: 1px solid #334155;' />
-                    {$moderateHotspots}
+
+                <div style='background: #0f172a; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 15px; text-align: center;'>
+                    <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 8px;'>
+                        <span style='color: #f59e0b; font-weight: bold; font-size: 1rem;'>🟠 خريطة مناطق الألم المتوسط (اضغط للتحديد)</span>
+                        <span style='background: #f59e0b; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;'>{$moderateCount} منطقة</span>
+                    </div>
+                    <div style='position: relative; display: inline-block; max-width: 500px; width: 100%;'>
+                        <img src='/images/body.jpg' alt='Moderate Pain Chart' style='width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid #334155;' />
+                        {$moderateHotspots}
+                    </div>
                 </div>
             </div>
+
+            <style>
+                .therapeutic-hotspot {
+                    position: absolute;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    border: 2px solid;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 11px;
+                    font-weight: 800;
+                    cursor: pointer;
+                    transform: translate(-50%, -50%);
+                    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+                    user-select: none;
+                    z-index: 10;
+                }
+                .therapeutic-hotspot:hover {
+                    transform: translate(-50%, -50%) scale(1.35);
+                    z-index: 30;
+                }
+                .severe-hotspot.selected {
+                    background: #ef4444 !important;
+                    border-color: #ffffff !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 12px #ef4444;
+                    animation: pulse-red 2s infinite;
+                }
+                .severe-hotspot.unselected {
+                    background: rgba(15, 23, 42, 0.75);
+                    border-color: rgba(239, 68, 68, 0.45);
+                    color: #e2e8f0;
+                }
+                .severe-hotspot.unselected:hover {
+                    background: rgba(239, 68, 68, 0.65);
+                    border-color: #ffffff;
+                    color: #ffffff;
+                    box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+                }
+                .moderate-hotspot.selected {
+                    background: #f59e0b !important;
+                    border-color: #ffffff !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 0 12px #f59e0b;
+                    animation: pulse-orange 2s infinite;
+                }
+                .moderate-hotspot.unselected {
+                    background: rgba(15, 23, 42, 0.75);
+                    border-color: rgba(245, 158, 11, 0.45);
+                    color: #e2e8f0;
+                }
+                .moderate-hotspot.unselected:hover {
+                    background: rgba(245, 158, 11, 0.65);
+                    border-color: #ffffff;
+                    color: #ffffff;
+                    box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+                }
+                @keyframes pulse-red {
+                    0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.7); }
+                    50% { box-shadow: 0 0 14px rgba(239, 68, 68, 1); }
+                    100% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.7); }
+                }
+                @keyframes pulse-orange {
+                    0% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.7); }
+                    50% { box-shadow: 0 0 14px rgba(245, 158, 11, 1); }
+                    100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.7); }
+                }
+            </style>
+
+            <script>
+                window.toggleTherapeuticRegion = function(el, targetField) {
+                    let region = parseInt(el.dataset.region);
+                    let otherField = (targetField === 'therapeutic_severe_regions') 
+                        ? 'therapeutic_moderate_regions' 
+                        : 'therapeutic_severe_regions';
+
+                    // Instant client DOM visual feedback
+                    let isCurrentlySelected = el.classList.contains('selected');
+                    if (isCurrentlySelected) {
+                        el.classList.remove('selected');
+                        el.classList.add('unselected');
+                    } else {
+                        el.classList.remove('unselected');
+                        el.classList.add('selected');
+                        let otherClass = (targetField === 'therapeutic_severe_regions') ? '.moderate-hotspot' : '.severe-hotspot';
+                        let otherEl = document.querySelector(otherClass + '[data-region=\"' + region + '\"]');
+                        if (otherEl) {
+                            otherEl.classList.remove('selected');
+                            otherEl.classList.add('unselected');
+                        }
+                    }
+
+                    // Robust Livewire / Alpine component discovery
+                    let wireEl = el;
+                    while (wireEl && wireEl !== document.body) {
+                        if (wireEl.hasAttribute && wireEl.hasAttribute('wire:id')) break;
+                        wireEl = wireEl.parentElement;
+                    }
+                    let wire = null;
+                    if (wireEl && wireEl.hasAttribute && wireEl.hasAttribute('wire:id') && window.Livewire) {
+                        wire = window.Livewire.find(wireEl.getAttribute('wire:id'));
+                    }
+                    if (!wire && window.Livewire && typeof window.Livewire.first === 'function') {
+                        wire = window.Livewire.first();
+                    }
+                    if (!wire && typeof window.Alpine !== 'undefined' && typeof window.Alpine.\$wire === 'function') {
+                        wire = window.Alpine.\$wire(el);
+                    }
+
+                    if (wire) {
+                        let toNumArray = function(val) {
+                            if (!val) return [];
+                            if (Array.isArray(val)) return val.map(Number);
+                            if (typeof val === 'object') return Object.values(val).map(Number);
+                            return [Number(val)];
+                        };
+
+                        let currentTarget = toNumArray(wire.get('data.' + targetField));
+                        let currentOther = toNumArray(wire.get('data.' + otherField));
+
+                        let idx = currentTarget.indexOf(region);
+                        if (idx > -1) {
+                            currentTarget.splice(idx, 1);
+                        } else {
+                            currentTarget.push(region);
+                            let otherIdx = currentOther.indexOf(region);
+                            if (otherIdx > -1) {
+                                currentOther.splice(otherIdx, 1);
+                                if (typeof wire.set === 'function') {
+                                    wire.set('data.' + otherField, currentOther, false);
+                                }
+                            }
+                        }
+                        if (typeof wire.set === 'function') {
+                            wire.set('data.' + targetField, currentTarget, true);
+                        }
+                    }
+                };
+            </script>
         </div>
         ");
     }
+
+    public static function renderTherapeuticTechniquesForForm(callable $get, $record = null)
+    {
+        $protocol = $get('therapeutic_protocol') ?: 'intensive';
+        $bloodType = $get('therapeutic_blood_type') ?: 'O';
+        $weight = (float)($get('therapeutic_weight') ?: 75);
+        $age = (int)($get('therapeutic_age') ?: 30);
+        $severe = array_values(array_filter(array_map('intval', (array)($get('therapeutic_severe_regions') ?: []))));
+        $moderate = array_values(array_filter(array_map('intval', (array)($get('therapeutic_moderate_regions') ?: []))));
+
+        if (empty($severe) && empty($moderate) && $record) {
+            $desc = $record->description ?? $record->complaint ?? '';
+            $parsed = self::parseTherapeuticDescription($desc);
+            $severe = $parsed['severe_regions'];
+            $moderate = $parsed['moderate_regions'];
+            if (!empty($parsed['protocol'])) $protocol = $parsed['protocol'];
+            if (!empty($parsed['blood_type'])) $bloodType = $parsed['blood_type'];
+            if ($parsed['weight'] > 0) $weight = $parsed['weight'];
+            if ($parsed['age'] > 0) $age = $parsed['age'];
+        }
+
+        if (empty($severe) && empty($moderate)) {
+            return new \Illuminate\Support\HtmlString("
+                <div style='background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem; margin-top: 10px; direction: rtl;'>
+                    ℹ️ لم يتم تحديد مناطق ألم حتى الآن. يرجى اختيار مناطق شديدة أو متوسطة الألم من القوائم أعلاه لعرض التكنيكات المعتمدة فورياً.
+                </div>
+            ");
+        }
+
+        $calc = self::buildTherapeuticDescription(
+            $protocol,
+            $bloodType,
+            $weight,
+            $age,
+            $severe,
+            $moderate
+        );
+
+        $dummyObj = (object)[
+            'description' => $calc['description'],
+            'complaint' => $calc['description'],
+        ];
+
+        $massageTable = self::renderDetailedTechniquesTable($dummyObj);
+        $chiroTable = \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($dummyObj);
+
+        return new \Illuminate\Support\HtmlString($massageTable->toHtml() . $chiroTable->toHtml());
+    }
 }
+
