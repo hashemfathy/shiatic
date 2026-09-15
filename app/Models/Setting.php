@@ -18,8 +18,12 @@ class Setting extends Model
 
     public static function get(string $key, $default = null)
     {
-        $setting = self::find($key);
-        return $setting ? $setting->value : $default;
+        try {
+            $setting = self::find($key);
+            return $setting ? $setting->value : $default;
+        } catch (\Throwable $e) {
+            return $default;
+        }
     }
 
     public static function set(string $key, $value): void

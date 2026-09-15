@@ -20,6 +20,7 @@ class SessionsRelationManager extends RelationManager
             ->schema([
                     Forms\Components\Select::make('type')
                         ->options([
+                                "موعد مع مختص" => "موعد مع مختص",
                                 "مساج علاجي" => "مساج علاجي",
                                 "تأهيل حركي" => "تأهيل حركي",
                                 "تأهيل" => "تأهيل",

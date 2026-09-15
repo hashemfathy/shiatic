@@ -108,6 +108,7 @@ class RequestResource extends Resource
                         Forms\Components\Select::make('booking_type')
                             ->label('نوع الحجز')
                             ->options([
+                                'موعد مع مختص' => 'موعد مع مختص',
                                 'وقائية' => 'وقائية',
                                 'علاجية' => 'علاجية',
                                 'رياضية' => 'رياضية',
@@ -141,6 +142,50 @@ class RequestResource extends Resource
                     ->collapsible()
                     ->collapsed(false)
                     ->visible(fn (callable $get) => $get('booking_type') !== null),
+
+                Forms\Components\Section::make('👨‍⚕️ تفاصيل موعد مع مختص (Specialist Consultation Details)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->visible(fn (callable $get) => $get('booking_type') === 'موعد مع مختص')
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('consultation_blood_type')
+                                    ->label('فصيلة الدم')
+                                    ->options([
+                                        'A' => 'فصيلة A',
+                                        'B' => 'فصيلة B',
+                                        'AB' => 'فصيلة AB',
+                                        'O' => 'فصيلة O',
+                                    ])
+                                    ->default('O')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateConsultationTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('consultation_weight')
+                                    ->label('الوزن (كجم)')
+                                    ->numeric()
+                                    ->default(70)
+                                    ->suffix('كجم')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateConsultationTotals($set, $get)),
+
+                                Forms\Components\TextInput::make('consultation_age')
+                                    ->label('السن')
+                                    ->numeric()
+                                    ->default(30)
+                                    ->suffix('سنة')
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (callable $set, callable $get) => self::updateConsultationTotals($set, $get)),
+                            ]),
+                        Forms\Components\Textarea::make('consultation_notes')
+                            ->label('الشكوى أو سبب الاستشارة / الملاحظات')
+                            ->placeholder('اكتب الشكوى أو سبب الاستشارة هنا...')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->reactive()
+                            ->afterStateUpdated(fn (callable $set, callable $get) => self::updateConsultationTotals($set, $get)),
+                    ]),
 
                 Forms\Components\Section::make('🩺 تفاصيل الجلسة العلاجية ومناطق الألم (Therapeutic Session Details & Pain Regions)')
                     ->collapsible()
@@ -682,6 +727,14 @@ class RequestResource extends Resource
                 //     ->wrap(),
                 Tables\Columns\TextColumn::make('booking_type')
                     ->label('نوع الحجز')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'موعد مع مختص' => 'info',
+                        'علاجية' => 'warning',
+                        'وقائية' => 'success',
+                        'رياضية' => 'primary',
+                        default => 'gray',
+                    })
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('is_urgent')
@@ -803,6 +856,7 @@ class RequestResource extends Resource
                                         Forms\Components\Select::make('type')
                                             ->label('نوع الخدمة')
                                             ->options([
+                                                'موعد مع مختص' => 'موعد مع مختص (Specialist Consultation)',
                                                 'مساج' => 'مساج (Massage)',
                                                 'مساج علاجي' => 'مساج علاجي (Therapeutic Massage)',
                                                 'تقويم' => 'تقويم (Cracking)',
@@ -1002,9 +1056,13 @@ class RequestResource extends Resource
                         $paid = $deposit; // Default to deposit
 
                         // Prepare default sessions
-                        $services = array_filter(explode(' + ', $record->service_type ?? ''));
-                        if (empty($services)) {
-                            $services = ['مساج'];
+                        if ($record->booking_type === 'موعد مع مختص' || $record->service_type === 'موعد مع مختص') {
+                            $services = ['موعد مع مختص'];
+                        } else {
+                            $services = array_filter(explode(' + ', $record->service_type ?? ''));
+                            if (empty($services)) {
+                                $services = ['مساج'];
+                            }
                         }
 
                         $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($record);
@@ -1013,6 +1071,7 @@ class RequestResource extends Resource
                         $defaultSessions = [];
                         foreach ($services as $service) {
                             $serviceKey = match ($service) {
+                                'موعد مع مختص' => 'consultation',
                                 'مساج', 'مساج علاجي' => 'massage',
                                 'تقويم', 'كيروبراكتيك علاجي', 'كيروبراكتيك' => 'cracking',
                                 'حجامة' => 'hijama',
@@ -1089,14 +1148,19 @@ class RequestResource extends Resource
                         $sessionsData = $data['sessions'] ?? [];
                         if (empty($sessionsData)) {
                             // Fallback if empty
-                            $services = array_filter(explode(' + ', $record->service_type ?? ''));
-                            if (empty($services)) $services = ['مساج'];
+                            if ($record->booking_type === 'موعد مع مختص' || $record->service_type === 'موعد مع مختص') {
+                                $services = ['موعد مع مختص'];
+                            } else {
+                                $services = array_filter(explode(' + ', $record->service_type ?? ''));
+                                if (empty($services)) $services = ['مساج'];
+                            }
                             
                             $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($record);
                             $sumBase = array_sum($basePrices);
 
                             foreach ($services as $service) {
                                 $serviceKey = match ($service) {
+                                    'موعد مع مختص' => 'consultation',
                                     'مساج', 'مساج علاجي' => 'massage',
                                     'تقويم', 'كيروبراكتيك علاجي', 'كيروبراكتيك' => 'cracking',
                                     'حجامة' => 'hijama',
@@ -1106,6 +1170,7 @@ class RequestResource extends Resource
                                 $sessionPrice = $basePrices[$serviceKey] ?? 0;
 
                                 $sessionType = match ($service) {
+                                    'موعد مع مختص' => 'موعد مع مختص',
                                     'مساج' => ($record->booking_type === 'علاجية' ? 'مساج علاجي' : 'مساج وقائي (جزئي)'),
                                     'مساج علاجي' => 'مساج علاجي',
                                     'تقويم' => ($record->booking_type === 'علاجية' ? 'كيروبراكتيك علاجي' : 'كيروبراكتيك وقائي'),
@@ -1150,9 +1215,33 @@ class RequestResource extends Resource
                         // 4. Update Request status to confirmed
                         $record->update(['status' => 'confirmed']);
 
+                        // 5. Send notification email to assigned specialists
+                        try {
+                            $assignedSpecialists = [];
+                            foreach ($sessionsData as $sessionItem) {
+                                $empId = $sessionItem['employee_id'] ?? null;
+                                if ($empId) {
+                                    $assignedSpecialists[$empId][] = [
+                                        'type' => $sessionItem['type'] ?? 'جلسة',
+                                        'price' => $sessionItem['price'] ?? 0,
+                                    ];
+                                }
+                            }
+
+                            foreach ($assignedSpecialists as $empId => $empSessions) {
+                                $employee = \App\Models\Employee::find($empId);
+                                if ($employee && !empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+                                    \Illuminate\Support\Facades\Mail::to($employee->email)
+                                        ->send(new \App\Mail\SpecialistAssignedMail($employee, $visit, $empSessions));
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error('Error sending specialist assignment email: ' . $e->getMessage());
+                        }
+
                         // Show success notification
                         \Filament\Notifications\Notification::make()
-                            ->title('تم قبول الحجز وإنشاء زيارة بنجاح')
+                            ->title('تم قبول الحجز وإنشاء زيارة بنجاح وإشعار المختصين')
                             ->success()
                             ->send();
                     }),
@@ -1837,6 +1926,46 @@ class RequestResource extends Resource
         $set('description', $calc['description']);
     }
 
+    public static function updateConsultationTotals(callable $set, callable $get)
+    {
+        $age = (int)($get('consultation_age') ?: 30);
+        $weight = (float)($get('consultation_weight') ?: 70);
+        $bloodType = $get('consultation_blood_type') ?: 'O';
+        $notes = trim($get('consultation_notes') ?: '');
+        $isUrgent = (bool)($get('is_urgent') ?: false);
+        $urgentFee = $isUrgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
+        
+        $price = 200.0 + $urgentFee;
+        $couponCode = $get('coupon_code');
+        $couponDiscount = (float)($get('coupon_discount') ?: 0);
+        if ($couponDiscount > 0) {
+            $price = max(0, $price - $couponDiscount);
+        }
+        $duration = 15;
+        $deposit = (int)$price;
+
+        $descParts = [];
+        $descParts[] = "نوع الجلسة: موعد مع مختص [استشارة]";
+        $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+        if (!empty($notes)) {
+            $descParts[] = "الشكوى أو سبب الاستشارة: {$notes}";
+        }
+        $descParts[] = "مدة الموعد: 15 دقيقة | السعر: 200.00 ج.م";
+        if ($isUrgent) {
+            $descParts[] = "الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+        }
+        if ($couponDiscount > 0 && !empty($couponCode)) {
+            $descParts[] = "كوبون الخصم [الكود: {$couponCode} | الخصم: {$couponDiscount} ج.م]";
+        }
+
+        $set('total_price', $price);
+        $set('total_duration', $duration);
+        $set('deposit', $deposit);
+        $set('service_type', 'موعد مع مختص');
+        $set('packages', ['consultation']);
+        $set('description', implode(' | ', $descParts));
+    }
+
     public static function updateTotals(callable $set, callable $get)
     {
         $bookingType = $get('booking_type') ?: 'وقائية';
@@ -1844,6 +1973,11 @@ class RequestResource extends Resource
         if ($bookingType !== 'وقائية') {
             if ($bookingType === 'علاجية') {
                 self::updateTherapeuticTotals($set, $get);
+                return;
+            }
+
+            if ($bookingType === 'موعد مع مختص') {
+                self::updateConsultationTotals($set, $get);
                 return;
             }
 

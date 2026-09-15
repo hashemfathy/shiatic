@@ -25,6 +25,10 @@ class BookingController extends Controller
     // Store the booking request
     public function store(Request $request)
     {
+        if ($request->input('active_tab') === 'consultation' || $request->input('booking_type') === 'موعد مع مختص') {
+            return $this->storeConsultation($request);
+        }
+
         if ($request->input('active_tab') === 'علاجية' || $request->input('booking_type') === 'علاجية') {
             return $this->storeTherapeutic($request);
         }
@@ -309,20 +313,15 @@ class BookingController extends Controller
 
         // Trigger manual email notification for the parent booking now that children are stored in database
         try {
-            $recipient = config('mail.to_address') ?? config('mail.from.address');
-            if ($recipient && env('RESEND_API_KEY') && $parentBooking) {
+            $recipient = config('mail.to_address') ?? config('mail.from.address') ?? 'ninjahunted26@gmail.com';
+            if ($recipient && $parentBooking) {
                 // Refresh parentBooking to load children relationship
                 $parentBooking->load('children');
+                $isGroup = $parentBooking->children && $parentBooking->children->count() > 0;
+                $emailSubject = ($isGroup ? 'طلب حجز جماعي جديد - ' : 'طلب حجز جديد - ') . $parentBooking->name;
 
-                \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => 'Bearer ' . env('RESEND_API_KEY'),
-                    'Content-Type' => 'application/json',
-                ])->post('https://api.resend.com/emails', [
-                    'from' => config('mail.from.address') ?? 'onboarding@resend.dev',
-                    'to' => $recipient,
-                    'subject' => 'طلب حجز جماعي جديد - ' . $parentBooking->name,
-                    'html' => view('emails.new_request', ['bookingRequest' => $parentBooking])->render(),
-                ]);
+                \Illuminate\Support\Facades\Mail::to($recipient)
+                    ->send(new \App\Mail\NewRequestMail($parentBooking, $emailSubject));
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to send group request email notification: ' . $e->getMessage());
@@ -605,27 +604,232 @@ class BookingController extends Controller
 
         // Email notification
         try {
-            $recipient = config('mail.to_address') ?? config('mail.from.address');
-            if ($recipient && env('RESEND_API_KEY') && $parentBooking) {
+            $recipient = config('mail.to_address') ?? config('mail.from.address') ?? 'ninjahunted26@gmail.com';
+            if ($recipient && $parentBooking) {
                 $parentBooking->load('children');
-                $isGroup = $parentBooking->children->count() > 0;
+                $isGroup = $parentBooking->children && $parentBooking->children->count() > 0;
                 $emailSubject = ($isGroup ? 'طلب حجز سيشن علاجية جماعية جديدة - ' : 'طلب حجز سيشن علاجية جديدة - ') . $parentBooking->name;
 
-                \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => 'Bearer ' . env('RESEND_API_KEY'),
-                    'Content-Type' => 'application/json',
-                ])->post('https://api.resend.com/emails', [
-                    'from' => config('mail.from.address') ?? 'onboarding@resend.dev',
-                    'to' => $recipient,
-                    'subject' => $emailSubject,
-                    'html' => view('emails.new_request', ['bookingRequest' => $parentBooking])->render(),
-                ]);
+                \Illuminate\Support\Facades\Mail::to($recipient)
+                    ->send(new \App\Mail\NewRequestMail($parentBooking, $emailSubject));
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to send therapeutic request email notification: ' . $e->getMessage());
         }
 
         return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب الحجز بنجاح وسنتواصل معك قريباً!');
+    }
+
+    // Store Consultation (موعد مع مختص)
+    public function storeConsultation(Request $request)
+    {
+        $request->validate([
+            'attendees' => 'required|array|min:1',
+            'attendees.*.name' => 'required|string|max:255',
+            'attendees.*.phone' => 'required|string|max:255',
+            'attendees.*.gender' => 'required|string|in:male,female',
+            'attendees.*.age' => 'nullable|numeric|between:1,120',
+            'attendees.*.blood_type' => 'nullable|string',
+            'attendees.*.weight' => 'nullable|numeric|between:10,350',
+            'attendees.*.notes' => 'nullable|string|max:2000',
+            'consultation_date' => 'nullable|date',
+            'consultation_time' => 'nullable|string',
+            'date' => 'nullable|date',
+            'time' => 'nullable|string',
+            'consultation_user_agreement' => 'nullable|string',
+            'user_agreement' => 'nullable|string',
+            'consultation_is_urgent' => 'nullable|boolean',
+            'is_urgent' => 'nullable|boolean',
+            'consultation_coupon_code' => 'nullable|string',
+            'coupon_code' => 'nullable|string',
+        ]);
+
+        $bookingDate = $request->input('consultation_date') ?? $request->input('date');
+        $bookingTime = $request->input('consultation_time') ?? $request->input('time');
+        $isUrgent = $request->boolean('consultation_is_urgent', false) || $request->boolean('is_urgent', false);
+        $userAgreement = $request->input('consultation_user_agreement') ?? $request->input('user_agreement');
+        $urgentFee = $isUrgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
+
+        if (!$bookingDate) {
+            return redirect()->back()->withInput()->withErrors(['consultation_date' => 'يرجى اختيار تاريخ الموعد.']);
+        }
+        if (!$bookingTime) {
+            return redirect()->back()->withInput()->withErrors(['consultation_time' => 'يرجى اختيار وقت الموعد المتاح.']);
+        }
+        if ($userAgreement !== 'موافق') {
+            return redirect()->back()->withInput()->withErrors(['consultation_user_agreement' => 'يجب الموافقة على شروط الحجز ومقدم الجدية لتأكيد الحجز.']);
+        }
+
+        $today = date('Y-m-d');
+        if ($bookingDate < $today) {
+            return redirect()->back()->withInput()->withErrors(['consultation_date' => 'لا يمكن حجز موعد في الماضي.']);
+        }
+
+        $bookingTimestamp = strtotime($bookingDate . ' ' . $bookingTime);
+        if (($bookingTimestamp - time()) < (40 * 60)) {
+            return redirect()->back()->withInput()->withErrors(['consultation_time' => 'يجب أن يكون موعد الحجز بعد 40 دقيقة من الآن على الأقل.']);
+        }
+
+        $attendeesInput = $request->input('attendees', []);
+        $processedAttendees = [];
+        $totalSessionsPrice = 0;
+        $totalGroupDuration = 15;
+        $groupGendersAndDurations = [];
+
+        foreach ($attendeesInput as $index => $attData) {
+            $name = $attData['name'];
+            $phone = $attData['phone'];
+            $gender = $attData['gender'];
+            $age = !empty($attData['age']) ? (int)$attData['age'] : 30;
+            $weight = !empty($attData['weight']) ? (float)$attData['weight'] : 70;
+            $bloodType = $attData['blood_type'] ?? 'O';
+            if ($bloodType === 'dont_know' || empty($bloodType)) {
+                $bloodType = 'O';
+            }
+            $notes = trim($attData['notes'] ?? ($attData['complaint'] ?? ''));
+
+            $duration = 15;
+            $price = 200.0;
+
+            $descParts = [];
+            $descParts[] = "نوع الجلسة: موعد مع مختص [استشارة]";
+            $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+            if (!empty($notes)) {
+                $descParts[] = "الشكوى أو سبب الاستشارة: {$notes}";
+            }
+            $descParts[] = "مدة الموعد: 15 دقيقة | السعر: 200.00 ج.م";
+
+            $processedAttendees[] = [
+                'name' => $name,
+                'phone' => $phone,
+                'gender' => $gender,
+                'age' => $age,
+                'weight' => $weight,
+                'blood_type' => $bloodType,
+                'notes' => $notes,
+                'total_price' => $price,
+                'total_duration' => $duration,
+                'description' => implode(' | ', $descParts),
+            ];
+
+            $totalSessionsPrice += $price;
+            $groupGendersAndDurations[] = [
+                'gender' => $gender,
+                'duration' => $duration
+            ];
+        }
+
+        // Validate blocked day
+        if (!$isUrgent) {
+            $matchingBlockedDays = \App\Models\BlockedDay::getMatchingBlockedDays($bookingDate);
+            $isBlocked = false;
+            $startMin = $this->timeToMinutes($bookingTime);
+            $endMin = $startMin + $totalGroupDuration;
+
+            foreach ($matchingBlockedDays as $bd) {
+                if (is_null($bd->start_time) && is_null($bd->end_time)) {
+                    $isBlocked = true;
+                    break;
+                } else {
+                    $bStart = $this->timeToMinutes($bd->start_time);
+                    $bEnd = $this->timeToMinutes($bd->end_time);
+                    if (max($startMin, $bStart) < min($endMin, $bEnd)) {
+                        $isBlocked = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($isBlocked) {
+                return redirect()->back()->withInput()->withErrors(['consultation_date' => 'عذراً، هذا الوقت/التاريخ غير متاح للحجز (إجازة مغلقة).']);
+            }
+        }
+
+        // Capacity check
+        $startMin = $this->timeToMinutes($bookingTime);
+        if (!$this->isSlotAvailable($bookingDate, $groupGendersAndDurations, $startMin)) {
+            return redirect()->back()->withInput()->withErrors(['consultation_time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة لمجموعتكم.']);
+        }
+
+        // Coupon discount
+        $couponCode = $request->input('consultation_coupon_code') ?? $request->input('coupon_code');
+        $coupon = null;
+        $couponDiscount = 0;
+        if ($couponCode) {
+            $coupon = \App\Models\Coupon::where('code', trim($couponCode))->first();
+            if (!$coupon) {
+                $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper(trim($couponCode))])->first();
+            }
+            if ($coupon && $coupon->isValidFor($bookingDate, $totalSessionsPrice)) {
+                $couponDiscount = $coupon->calculateDiscountFor($totalSessionsPrice);
+            }
+        }
+
+        // Save requests (parent + children)
+        $parentBooking = null;
+        foreach ($processedAttendees as $index => $att) {
+            $isFirst = ($index === 0);
+
+            $individualPrice = $att['total_price'] + ($isFirst ? $urgentFee : 0);
+            if ($isFirst && $couponDiscount > 0) {
+                $individualPrice = max(0, $individualPrice - $couponDiscount);
+            }
+            // Deposit is 100% of the total price (200 EGP per person + urgent fee)
+            $deposit = (int)$individualPrice;
+
+            $bookingDesc = $att['description'];
+            if ($isFirst && $isUrgent) {
+                $bookingDesc .= " | الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+            }
+            if ($isFirst && $couponDiscount > 0 && $coupon) {
+                $bookingDesc .= " | كوبون الخصم [الكود: {$coupon->code} | الخصم: {$couponDiscount} ج.م]";
+            }
+
+            $booking = BookingRequest::create([
+                'parent_id' => $isFirst ? null : $parentBooking->id,
+                'name' => $att['name'],
+                'phone' => $att['phone'],
+                'gender' => $att['gender'],
+                'booking_type' => 'موعد مع مختص',
+                'service_type' => 'موعد مع مختص',
+                'packages' => ['consultation'],
+                'total_price' => $individualPrice,
+                'total_duration' => $att['total_duration'],
+                'description' => $bookingDesc,
+                'date' => $bookingDate,
+                'time' => $bookingTime,
+                'status' => 'pending',
+                'deposit' => $deposit,
+                'user_agreement' => $userAgreement,
+                'is_urgent' => $isUrgent,
+                'coupon_code' => $isFirst && $coupon ? $coupon->code : null,
+                'coupon_discount' => $isFirst ? $couponDiscount : 0,
+            ]);
+
+            if ($isFirst) {
+                $parentBooking = $booking;
+                if ($coupon && $couponDiscount > 0) {
+                    $coupon->increment('uses');
+                }
+            }
+        }
+
+        // Email notification
+        try {
+            $recipient = config('mail.to_address') ?? config('mail.from.address') ?? 'ninjahunted26@gmail.com';
+            if ($recipient && $parentBooking) {
+                $parentBooking->load('children');
+                $isGroup = $parentBooking->children && $parentBooking->children->count() > 0;
+                $emailSubject = ($isGroup ? 'طلب حجز موعد جماعي مع مختص جديد - ' : 'طلب حجز موعد مع مختص جديد - ') . $parentBooking->name;
+
+                \Illuminate\Support\Facades\Mail::to($recipient)
+                    ->send(new \App\Mail\NewRequestMail($parentBooking, $emailSubject));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send consultation request email notification: ' . $e->getMessage());
+        }
+
+        return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب حجز الموعد مع المختص بنجاح وسنتواصل معك قريباً لتأكيد الموعد!');
     }
 
     // AJAX Endpoint to get available times for a date and duration

@@ -50,6 +50,10 @@ class EmployeeResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->label('البريد الإلكتروني (Email)')
+                    ->email()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
                     ->tel()
                     ->unique(ignoreRecord: true)
@@ -81,6 +85,9 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('البريد الإلكتروني')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),

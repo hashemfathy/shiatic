@@ -15,6 +15,60 @@ class CreateRequest extends CreateRecord
         $bookings = $data['dates_times'] ?? [];
         $record = null;
 
+        if (($data['booking_type'] ?? 'وقائية') === 'موعد مع مختص') {
+            $age = (int)($data['consultation_age'] ?? 30);
+            $weight = (float)($data['consultation_weight'] ?? 70);
+            $bloodType = $data['consultation_blood_type'] ?? 'O';
+            $notes = trim($data['consultation_notes'] ?? '');
+            $isUrgent = (bool)($data['is_urgent'] ?? false);
+            $urgentFee = $isUrgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
+            
+            $price = 200.0 + $urgentFee;
+            $couponCode = $data['coupon_code'] ?? null;
+            $couponDiscount = (float)($data['coupon_discount'] ?? 0);
+            if ($couponDiscount > 0) {
+                $price = max(0, $price - $couponDiscount);
+            }
+            $duration = 15;
+            $deposit = (int)$price;
+
+            $descParts = [];
+            $descParts[] = "نوع الجلسة: موعد مع مختص [استشارة]";
+            $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+            if (!empty($notes)) {
+                $descParts[] = "الشكوى أو سبب الاستشارة: {$notes}";
+            }
+            $descParts[] = "مدة الموعد: 15 دقيقة | السعر: 200.00 ج.م";
+            if ($isUrgent) {
+                $descParts[] = "الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+            }
+            if ($couponDiscount > 0 && !empty($couponCode)) {
+                $descParts[] = "كوبون الخصم [الكود: {$couponCode} | الخصم: {$couponDiscount} ج.م]";
+            }
+
+            $data['total_price'] = $price;
+            $data['total_duration'] = $duration;
+            $data['deposit'] = $deposit;
+            $data['service_type'] = 'موعد مع مختص';
+            $data['packages'] = ['consultation'];
+            $data['description'] = implode(' | ', $descParts);
+
+            if (empty($bookings)) {
+                return static::getModel()::create($data);
+            }
+
+            foreach ($bookings as $booking) {
+                $recordData = $data;
+                unset($recordData['dates_times']);
+                $recordData['date'] = $booking['date'];
+                $recordData['time'] = $booking['time'];
+                $recordData['deposit'] = $booking['deposit'] ?? $deposit;
+                $record = static::getModel()::create($recordData);
+            }
+
+            return $record;
+        }
+
         if (($data['booking_type'] ?? 'وقائية') === 'علاجية') {
             $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(
                 $data['therapeutic_protocol'] ?? 'intensive',

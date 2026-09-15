@@ -290,6 +290,17 @@ class MassageHelper
     {
         $bookingType = $record->booking_type ?? 'وقائية';
         if ($bookingType !== 'وقائية') {
+            if ($bookingType === 'موعد مع مختص') {
+                $price = (float)($record->total_price ?? 200);
+                return [
+                    'consultation' => $price,
+                    'massage' => 0,
+                    'cracking' => 0,
+                    'hijama' => 0,
+                    'rehab' => 0,
+                ];
+            }
+
             if ($bookingType === 'علاجية') {
                 $desc = $record->description ?? $record->complaint ?? '';
                 $massagePrice = 0;

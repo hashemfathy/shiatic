@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Models\Employee;
+use App\Models\Visit;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -9,22 +11,22 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-use App\Models\Request as BookingRequest;
-
-class NewRequestMail extends Mailable
+class SpecialistAssignedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public BookingRequest $bookingRequest;
-    public ?string $customSubject;
+    public Employee $employee;
+    public Visit $visit;
+    public array $sessions;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(BookingRequest $bookingRequest, ?string $customSubject = null)
+    public function __construct(Employee $employee, Visit $visit, array $sessions = [])
     {
-        $this->bookingRequest = $bookingRequest;
-        $this->customSubject = $customSubject;
+        $this->employee = $employee;
+        $this->visit = $visit;
+        $this->sessions = $sessions;
     }
 
     /**
@@ -32,8 +34,10 @@ class NewRequestMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $clientName = $this->visit->client?->name ?? 'عميل جديد';
+        $visitDate = $this->visit->date;
         return new Envelope(
-            subject: $this->customSubject ?? ('طلب حجز جديد - ' . $this->bookingRequest->name),
+            subject: "موعد جلسة جديد - {$clientName} ({$visitDate})",
         );
     }
 
@@ -43,7 +47,7 @@ class NewRequestMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.new_request',
+            view: 'emails.specialist_assigned',
         );
     }
 

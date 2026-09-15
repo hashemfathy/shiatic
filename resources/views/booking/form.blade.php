@@ -683,8 +683,13 @@
                 </div>
             </div>
 
-            <!-- قسم اختيار نوع السيشن (وقائية / علاجية) -->
+            <!-- قسم اختيار نوع السيشن (موعد مع مختص / وقائية / علاجية) -->
             <div class="booking-tabs-nav d-flex justify-content-center align-items-start gap-3 gap-md-4 mb-4 flex-wrap">
+                <div class="text-center" style="min-width: 220px;">
+                    <button type="button" class="btn btn-tab w-100 {{ old('active_tab') == 'consultation' ? 'active' : '' }}" id="tab-btn-consultation" onclick="switchBookingTab('consultation')">
+                         حجز موعد مع مختص
+                    </button>
+                </div>
                 <div class="text-center" style="min-width: 220px;">
                     <button type="button" class="btn btn-tab w-100 {{ old('active_tab') == 'وقائية' ? 'active' : '' }}" id="tab-btn-preventative" onclick="switchBookingTab('preventative')">
                         🛡️ سيشن وقائية
@@ -698,6 +703,167 @@
                         (إذا كنت تعاني من ألم أو إصابة)
                     </div>
                 </div>
+            </div>
+
+            <!-- Section 0: حجز موعد مع مختص (قسم منفصل تماماً) -->
+            <div id="consultation-section" style="display: none;">
+                <form action="{{ route('booking.store') }}" method="POST" id="bookingFormConsultation">
+                @csrf
+                <input type="hidden" name="active_tab" value="consultation">
+                <input type="hidden" name="booking_type" value="موعد مع مختص">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-dark mb-2"> حجز موعد مع مختص</h3>
+                    <p class="text-muted">استشارة مع الأخصائي لتحديد حالتك بدقة ووضع الخطة العلاجية الأنسب.</p>
+                </div>
+
+                <!-- Dynamic Attendees Container for Consultation -->
+                <div id="cs-attendees-list">
+                    <!-- Attendees will be generated here -->
+                </div>
+
+                <!-- Add Consultation Attendee Button -->
+                <div class="text-center mb-5 mt-4">
+                    <button type="button" id="btn-add-cs-attendee" class="btn btn-outline-warning rounded-4 px-4 py-2 border-2 fw-bold" style="font-size: 1.05rem;">
+                        ➕ إضافة شخص آخر للموعد (زوجتك / صديقك)
+                    </button>
+                </div>
+
+                <!-- قسم تحديد موعد الاستشارة -->
+                <div id="consultation-appointment-section" class="card mt-4 mb-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 16px;">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد الاستشارة</h4>
+                        
+                        <!-- Urgent Booking Toggle -->
+                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
+                            <div class="form-check form-switch d-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" id="cs_is_urgent" name="consultation_is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
+                                <label class="form-check-label text-dark fw-bold" for="cs_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
+                                    🔥 فتح موعد من اختياري / موعد مستعجل
+                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
+                                        يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
+                                        رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="cs_appointment_date" class="form-label">اختر التاريخ *</label>
+                                <input type="date" class="form-control" id="cs_appointment_date" name="consultation_date" min="{{ date('Y-m-d') }}">
+                            </div>
+                            <!-- Regular Booking Time Select -->
+                            <div class="col-md-6" id="cs_regular_time_container">
+                                <label for="cs_appointment_time_select" class="form-label">اختر الوقت المتاح للمجموعة *</label>
+                                <select class="form-select" id="cs_appointment_time_select">
+                                    <option value="" disabled selected>يرجى اختيار تاريخ أولاً</option>
+                                </select>
+                            </div>
+
+                            <!-- Urgent Booking Time Input -->
+                            <div class="col-md-6" id="cs_urgent_time_container" style="display: none;">
+                                <label for="cs_appointment_time_input" class="form-label">اختر الوقت المطلوب *</label>
+                                <input type="time" class="form-control" id="cs_appointment_time_input">
+                                <div id="cs_time_validation_feedback" class="mt-2 fw-bold" style="display: none; font-size: 0.9rem;"></div>
+                            </div>
+
+                            <!-- Hidden submitted time input -->
+                            <input type="hidden" id="cs_appointment_time" name="consultation_time">
+                        </div>
+
+                        <!-- Coupon Input Section -->
+                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 16px; text-align: right;">
+                            <label for="cs_coupon_input" class="form-label fw-bold text-dark mb-2">🎟️ هل لديك كوبون خصم؟</label>
+                            <div class="input-group">
+                                <input type="text" id="cs_coupon_input" class="form-control" placeholder="أدخل كود الكوبون هنا" style="text-transform: uppercase; border-radius: 0 12px 12px 0;">
+                                <button type="button" id="cs_btn-apply-coupon" class="btn btn-warning fw-bold text-white px-4" style="border-radius: 12px 0 0 12px;">تطبيق</button>
+                            </div>
+                            <input type="hidden" name="consultation_coupon_code" id="cs_submitted_coupon_code">
+                            <div id="cs_coupon_feedback" class="mt-2 fw-bold" style="display: none; font-size: 0.95rem;"></div>
+                        </div>
+
+                        <!-- Group Summary Breakdown -->
+                        <div class="mt-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.03); border-right: 4px solid #38bdf8;">
+                            <h5 class="mb-3 text-dark" style="font-weight: 700;">👥 تفاصيل موعد الاستشارة :</h5>
+                            
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm bg-white rounded-3 overflow-hidden text-center mb-0" style="font-size: 0.9rem;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>الاسم</th>
+                                            <th>نوع الحجز</th>
+                                            <th>المدة</th>
+                                            <th>السعر</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cs-group-summary-tbody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>السعر الإجمالي :</span>
+                                <span class="fw-bold text-dark"><span id="cs_summary_total_price" class="text-warning fs-5">0.00</span> ج.م</span>
+                            </div>
+                            <div id="cs_urgent_fee_row" class="justify-content-between mb-2" style="display: none;">
+                                <span>رسوم الحجز المستعجل الإضافية:</span>
+                                <span class="fw-bold text-warning"><span id="cs_summary_urgent_fee">0</span> ج.م</span>
+                            </div>
+                            <div id="cs_coupon_discount_row" class="justify-content-between mb-2 text-success" style="display: none;">
+                                <span>خصم الكوبون:</span>
+                                <span class="fw-bold"><span id="cs_summary_coupon_discount">0</span> ج.م</span>
+                            </div>
+                            <div class="d-flex justify-content-between" id="cs_duration_row">
+                                <span>المدة المتوقعة:</span>
+                                <span class="fw-bold text-dark"><span id="cs_summary_total_duration" class="text-info">15</span> دقيقة</span>
+                            </div>
+                        </div>
+
+                        <!-- Notes Section (100% deposit) -->
+                        <div class="mt-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.02); border-right: 4px solid #ff9d42;">
+                            <h6 class="fw-bold mb-3 text-dark" style="font-size: 1.05rem; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 0.5rem;">⚖️ الأحكام والشروط:</h6>
+                            <ul class="mb-0 text-dark" style="list-style-type: none; padding-right: 0.5rem; font-size: 0.95rem; line-height: 1.8;">
+                                <li>
+                                    📌 يرجى ارسال قيمة حجز موعد المختص بالكامل (100%) = <strong class="text-warning" id="cs_deposit_amount">200</strong> جنيه 
+                                    و ارسال صورة التحويل على واتساب رقم <strong class="text-dark">01064344092</strong>
+                                </li>
+                                <li>
+                                    ⚠️ في حال التأخر عن الموعد أكثر من 10 دقائق يتم خصم 50 % من قيمة الحجز
+                                </li>
+                                <li>
+                                    ⚠️ في حال التأخر عن الموعد أكثر من 20 دقيقة يتم خصم 100 % من قيمة الحجز ويتم إلغاء الموعد
+                                </li>
+                                <li>
+                                    ⚠️ خلال ساعتين اذا لم يتم دفع القيمة يلغى الحجز تلقائيا.
+                                </li>
+                                <li>
+                                    ⚠️ لالغاء الحجز يرجى ابلاغنا قبل الميعاد بـ 5 ساعات على الاقل لاسترداد القيمة.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Required Agreement Fields -->
+                        <div class="mt-4 text-center">
+                            <label class="form-label d-block mb-3" style="font-weight: 700;">هل توافق على شروط الحجز ومقدم الجدية أعلاه؟ *</label>
+                            <div class="d-flex justify-content-center gap-4">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="consultation_user_agreement" id="cs_agree_yes" value="موافق" style="accent-color: #2ecc71; width: 1.3rem; height: 1.3rem; margin-left: 0.5rem;">
+                                    <label class="form-check-label text-success fw-bold" for="cs_agree_yes" style="cursor: pointer; font-size: 1.1rem;">موافق</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="consultation_user_agreement" id="cs_agree_no" value="الغاء الحجز" onclick="window.location.href='{{ url('/') }}'" style="accent-color: #e67e22; width: 1.3rem; height: 1.3rem; margin-left: 0.5rem;">
+                                    <label class="form-check-label text-danger fw-bold" for="cs_agree_no" style="cursor: pointer; font-size: 1.1rem;">الغاء الحجز</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn-submit mt-4" id="btn-submit-consultation">تأكيد حجز موعد المختص</button>
+                    </div>
+                </div>
+                </form>
             </div>
 
             <!-- النموذج الأول: حجز السيشن الوقائية -->
@@ -732,7 +898,7 @@
                             <div class="form-check form-switch d-flex align-items-center">
                                 <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
                                 <label class="form-check-label text-dark fw-bold" for="is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
-                                    🔥 تفعيل خيار الحجز المستعجل (Urgent Booking)
+                                    🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
                                         يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
                                         رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
@@ -883,7 +1049,7 @@
                             <div class="form-check form-switch d-flex align-items-center">
                                 <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
                                 <label class="form-check-label text-dark fw-bold" for="th_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
-                                    🔥 تفعيل خيار الحجز المستعجل (Urgent Booking)
+                                    🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
                                         يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
                                         رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
@@ -1428,8 +1594,7 @@
             <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 my-4 text-center" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.08) !important;">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-2">
                     <div class="text-start">
-                        <h5 class="fw-bold text-dark mb-1">🗺️ خريطة تحديد مناطق الألم للشخص <span class="th-attendee-number">{number}</span></h5>
-                        <p class="text-muted small mb-0">اضغط على أي نقطة لتحديد درجة الألم (<span class="text-danger fw-bold">🔥 شديد</span> أو <span class="text-warning fw-bold">⚡ متوسط</span>)</p>
+                        <h5 class="fw-bold text-dark mb-1">🗺️ اضغط لتحديد مناطق الألم للشخص <span class="th-attendee-number">{number}</span></h5>
                     </div>
                     <div class="d-flex gap-2 align-items-center mt-2 mt-sm-0">
                         <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill shadow-sm">
@@ -1447,6 +1612,7 @@
                     <!-- Popover لاختيار شديد أو متوسط عند الضغط على النقطة -->
                     <div id="th-pain-selector-popover-{index}" class="th-popover-menu" style="display: none;">
                         <div class="th-popover-title" id="th-popover-region-title-{index}">منطقة 1</div>
+                        <div class="text-center small mb-2 fw-semibold" style="font-size: 0.78rem;color:white">اختر درجة الألم:</div>
                         <div class="d-flex gap-1 justify-content-center">
                             <button type="button" class="btn btn-sm btn-danger fw-bold px-2 py-1 btn-th-select-severe" data-index="{index}">
                                 🔥 شديد
@@ -1470,7 +1636,7 @@
             <!-- زر التأكيد -->
             <div class="text-center my-4">
                 <button type="button" class="btn btn-warning text-white fw-bold px-4 px-md-5 py-3 rounded-4 shadow fs-5 btn-confirm-th-attendee" id="btn-confirm-th-{index}" data-index="{index}">
-                    ✅ التأكيد وإظهار البروتوكول العلاجي المقترح بناءً على فصيلة الدم والوزن وشدة الألم للشخص رقم <span class="th-attendee-number">{number}</span>
+                    اضغط لإظهار البروتوكول العلاجي المناسب بناءً على فصيلة الدم والوزن وشدة الألم للشخص رقم <span class="th-attendee-number">{number}</span>
                 </button>
             </div>
 
@@ -1590,6 +1756,72 @@
                         البروتوكول: <span id="th_attendee_summary_protocol_{index}" class="text-primary">لم يحدد</span> | 
                         السعر: <span id="th_attendee_summary_price_{index}" class="text-danger">0.00</span> ج.م | 
                         المدة: <span id="th_attendee_summary_duration_{index}" class="text-info">0</span> دقيقة
+                    </span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Hidden Consultation Attendee Template -->
+    <template id="cs-attendee-template">
+        <div class="attendee-card card mb-4 p-4 rounded-4 position-relative" style="background: rgba(15, 23, 42, 0.01); border: 1px solid rgba(15, 23, 42, 0.08);" id="cs-attendee-card-{index}">
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-3 btn-remove-cs-attendee" data-index="{index}" aria-label="Close" style="display: none;"></button>
+            <h4 class="fw-bold mb-4" style="color: #ff9d42;"> بيانات الشخص رقم <span class="cs-attendee-number">{number}</span></h4>
+
+            <!-- نموذج البيانات الشخصية والصحية -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.06) !important;">
+                <h5 class="fw-bold mb-3 text-warning">📋 البيانات الشخصية والصحية</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="cs_name_{index}" class="form-label">الاسم *</label>
+                        <input type="text" class="form-control cs-input-track" id="cs_name_{index}" name="attendees[{index}][name]" placeholder="أدخل اسمك الكامل" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cs_phone_{index}" class="form-label">التليفون *</label>
+                        <input type="tel" class="form-control cs-input-track" id="cs_phone_{index}" name="attendees[{index}][phone]" placeholder="أدخل رقم التليفون" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cs_gender_{index}" class="form-label">الجنس *</label>
+                        <select class="form-select cs-input-track cs-gender-select" id="cs_gender_{index}" name="attendees[{index}][gender]" required>
+                            <option value="" disabled selected>اختر الجنس</option>
+                            <option value="male">ذكر</option>
+                            <option value="female">أنثى</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cs_age_{index}" class="form-label">السن</label>
+                        <input type="number" class="form-control cs-input-track" id="cs_age_{index}" name="attendees[{index}][age]" min="1" max="120" >
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cs_weight_{index}" class="form-label">الوزن (كجم)</label>
+                        <input type="number" class="form-control cs-input-track" id="cs_weight_{index}" name="attendees[{index}][weight]" min="10" max="300">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cs_blood_type_{index}" class="form-label">فصيلة الدم</label>
+                        <select class="form-select cs-input-track" id="cs_blood_type_{index}" name="attendees[{index}][blood_type]">
+                            <option value="" selected>اختر فصيلة الدم (اختياري)</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                            <option value="dont_know">لا اعرف</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="cs_notes_{index}" class="form-label">الشكوى أو سبب الاستشارة / أي ملاحظات</label>
+                        <textarea class="form-control cs-input-track" id="cs_notes_{index}" name="attendees[{index}][notes]" rows="2" placeholder="اكتب الشكوى أو ما تعاني منه باختصار..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendee Summary Footer inside card -->
+            <div class="mt-3 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.01); border-right: 4px solid #ff9d42; font-size: 0.95rem;">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <span>حساب الشخص رقم <span class="cs-attendee-number">{number}</span>:</span>
+                    <span class="fw-bold text-dark">
+                        الخدمة: <span class="text-primary">موعد مع مختص (استشارة)</span> | 
+                        السعر: <span class="text-danger">200.00</span> ج.م | 
+                        المدة: <span class="text-info">15</span> دقيقة
                     </span>
                 </div>
             </div>
@@ -2627,35 +2859,55 @@
             addAttendee();
 
             const initialTab = "{{ old('active_tab', '') }}";
-            if (initialTab === 'علاجية') {
+            if (initialTab === 'consultation' || initialTab === 'موعد مع مختص') {
+                switchBookingTab('consultation');
+            } else if (initialTab === 'علاجية') {
                 switchBookingTab('therapeutic');
             } else if (initialTab === 'وقائية') {
                 switchBookingTab('preventative');
             }
         });
 
-        // Tab Switching Logic (وقائية / علاجية)
+        // Tab Switching Logic (موعد مع مختص / وقائية / علاجية)
         function switchBookingTab(mode) {
+            const btnConsultation = document.getElementById('tab-btn-consultation');
             const btnPreventative = document.getElementById('tab-btn-preventative');
             const btnTherapeutic = document.getElementById('tab-btn-therapeutic');
+            const consultationSec = document.getElementById('consultation-section');
             const preventativeSec = document.getElementById('preventative-section');
             const therapeuticSec = document.getElementById('therapeutic-section');
             const activeTabInput = document.getElementById('active_tab');
 
-            if (mode === 'therapeutic') {
+            if (mode === 'consultation') {
+                if (btnConsultation) btnConsultation.classList.add('active');
+                if (btnPreventative) btnPreventative.classList.remove('active');
+                if (btnTherapeutic) btnTherapeutic.classList.remove('active');
+                if (consultationSec) consultationSec.style.display = 'block';
+                if (preventativeSec) preventativeSec.style.display = 'none';
+                if (therapeuticSec) therapeuticSec.style.display = 'none';
+                if (activeTabInput) activeTabInput.value = 'consultation';
+
+                if (typeof window.consultationAttendees !== 'undefined' && window.consultationAttendees.length === 0) {
+                    window.addConsultationAttendee();
+                }
+            } else if (mode === 'therapeutic') {
+                if (btnConsultation) btnConsultation.classList.remove('active');
                 if (btnPreventative) btnPreventative.classList.remove('active');
                 if (btnTherapeutic) btnTherapeutic.classList.add('active');
+                if (consultationSec) consultationSec.style.display = 'none';
                 if (preventativeSec) preventativeSec.style.display = 'none';
                 if (therapeuticSec) therapeuticSec.style.display = 'block';
                 if (activeTabInput) activeTabInput.value = 'علاجية';
 
                 // Initialize 1st attendee if list is empty
-                if (therapeuticAttendees.length === 0) {
+                if (typeof therapeuticAttendees !== 'undefined' && therapeuticAttendees.length === 0) {
                     addTherapeuticAttendee();
                 }
             } else {
+                if (btnConsultation) btnConsultation.classList.remove('active');
                 if (btnTherapeutic) btnTherapeutic.classList.remove('active');
                 if (btnPreventative) btnPreventative.classList.add('active');
+                if (consultationSec) consultationSec.style.display = 'none';
                 if (therapeuticSec) therapeuticSec.style.display = 'none';
                 if (preventativeSec) preventativeSec.style.display = 'block';
                 if (activeTabInput) activeTabInput.value = 'وقائية';
@@ -2783,9 +3035,9 @@
             economy:   { 1: 8,  2: 8,  3: 8,  4: 8,  5: 8 }
         };
 
-        const thChiroPricePerTechnique = {
-            intensive: 19.00,
-            economy: 19.23
+        const thChiroGroupPricePerTechnique = {
+            intensive: { 1: 20.0, 2: 7.0, 3: 12.0, 4: 20.0, 5: 10.0 },
+            economy:   { 1: 18.0, 2: 7.0, 3: 12.0, 4: 20.0, 5: 10.0 }
         };
 
         const thChiroDurationPerTechnique = 0.25; // 15 seconds per technique (0.25 min)
@@ -2800,14 +3052,14 @@
 
             const bloodKey = ['A', 'B', 'AB', 'O'].includes(effectiveBloodType) ? effectiveBloodType : 'O';
             const severeParams = {
-                '30_55':   { intensive: { duration: 1.5, price: 21 }, economy: { duration: 1.0, price: 12 } },
-                '55_100':  { intensive: { duration: 2.0, price: 32 }, economy: { duration: 1.5, price: 21 } },
-                '100_300': { intensive: { duration: 2.5, price: 45 }, economy: { duration: 2.0, price: 24 } }
+                '30_55':   { intensive: { duration: 1.5, price: 19.5 }, economy: { duration: 1.0, price: 13.0 } },
+                '55_100':  { intensive: { duration: 2.0, price: 30.0 }, economy: { duration: 1.5, price: 22.5 } },
+                '100_300': { intensive: { duration: 2.5, price: 42.5 }, economy: { duration: 2.0, price: 34.0 } }
             };
             const moderateParams = {
-                '30_55':   { intensive: { duration: 1.5, price: 21 }, economy: { duration: 1.0, price: 12 } },
-                '55_100':  { intensive: { duration: 2.0, price: 32 }, economy: { duration: 1.5, price: 21 } },
-                '100_300': { intensive: { duration: 2.5, price: 45 }, economy: { duration: 2.0, price: 24 } }
+                '30_55':   { intensive: { duration: 1.5, price: 19.5 }, economy: { duration: 1.0, price: 13.0 } },
+                '55_100':  { intensive: { duration: 2.0, price: 30.0 }, economy: { duration: 1.5, price: 22.5 } },
+                '100_300': { intensive: { duration: 2.5, price: 42.5 }, economy: { duration: 2.0, price: 34.0 } }
             };
 
             const sevMap = (thSevereTechniqueMaps[bloodKey] && thSevereTechniqueMaps[bloodKey][bracket]) ? thSevereTechniqueMaps[bloodKey][bracket] : thSevereTechniqueMaps['O'][bracket];
@@ -2850,24 +3102,34 @@
 
             let chiroIntTechniques = 0;
             let chiroEcoTechniques = 0;
+            let chiroIntRawPrice = 0;
+            let chiroEcoRawPrice = 0;
 
             activeChiroGroups.forEach(gId => {
-                chiroIntTechniques += (thChiroGroupTechniques.intensive[gId] || 0);
-                chiroEcoTechniques += (thChiroGroupTechniques.economy[gId] || 0);
+                const intCount = (thChiroGroupTechniques.intensive[gId] || 0);
+                const ecoCount = (thChiroGroupTechniques.economy[gId] || 0);
+                chiroIntTechniques += intCount;
+                chiroEcoTechniques += ecoCount;
+                chiroIntRawPrice += (intCount * (thChiroGroupPricePerTechnique.intensive[gId] || 19.0));
+                chiroEcoRawPrice += (ecoCount * (thChiroGroupPricePerTechnique.economy[gId] || 19.0));
             });
 
-            const chiroIntPrice = chiroIntTechniques * thChiroPricePerTechnique.intensive;
-            const chiroIntDuration = chiroIntTechniques * thChiroDurationPerTechnique;
+            // 15% discount on chiropractic if more than 3 regions (groups) selected
+            const chiroIntDiscount = (activeChiroGroups.size > 3) ? (chiroIntRawPrice * 0.15) : 0;
+            const chiroEcoDiscount = (activeChiroGroups.size > 3) ? (chiroEcoRawPrice * 0.15) : 0;
 
-            const chiroEcoPrice = chiroEcoTechniques * thChiroPricePerTechnique.economy;
+            const chiroIntPrice = Math.round((chiroIntRawPrice - chiroIntDiscount) * 100) / 100;
+            const chiroEcoPrice = Math.round((chiroEcoRawPrice - chiroEcoDiscount) * 100) / 100;
+
+            const chiroIntDuration = chiroIntTechniques * thChiroDurationPerTechnique;
             const chiroEcoDuration = chiroEcoTechniques * thChiroDurationPerTechnique;
 
-            // Rehabilitation calculation: 5 mins in intensive, 60 EGP
+            // Rehabilitation calculation: 5 mins (60 EGP)
             const hasAnyPain = (severeRegionsSet.size > 0 || moderateRegionsSet.size > 0);
             const intRehabDuration = hasAnyPain ? 5 : 0;
             const intRehabPrice = hasAnyPain ? 60 : 0;
-            const ecoRehabDuration = 0;
-            const ecoRehabPrice = 0;
+            const ecoRehabDuration = hasAnyPain ? 5 : 0;
+            const ecoRehabPrice = hasAnyPain ? 60 : 0;
 
             const totalIntDuration = massageIntDuration + chiroIntDuration + intRehabDuration;
             const totalIntPrice = massageIntPrice + chiroIntPrice + intRehabPrice;
@@ -3630,6 +3892,413 @@
                     if (!thAgreeYes) {
                         e.preventDefault();
                         alert('يجب الموافقة على شروط الحجز والمقدم المالي لتأكيد الحجز.');
+                        return;
+                    }
+                });
+            }
+
+            // ==========================================
+            // Consultation Booking Logic (حجز موعد مع مختص)
+            // ==========================================
+            window.consultationAttendees = [];
+            let nextConsultationAttendeeIndex = 0;
+            let csCouponDiscount = 0;
+
+            const csAttendeesListEl = document.getElementById('cs-attendees-list');
+            const csTemplateHtml = document.getElementById('cs-attendee-template')?.innerHTML || '';
+
+            window.addConsultationAttendee = function() {
+                if (!csAttendeesListEl) return;
+                const index = nextConsultationAttendeeIndex++;
+                const number = csAttendeesListEl.children.length + 1;
+
+                const attendee = {
+                    index: index,
+                    duration: 15,
+                    price: 200.0
+                };
+                consultationAttendees.push(attendee);
+
+                let compiledHtml = csTemplateHtml
+                    .replaceAll('{index}', index)
+                    .replaceAll('{number}', number);
+
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = compiledHtml;
+                const cardEl = wrapper.firstElementChild;
+                csAttendeesListEl.appendChild(cardEl);
+
+                if (number > 1) {
+                    const removeBtn = cardEl.querySelector('.btn-remove-cs-attendee');
+                    if (removeBtn) removeBtn.style.display = 'block';
+                }
+
+                // Event listener on inputs
+                cardEl.querySelectorAll('.cs-input-track').forEach(input => {
+                    input.addEventListener('input', updateConsultationPricing);
+                    input.addEventListener('change', updateConsultationPricing);
+                });
+
+                updateConsultationPricing();
+            };
+
+            window.removeConsultationAttendee = function(index) {
+                consultationAttendees = consultationAttendees.filter(a => a.index !== index);
+                const cardEl = document.getElementById(`cs-attendee-card-${index}`);
+                if (cardEl) {
+                    cardEl.remove();
+                }
+
+                Array.from(csAttendeesListEl.children).forEach((card, idx) => {
+                    const numSpan = card.querySelector('.cs-attendee-number');
+                    if (numSpan) {
+                        numSpan.textContent = idx + 1;
+                    }
+                    const removeBtn = card.querySelector('.btn-remove-cs-attendee');
+                    if (removeBtn) {
+                        removeBtn.style.display = (idx === 0) ? 'none' : 'block';
+                    }
+                });
+
+                updateConsultationPricing();
+            };
+
+            // Delegate remove button clicks
+            if (csAttendeesListEl) {
+                csAttendeesListEl.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.btn-remove-cs-attendee');
+                    if (btn) {
+                        const index = parseInt(btn.getAttribute('data-index'), 10);
+                        removeConsultationAttendee(index);
+                    }
+                });
+            }
+
+            const btnAddCsAttendee = document.getElementById('btn-add-cs-attendee');
+            if (btnAddCsAttendee) {
+                btnAddCsAttendee.addEventListener('click', addConsultationAttendee);
+            }
+
+            function updateConsultationPricing() {
+                const isUrgent = document.getElementById('cs_is_urgent')?.checked || false;
+                const urgentFee = isUrgent ? {{ $urgentBookingFee }} : 0;
+
+                let totalSessionsPrice = 0;
+                const tbody = document.getElementById('cs-group-summary-tbody');
+                if (tbody) tbody.innerHTML = '';
+
+                consultationAttendees.forEach((att, idx) => {
+                    att.price = 200.0;
+                    att.duration = 15;
+                    totalSessionsPrice += att.price;
+
+                    const nameInput = document.getElementById(`cs_name_${att.index}`);
+                    const nameVal = nameInput ? (nameInput.value.trim() || `الشخص رقم (${idx + 1})`) : `الشخص رقم (${idx + 1})`;
+
+                    if (tbody) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${idx + 1}</td>
+                            <td class="fw-bold">${nameVal}</td>
+                            <td>موعد مع مختص (استشارة)</td>
+                            <td>15 دقيقة</td>
+                            <td class="text-warning fw-bold">200.00 ج.م</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                });
+
+                let grandTotal = totalSessionsPrice + urgentFee;
+                if (csCouponDiscount > 0) {
+                    grandTotal = Math.max(0, grandTotal - csCouponDiscount);
+                }
+                const depositAmount = grandTotal; // 100% deposit
+
+                const totalPriceEl = document.getElementById('cs_summary_total_price');
+                if (totalPriceEl) totalPriceEl.textContent = totalSessionsPrice.toFixed(2);
+
+                const urgentFeeRow = document.getElementById('cs_urgent_fee_row');
+                const urgentFeeEl = document.getElementById('cs_summary_urgent_fee');
+                if (urgentFeeRow && urgentFeeEl) {
+                    if (isUrgent) {
+                        urgentFeeRow.style.display = 'flex';
+                        urgentFeeEl.textContent = urgentFee;
+                    } else {
+                        urgentFeeRow.style.display = 'none';
+                    }
+                }
+
+                const couponRow = document.getElementById('cs_coupon_discount_row');
+                const couponEl = document.getElementById('cs_summary_coupon_discount');
+                if (couponRow && couponEl) {
+                    if (csCouponDiscount > 0) {
+                        couponRow.style.display = 'flex';
+                        couponEl.textContent = csCouponDiscount.toFixed(2);
+                    } else {
+                        couponRow.style.display = 'none';
+                    }
+                }
+
+                const depositAmountEl = document.getElementById('cs_deposit_amount');
+                if (depositAmountEl) depositAmountEl.textContent = depositAmount.toFixed(0);
+
+                if (isUrgent) {
+                    validateConsultationTimeSelection();
+                } else {
+                    fetchConsultationAvailableTimes();
+                }
+            }
+
+            function fetchConsultationAvailableTimes() {
+                const dateVal = document.getElementById('cs_appointment_date')?.value;
+                const timeSelect = document.getElementById('cs_appointment_time_select');
+                if (!timeSelect) return;
+
+                if (!dateVal) {
+                    timeSelect.innerHTML = '<option value="" disabled selected>يرجى اختيار تاريخ أولاً</option>';
+                    return;
+                }
+
+                const attendeesPayload = consultationAttendees.map(att => {
+                    const genderVal = document.getElementById(`cs_gender_${att.index}`)?.value || 'male';
+                    return {
+                        gender: genderVal,
+                        duration: 15
+                    };
+                });
+
+                const hasEmptyGender = attendeesPayload.some(att => !att.gender);
+                if (hasEmptyGender) {
+                    timeSelect.innerHTML = '<option value="" disabled selected hidden>يرجى اختيار الجنس لجميع الأفراد أولاً...</option>';
+                    return;
+                }
+
+                timeSelect.innerHTML = '<option>جاري التحميل...</option>';
+                const payloadStr = encodeURIComponent(JSON.stringify(attendeesPayload));
+
+                fetch(`{{ route('booking.available-times') }}?date=${dateVal}&attendees=${payloadStr}&is_urgent=0`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            timeSelect.innerHTML = `<option value="" disabled selected hidden>${data.error}</option>`;
+                            alert(data.error);
+                            const dateInput = document.getElementById('cs_appointment_date');
+                            if (dateInput) dateInput.value = '';
+                            return;
+                        }
+                        timeSelect.innerHTML = '<option value="" disabled selected hidden>اختر الوقت المناسب...</option>';
+                        Object.keys(data).forEach(k => {
+                            const o = document.createElement('option');
+                            o.value = k;
+                            o.textContent = data[k];
+                            timeSelect.appendChild(o);
+                        });
+                        const csTimeInput = document.getElementById('cs_appointment_time');
+                        if (csTimeInput) csTimeInput.value = timeSelect.value;
+                    })
+                    .catch(() => {
+                        timeSelect.innerHTML = '<option value="" disabled selected>خطأ في جلب الأوقات المتاحة</option>';
+                    });
+            }
+
+            function validateConsultationTimeSelection() {
+                const dateVal = document.getElementById('cs_appointment_date')?.value;
+                const timeVal = document.getElementById('cs_appointment_time_input')?.value;
+                const feedbackDiv = document.getElementById('cs_time_validation_feedback');
+                const submitBtn = document.getElementById('btn-submit-consultation');
+                const csTimeInput = document.getElementById('cs_appointment_time');
+                if (csTimeInput) csTimeInput.value = timeVal;
+
+                if (!dateVal || !timeVal) {
+                    if (feedbackDiv) feedbackDiv.style.display = 'none';
+                    return;
+                }
+
+                const attendeesPayload = consultationAttendees.map(att => {
+                    const genderVal = document.getElementById(`cs_gender_${att.index}`)?.value || 'male';
+                    return {
+                        gender: genderVal,
+                        duration: 15
+                    };
+                });
+
+                const hasEmptyGender = attendeesPayload.some(att => !att.gender);
+                if (hasEmptyGender) {
+                    if (feedbackDiv) {
+                        feedbackDiv.style.display = 'block';
+                        feedbackDiv.style.color = '#e74c3c';
+                        feedbackDiv.innerText = 'يرجى اختيار الجنس لجميع الأفراد أولاً للتحقق من التوفر.';
+                    }
+                    return;
+                }
+
+                if (feedbackDiv) {
+                    feedbackDiv.style.display = 'block';
+                    feedbackDiv.style.color = '#e67e22';
+                    feedbackDiv.innerText = '⏳ جاري التحقق من توفر الوقت...';
+                }
+
+                const payloadStr = encodeURIComponent(JSON.stringify(attendeesPayload));
+
+                fetch(`{{ route('booking.validate-time') }}?date=${dateVal}&time=${timeVal}&attendees=${payloadStr}&is_urgent=1`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (feedbackDiv) {
+                            if (data.available) {
+                                feedbackDiv.style.color = '#2ecc71';
+                                feedbackDiv.innerText = '✓ ' + data.message;
+                                if (submitBtn) submitBtn.disabled = false;
+                            } else {
+                                feedbackDiv.style.color = '#e74c3c';
+                                feedbackDiv.innerText = '✗ ' + data.message;
+                                if (submitBtn) submitBtn.disabled = true;
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        if (feedbackDiv) {
+                            feedbackDiv.style.color = '#e74c3c';
+                            feedbackDiv.innerText = '⚠️ خطأ في الاتصال بالخادم للتحقق من الموعد.';
+                        }
+                    });
+            }
+
+            function handleConsultationUrgentToggle() {
+                const isUrgent = document.getElementById('cs_is_urgent')?.checked || false;
+                const regContainer = document.getElementById('cs_regular_time_container');
+                const urgContainer = document.getElementById('cs_urgent_time_container');
+                const timeSelect = document.getElementById('cs_appointment_time_select');
+                const timeInput = document.getElementById('cs_appointment_time_input');
+
+                if (isUrgent) {
+                    if (regContainer) regContainer.style.display = 'none';
+                    if (urgContainer) urgContainer.style.display = 'block';
+                    if (timeSelect) timeSelect.required = false;
+                    if (timeInput) timeInput.required = true;
+                    validateConsultationTimeSelection();
+                } else {
+                    if (regContainer) regContainer.style.display = 'block';
+                    if (urgContainer) urgContainer.style.display = 'none';
+                    if (timeSelect) timeSelect.required = true;
+                    if (timeInput) timeInput.required = false;
+
+                    const feedbackDiv = document.getElementById('cs_time_validation_feedback');
+                    if (feedbackDiv) feedbackDiv.style.display = 'none';
+
+                    const csTimeInput = document.getElementById('cs_appointment_time');
+                    if (csTimeInput && timeSelect) csTimeInput.value = timeSelect.value;
+                    fetchConsultationAvailableTimes();
+                }
+                updateConsultationPricing();
+            }
+
+            // Listeners for Consultation
+            document.getElementById('cs_appointment_time_select')?.addEventListener('change', function() {
+                const csTimeInput = document.getElementById('cs_appointment_time');
+                if (csTimeInput) csTimeInput.value = this.value;
+            });
+
+            document.getElementById('cs_appointment_date')?.addEventListener('change', function() {
+                const isUrgent = document.getElementById('cs_is_urgent')?.checked || false;
+                if (isUrgent) {
+                    validateConsultationTimeSelection();
+                } else {
+                    fetchConsultationAvailableTimes();
+                }
+            });
+
+            document.getElementById('cs_appointment_time_input')?.addEventListener('input', validateConsultationTimeSelection);
+
+            document.getElementById('cs_is_urgent')?.addEventListener('change', handleConsultationUrgentToggle);
+
+            // Consultation Coupon listener
+            const btnApplyCsCoupon = document.getElementById('cs_btn-apply-coupon');
+            if (btnApplyCsCoupon) {
+                btnApplyCsCoupon.addEventListener('click', function() {
+                    const code = document.getElementById('cs_coupon_input')?.value.trim();
+                    const feedbackEl = document.getElementById('cs_coupon_feedback');
+                    const dateVal = document.getElementById('cs_appointment_date')?.value;
+                    const baseTotalPrice = consultationAttendees.length * 200.0;
+
+                    if (!dateVal) {
+                        if (feedbackEl) {
+                            feedbackEl.style.display = 'block';
+                            feedbackEl.style.color = '#e74c3c';
+                            feedbackEl.innerText = 'يرجى اختيار التاريخ أولاً قبل تطبيق الكوبون.';
+                        }
+                        return;
+                    }
+
+                    if (!code) {
+                        if (feedbackEl) {
+                            feedbackEl.style.display = 'block';
+                            feedbackEl.style.color = '#e74c3c';
+                            feedbackEl.innerText = 'يرجى إدخال كود الكوبون أولاً.';
+                        }
+                        return;
+                    }
+
+                    const url = `{{ route('booking.validate-coupon') }}?code=${encodeURIComponent(code)}&date=${encodeURIComponent(dateVal)}&total_price=${encodeURIComponent(baseTotalPrice)}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!feedbackEl) return;
+                            feedbackEl.style.display = 'block';
+                            if (data.valid) {
+                                csCouponDiscount = parseFloat(data.discount_amount || data.discount) || 0;
+                                const submittedCoupon = document.getElementById('cs_submitted_coupon_code');
+                                if (submittedCoupon) submittedCoupon.value = data.code;
+                                feedbackEl.style.color = '#27ae60';
+                                feedbackEl.innerText = `✓ ${data.message} (تم خصم ${csCouponDiscount.toFixed(2)} ج.م)`;
+                            } else {
+                                csCouponDiscount = 0;
+                                const submittedCoupon = document.getElementById('cs_submitted_coupon_code');
+                                if (submittedCoupon) submittedCoupon.value = '';
+                                feedbackEl.style.color = '#e74c3c';
+                                feedbackEl.innerText = '✗ ' + data.message;
+                            }
+                            updateConsultationPricing();
+                        })
+                        .catch(() => {
+                            if (feedbackEl) {
+                                feedbackEl.style.display = 'block';
+                                feedbackEl.style.color = '#e74c3c';
+                                feedbackEl.innerText = '⚠️ خطأ في الاتصال بالخادم للتحقق من الكوبون.';
+                            }
+                        });
+                });
+            }
+
+            // Consultation Form submit listener
+            const csForm = document.getElementById('bookingFormConsultation');
+            if (csForm) {
+                csForm.addEventListener('submit', function(e) {
+                    if (consultationAttendees.length === 0) {
+                        e.preventDefault();
+                        alert('يرجى إضافة شخص واحد على الأقل للموعد.');
+                        return;
+                    }
+
+                    const csDate = document.getElementById('cs_appointment_date')?.value;
+                    const csTime = document.getElementById('cs_appointment_time')?.value;
+                    const csAgreeYes = document.getElementById('cs_agree_yes')?.checked;
+
+                    if (!csDate) {
+                        e.preventDefault();
+                        alert('يرجى اختيار تاريخ موعد الاستشارة.');
+                        return;
+                    }
+
+                    if (!csTime) {
+                        e.preventDefault();
+                        alert('يرجى اختيار وقت موعد الاستشارة المتاح.');
+                        return;
+                    }
+
+                    if (!csAgreeYes) {
+                        e.preventDefault();
+                        alert('يجب الموافقة على شروط الحجز ومقدم الجدية لتأكيد الحجز.');
                         return;
                     }
                 });

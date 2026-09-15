@@ -21,9 +21,9 @@ class TherapeuticMassageTest extends TestCase
         $this->assertEquals('55_100', $result['weight_bracket']);
         $this->assertEquals(1, $result['severe_count']);
         $this->assertEquals(1, $result['severe_techniques']);
-        // 55_100 intensive: 1 technique * 2.0 min = 2.0 min, 1 technique * 32 EGP = 32 EGP
+        // 55_100 intensive: 1 technique * 2.0 min = 2.0 min, 1 technique * 30 EGP = 30 EGP
         $this->assertEquals(2.0, $result['duration']);
-        $this->assertEquals(32.0, $result['total_price']);
+        $this->assertEquals(30.0, $result['total_price']);
     }
 
     public function test_calculate_with_severe_region_11(): void
@@ -40,8 +40,8 @@ class TherapeuticMassageTest extends TestCase
         $this->assertEquals(6, $result['severe_techniques']);
         // 6 techniques * 2.0 min = 12.0 min
         $this->assertEquals(12.0, $result['duration']);
-        // 6 techniques * 32 EGP = 192 EGP
-        $this->assertEquals(192.0, $result['total_price']);
+        // 6 techniques * 30 EGP = 180 EGP
+        $this->assertEquals(180.0, $result['total_price']);
     }
 
     public function test_calculate_with_no_pain_regions(): void

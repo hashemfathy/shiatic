@@ -21,6 +21,27 @@ class TherapeuticChiropracticHelper
     ];
 
     /**
+     * Price per chiropractic technique by region group and protocol style in EGP
+     * Extracted from كيروبراكتيك علاجي.pdf
+     */
+    public static array $groupPricePerTechniqueMap = [
+        'intensive' => [
+            1 => 20.0, // منطقة 1 العنقية (20 ج للتكنيك)
+            2 => 7.0,  // منطقة 2 الأكتاف والذراعين (7 ج للتكنيك)
+            3 => 12.0, // منطقة 3 الصدرية (12 ج للتكنيك)
+            4 => 20.0, // منطقة 4 القطنية (20 ج للتكنيك)
+            5 => 10.0, // منطقة 5 القدمين والطرف السفلي (10 ج للتكنيك)
+        ],
+        'economy' => [
+            1 => 18.0, // منطقة 1 العنقية (18 ج للتكنيك)
+            2 => 7.0,  // منطقة 2 الأكتاف والذراعين (7 ج للتكنيك)
+            3 => 12.0, // منطقة 3 الصدرية (12 ج للتكنيك)
+            4 => 20.0, // منطقة 4 القطنية (20 ج للتكنيك)
+            5 => 10.0, // منطقة 5 القدمين والطرف السفلي (10 ج للتكنيك)
+        ],
+    ];
+
+    /**
      * Duration per chiropractic technique in minutes (15 seconds = 0.25 min)
      */
     public static float $durationPerTechnique = 0.25;
@@ -258,24 +279,34 @@ class TherapeuticChiropracticHelper
         sort($activeGroupIds);
 
         $styleKey = ($style === 'economy') ? 'economy' : 'intensive';
-        $pricePerTech = static::getPricePerTechnique($styleKey);
         $totalTechniques = 0;
+        $rawTotalPrice = 0.0;
         $activeGroupNames = [];
 
         foreach ($activeGroupIds as $gId) {
-            $totalTechniques += static::$groupTechniquesMap[$styleKey][$gId] ?? 0;
+            $techCount = static::$groupTechniquesMap[$styleKey][$gId] ?? 0;
+            $pricePerTech = static::$groupPricePerTechniqueMap[$styleKey][$gId] ?? (static::$pricePerTechniqueMap[$styleKey] ?? 19.0);
+            $totalTechniques += $techCount;
+            $rawTotalPrice += ($techCount * $pricePerTech);
             $activeGroupNames[] = static::$regionGroups[$gId]['name'];
         }
 
         $duration = round($totalTechniques * static::$durationPerTechnique, 2);
-        $totalPrice = round($totalTechniques * $pricePerTech, 2);
+
+        // Apply 15% discount on chiropractic when selecting more than 3 regions (groups)
+        $discountAmount = 0.0;
+        if (count($activeGroupIds) > 3) {
+            $discountAmount = round($rawTotalPrice * 0.15, 2);
+        }
+        $totalPrice = round($rawTotalPrice - $discountAmount, 2);
 
         return [
             'active_groups' => $activeGroupIds,
             'active_group_names' => $activeGroupNames,
             'total_techniques' => $totalTechniques,
-            'price_per_technique' => $pricePerTech,
             'duration_per_technique' => static::$durationPerTechnique,
+            'raw_total_price' => $rawTotalPrice,
+            'discount_amount' => $discountAmount,
             'total_price' => $totalPrice,
             'duration' => $duration,
             'selected_regions_count' => count($uniqueRegions),

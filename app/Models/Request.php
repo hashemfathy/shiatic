@@ -49,30 +49,4 @@ class Request extends Model
     {
         return $this->belongsTo(Request::class, 'parent_id');
     }
-
-    protected static function booted()
-    {
-        static::created(function ($request) {
-            try {
-                if ($request->parent_id || request()->has('attendees')) {
-                    return;
-                }
-                $recipient = config('mail.to_address') ?? config('mail.from.address');
-
-                if ($recipient && env('RESEND_API_KEY')) {
-                    \Illuminate\Support\Facades\Http::withHeaders([
-                        'Authorization' => 'Bearer ' . env('RESEND_API_KEY'),
-                        'Content-Type' => 'application/json',
-                    ])->post('https://api.resend.com/emails', [
-                        'from' => config('mail.from.address') ?? 'onboarding@resend.dev',
-                        'to' => $recipient,
-                        'subject' => 'طلب حجز جديد - ' . $request->name,
-                        'html' => view('emails.new_request', ['bookingRequest' => $request])->render(),
-                    ]);
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to send new request email notification: ' . $e->getMessage());
-            }
-        });
-    }
 }

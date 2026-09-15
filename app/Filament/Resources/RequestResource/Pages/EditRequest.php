@@ -33,6 +33,24 @@ class EditRequest extends EditRecord
             }
         }
 
+        if ($bookingType === 'موعد مع مختص') {
+            $desc = $data['description'] ?? '';
+            $age = 30;
+            if (preg_match('/السن \((\d+)\)/u', $desc, $m)) $age = (int)$m[1];
+            $weight = 70;
+            if (preg_match('/الوزن \((\d+(\.\d+)?)(?:\s*كجم)?\)/u', $desc, $m)) $weight = (float)$m[1];
+            $bloodType = 'O';
+            if (preg_match('/فصيلة الدم \((A|B|AB|O)\)/ui', $desc, $m)) $bloodType = strtoupper($m[1]);
+            $notes = '';
+            if (preg_match('/الشكوى أو سبب الاستشارة: ([^|]+)/u', $desc, $m)) $notes = trim($m[1]);
+
+            $data['consultation_age'] = $age;
+            $data['consultation_weight'] = $weight;
+            $data['consultation_blood_type'] = $bloodType;
+            $data['consultation_notes'] = $notes;
+            return $data;
+        }
+
         if ($bookingType === 'علاجية') {
             $parsed = \App\Helpers\TherapeuticMassageHelper::parseTherapeuticDescription($data['description'] ?? '');
             
@@ -68,6 +86,49 @@ class EditRequest extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $bookingType = $data['booking_type'] ?? 'وقائية';
+
+        if ($bookingType === 'موعد مع مختص') {
+            $age = (int)($data['consultation_age'] ?? 30);
+            $weight = (float)($data['consultation_weight'] ?? 70);
+            $bloodType = $data['consultation_blood_type'] ?? 'O';
+            $notes = trim($data['consultation_notes'] ?? '');
+            $isUrgent = (bool)($data['is_urgent'] ?? false);
+            $urgentFee = $isUrgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
+            
+            $price = 200.0 + $urgentFee;
+            $couponCode = $data['coupon_code'] ?? null;
+            $couponDiscount = (float)($data['coupon_discount'] ?? 0);
+            if ($couponDiscount > 0) {
+                $price = max(0, $price - $couponDiscount);
+            }
+            $duration = 15;
+            $deposit = (int)$price;
+
+            $descParts = [];
+            $descParts[] = "نوع الجلسة: موعد مع مختص [استشارة]";
+            $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+            if (!empty($notes)) {
+                $descParts[] = "الشكوى أو سبب الاستشارة: {$notes}";
+            }
+            $descParts[] = "مدة الموعد: 15 دقيقة | السعر: 200.00 ج.م";
+            if ($isUrgent) {
+                $descParts[] = "الحجز المستعجل [رسوم إضافية: {$urgentFee} ج.م]";
+            }
+            if ($couponDiscount > 0 && !empty($couponCode)) {
+                $descParts[] = "كوبون الخصم [الكود: {$couponCode} | الخصم: {$couponDiscount} ج.م]";
+            }
+
+            $data['total_price'] = $price;
+            $data['total_duration'] = $duration;
+            if (!isset($data['deposit']) || $data['deposit'] === null || $data['deposit'] === '') {
+                $data['deposit'] = $deposit;
+            }
+            $data['service_type'] = 'موعد مع مختص';
+            $data['packages'] = ['consultation'];
+            $data['description'] = implode(' | ', $descParts);
+
+            return $data;
+        }
 
         if ($bookingType === 'علاجية') {
             $calc = \App\Helpers\TherapeuticMassageHelper::buildTherapeuticDescription(

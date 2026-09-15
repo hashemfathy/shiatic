@@ -10,23 +10,23 @@ class TherapeuticMassageHelper
     public static array $bloodTypeMatrix = [
         'A' => [
             'label' => 'فصيلة A',
-            'base_technique' => 'مسحي علاجي واسترخائي عميق (وتري زلالي / انبساطي تجمعي)',
-            'pressure' => 'متوسط إلى خفيف',
+            'base_technique' => 'مسحي وتري وعضلي (وتري زلالي / انبساطي حمضي وتجمعي)',
+            'pressure' => 'شدة 60% وسرعة 20% (قبضة غ / إبهام)',
         ],
         'B' => [
             'label' => 'فصيلة B',
-            'base_technique' => 'ضغط نقطي وعضلي علاجي (ليمفاوي عصبي / وتري زلالي)',
-            'pressure' => 'متوسط إلى شديد',
+            'base_technique' => 'ضغط نقطي وعصبي (ليمفاوي عصبي / انبساطي تجمعي)',
+            'pressure' => 'شدة 40% وسرعة 20% (إبهام / قبضة م)',
         ],
         'AB' => [
             'label' => 'فصيلة AB',
-            'base_technique' => 'تقويم عضلي ومسحي مركب (عصبي زلالي / عقدي حمضي)',
-            'pressure' => 'متنوع ومركب',
+            'base_technique' => 'تقويم عضلي ومسحي مركب (عصبي زلالي / انبساطي مركب)',
+            'pressure' => 'شدة 50% وسرعة 20% (إبهام / قبضة غ)',
         ],
         'O' => [
             'label' => 'فصيلة O',
-            'base_technique' => 'علاجي هارد عميق وتفكيك التصلبات (وتري مفصلي / حمضي عصبي)',
-            'pressure' => 'عميق وقوي (هارد)',
+            'base_technique' => 'علاجي عميق وتفكيك التصلبات (انبساطي حمضي / عصبي عميق ومفصلي)',
+            'pressure' => 'شدة 30% وسرعة 20% (إبهام / كلوة)',
         ],
     ];
 
@@ -196,15 +196,15 @@ class TherapeuticMassageHelper
 
         // Parameters per region based on bracket & severity (Severe & Moderate)
         $severeParams = [
-            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 21], 'economy' => ['duration' => 1.0, 'price' => 12]],
-            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 32], 'economy' => ['duration' => 1.5, 'price' => 21]],
-            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 45], 'economy' => ['duration' => 2.0, 'price' => 24]],
+            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 19.5], 'economy' => ['duration' => 1.0, 'price' => 13.0]],
+            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 30.0], 'economy' => ['duration' => 1.5, 'price' => 22.5]],
+            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 42.5], 'economy' => ['duration' => 2.0, 'price' => 34.0]],
         ];
 
         $moderateParams = [
-            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 21], 'economy' => ['duration' => 1.0, 'price' => 12]],
-            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 32], 'economy' => ['duration' => 1.5, 'price' => 21]],
-            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 45], 'economy' => ['duration' => 2.0, 'price' => 24]],
+            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 19.5], 'economy' => ['duration' => 1.0, 'price' => 13.0]],
+            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 30.0], 'economy' => ['duration' => 1.5, 'price' => 22.5]],
+            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 42.5], 'economy' => ['duration' => 2.0, 'price' => 34.0]],
         ];
 
         $sev = $severeParams[$bracket][$style];
@@ -369,8 +369,8 @@ class TherapeuticMassageHelper
         $chiroCalc = \App\Helpers\TherapeuticChiropracticHelper::calculate($allPain, $protocol);
 
         $hasAnyPain = (count($severeRegions) > 0 || count($moderateRegions) > 0);
-        $rehabDuration = ($hasAnyPain && $protocol === 'intensive') ? 5 : 0;
-        $rehabPrice = $rehabDuration * 12; // 60 EGP
+        $rehabDuration = $hasAnyPain ? 5 : 0;
+        $rehabPrice = $rehabDuration * 12; // 60 EGP (5 min @ 12 EGP/min)
 
         $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration'] + $rehabDuration);
         $baseTotal = $massageCalc['total_price'] + $chiroCalc['total_price'] + $rehabPrice;

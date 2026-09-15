@@ -18,12 +18,12 @@ class TherapeuticBookingTest extends TestCase
         $this->assertEquals(3, $massageData['moderate_techniques']); // Region 1 has 3 techs
         $this->assertEquals(4, $massageData['total_techniques']);
         $this->assertEquals(8.0, $massageData['duration']);
-        $this->assertEquals(128.00, $massageData['total_price']);
+        $this->assertEquals(120.00, $massageData['total_price']);
 
         // Chiropractic for Region 17 & 1 (Group 2 and Group 5)
         $chiroData = TherapeuticChiropracticHelper::calculate([17, 1], 'intensive');
         $this->assertEquals(22, $chiroData['total_techniques']); // Group 2 (10) + Group 5 (12) = 22
-        $this->assertEquals(418.00, $chiroData['total_price']);
+        $this->assertEquals(190.00, $chiroData['total_price']);
         $this->assertEquals(5.5, $chiroData['duration']);
 
         // Build a mock therapeutic request
@@ -31,25 +31,25 @@ class TherapeuticBookingTest extends TestCase
             "نوع الجلسة: سيشن علاجية [البروتوكول: مكثف]",
             "بيانات المريض: فصيلة الدم (A) | الوزن (75 كجم)",
             "مناطق الألم: شديد [17] | متوسط [1]",
-            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 128.00 ج.م | المدة: 8.0 دقيقة]",
-            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 22 | السعر: 418.00 ج.م | المدة: 5.5 دقيقة]",
-            "الحجامة [عدد الكاسات: 1 كاس على مناطق الألم الشديد | السعر: 45.00 ج.م | المدة: 11 دقيقة]",
-            "التأهيل [برنامج تمارين تأهيلية | السعر: 120.00 ج.م | المدة: 10 دقيقة]",
+            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 120.00 ج.م | المدة: 8.0 دقيقة]",
+            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 22 | السعر: 190.00 ج.م | المدة: 5.5 دقيقة]",
+            "الحجامة [عدد الكاسات: 1 كاس على مناطق الألم الشديد | السعر: 40.00 ج.م | المدة: 11 دقيقة]",
+            "التأهيل [برنامج تمارين تأهيلية | السعر: 60.00 ج.م | المدة: 5 دقيقة]",
         ];
 
         $record = (object)[
             'booking_type' => 'علاجية',
             'service_type' => 'مساج علاجي + كيروبراكتيك علاجي + حجامة + تأهيل',
-            'total_price' => 711.00,
+            'total_price' => 410.00,
             'description' => implode(' | ', $descParts),
         ];
 
         // Test base prices parsing
         $basePrices = MassageHelper::calculateServiceBasePrices($record);
-        $this->assertEquals(128.00, $basePrices['massage']);
-        $this->assertEquals(418.00, $basePrices['cracking']);
-        $this->assertEquals(45.00, $basePrices['hijama']);
-        $this->assertEquals(120.00, $basePrices['rehab']);
+        $this->assertEquals(120.00, $basePrices['massage']);
+        $this->assertEquals(190.00, $basePrices['cracking']);
+        $this->assertEquals(40.00, $basePrices['hijama']);
+        $this->assertEquals(60.00, $basePrices['rehab']);
 
         // Test HTML rendering
         $html = TherapeuticMassageHelper::renderTherapeuticDetails($record);
@@ -67,58 +67,61 @@ class TherapeuticBookingTest extends TestCase
     public function test_intensive_protocol_hijama_disabled_and_rehab_5_min(): void
     {
         // Intensive protocol with severe [17] and moderate [1]
-        // Massage: 8.0 min, 128 EGP
-        // Chiro: 5.5 min, 418 EGP
+        // Massage: 8.0 min, 120 EGP
+        // Chiro: 5.5 min, 190 EGP
         // Hijama: 0 min, 0 EGP (disabled / commented out)
-        // Rehab: 5 min, 60 EGP (in intensive only)
+        // Rehab: 5 min, 60 EGP
         $descParts = [
             "نوع الجلسة: سيشن علاجية [البروتوكول: مكثف]",
             "بيانات المريض: فصيلة الدم (A) | الوزن (75 كجم)",
             "مناطق الألم: شديد [17] | متوسط [1]",
-            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 128.00 ج.م | المدة: 8.0 دقيقة]",
-            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 22 | السعر: 418.00 ج.م | المدة: 5.5 دقيقة]",
+            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 120.00 ج.م | المدة: 8.0 دقيقة]",
+            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 22 | السعر: 190.00 ج.م | المدة: 5.5 دقيقة]",
             "التأهيل [برنامج تمارين تأهيلية | السعر: 60.00 ج.م | المدة: 5 دقيقة]",
         ];
 
         $record = (object)[
             'booking_type' => 'علاجية',
             'service_type' => 'مساج علاجي + كيروبراكتيك علاجي + تأهيل',
-            'total_price' => 606.00,
+            'total_price' => 370.00,
             'description' => implode(' | ', $descParts),
         ];
 
         $basePrices = MassageHelper::calculateServiceBasePrices($record);
-        $this->assertEquals(128.00, $basePrices['massage']);
-        $this->assertEquals(418.00, $basePrices['cracking']);
+        $this->assertEquals(120.00, $basePrices['massage']);
+        $this->assertEquals(190.00, $basePrices['cracking']);
         $this->assertEquals(0.00, $basePrices['hijama']);
         $this->assertEquals(60.00, $basePrices['rehab']);
     }
 
-    public function test_economy_protocol_no_rehab_and_no_hijama(): void
+    public function test_economy_protocol_rehab_5_min_and_no_hijama(): void
     {
         // Economy protocol with severe [17] and moderate [1]
+        // Massage: 4 techs * 22.5 = 90.00 EGP, 6.0 min
+        // Chiro: Group 2 (8 @ 7 = 56) + Group 5 (8 @ 10 = 80) = 136.00 EGP, 16 techs, 4.0 min
         // Hijama: 0 min, 0 EGP (disabled)
-        // Rehab: 0 min, 0 EGP (not included in economy protocol)
+        // Rehab: 5 min, 60.00 EGP
         $descParts = [
             "نوع الجلسة: سيشن علاجية [البروتوكول: اقتصادي]",
             "بيانات المريض: فصيلة الدم (A) | الوزن (75 كجم)",
             "مناطق الألم: شديد [17] | متوسط [1]",
-            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 84.00 ج.م | المدة: 5.5 دقيقة]",
-            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 16 | السعر: 307.68 ج.م | المدة: 4.0 دقيقة]",
+            "المساج العلاجي [التكنيك: مسحي علاجي | عدد التكنيكات: 4 | السعر: 90.00 ج.م | المدة: 6.0 دقيقة]",
+            "الكيروبراكتيك العلاجي [المناطق: منطقة 2 + منطقة 5 | عدد التكنيكات: 16 | السعر: 136.00 ج.م | المدة: 4.0 دقيقة]",
+            "التأهيل [برنامج تمارين تأهيلية | السعر: 60.00 ج.م | المدة: 5 دقيقة]",
         ];
 
         $record = (object)[
             'booking_type' => 'علاجية',
-            'service_type' => 'مساج علاجي + كيروبراكتيك علاجي',
-            'total_price' => 391.68,
+            'service_type' => 'مساج علاجي + كيروبراكتيك علاجي + تأهيل',
+            'total_price' => 286.00,
             'description' => implode(' | ', $descParts),
         ];
 
         $basePrices = MassageHelper::calculateServiceBasePrices($record);
-        $this->assertEquals(84.00, $basePrices['massage']);
-        $this->assertEquals(307.68, $basePrices['cracking']);
+        $this->assertEquals(90.00, $basePrices['massage']);
+        $this->assertEquals(136.00, $basePrices['cracking']);
         $this->assertEquals(0.00, $basePrices['hijama']);
-        $this->assertEquals(0.00, $basePrices['rehab']);
+        $this->assertEquals(60.00, $basePrices['rehab']);
     }
 
     public function test_expected_sessions_rules(): void
