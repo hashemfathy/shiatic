@@ -112,22 +112,22 @@ class TherapeuticMassageHelper
         $severeProto = static::getProtocol($bloodTypeKey, 'severe', $bracket);
         $moderateProto = static::getProtocol($bloodTypeKey, 'moderate', $bracket);
 
-        $severeTechniquesList = [];
+        $severeTechniquesList = collect();
         if ($severeProto && !empty($severeRegions)) {
             $severeTechniquesList = $severeProto->techniques->filter(function ($tech) use ($severeRegions) {
                 return in_array((int)$tech->region_number, $severeRegions, true);
             });
         }
 
-        $moderateTechniquesList = [];
+        $moderateTechniquesList = collect();
         if ($moderateProto && !empty($moderateRegions)) {
             $moderateTechniquesList = $moderateProto->techniques->filter(function ($tech) use ($moderateRegions) {
                 return in_array((int)$tech->region_number, $moderateRegions, true);
             });
         }
 
-        $severeTechCount = $severeTechniquesList->count();
-        $moderateTechCount = $moderateTechniquesList->count();
+        $severeTechCount = count($severeTechniquesList);
+        $moderateTechCount = count($moderateTechniquesList);
 
         // Fallbacks if database not seeded
         if ($severeTechCount === 0 && $totalSevereCount > 0) {
