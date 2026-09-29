@@ -343,6 +343,40 @@
             font-size: 0.9rem;
         }
 
+        /* 3D Realistic Push Button for Generating Protocol */
+        .btn-confirm-th-attendee {
+            background: linear-gradient(180deg, #ff9d42 0%, #ea580c 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #ffb36b !important;
+            border-bottom: 6px solid #9a3412 !important;
+            border-radius: 20px !important;
+            box-shadow: 0 8px 0 #7c2d12, 0 16px 28px rgba(234, 88, 12, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.4) !important;
+            cursor: pointer !important;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: relative;
+            user-select: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+            transform: translateY(0);
+        }
+
+        .btn-confirm-th-attendee:hover {
+            background: linear-gradient(180deg, #ffa857 0%, #f97316 100%) !important;
+            border-bottom: 7px solid #9a3412 !important;
+            box-shadow: 0 9px 0 #7c2d12, 0 20px 35px rgba(234, 88, 12, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.5) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-confirm-th-attendee:active {
+            border-bottom: 2px solid #9a3412 !important;
+            box-shadow: 0 2px 0 #7c2d12, 0 6px 12px rgba(234, 88, 12, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+            transform: translateY(6px) !important;
+        }
+
+        @keyframes bounce-hand {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
         .package-checkbox-card {
             background: rgba(15, 23, 42, 0.02);
             border: 1px solid rgba(15, 23, 42, 0.06);
@@ -1633,10 +1667,14 @@
                 ⚠️ يرجى التأكد من استكمال كافة البيانات الأساسية (الاسم، التليفون، الجنس، السن، الوزن، وفصيلة الدم) وتحديد منطقة ألم واحدة على الأقل للشخص <span class="th-attendee-number">{number}</span> قبل تأكيد وتوليد البروتوكول العلاجي.
             </div>
 
-            <!-- زر التأكيد -->
-            <div class="text-center my-4">
-                <button type="button" class="btn btn-warning text-white fw-bold px-4 px-md-5 py-3 rounded-4 shadow fs-5 btn-confirm-th-attendee" id="btn-confirm-th-{index}" data-index="{index}">
-                    اضغط لإظهار البروتوكول العلاجي المناسب بناءً على فصيلة الدم والوزن وشدة الألم للشخص رقم <span class="th-attendee-number">{number}</span>
+            <!-- زر التأكيد وتوليد البروتوكول العلاجي -->
+            <div class="text-center my-4 py-2">
+                <button type="button" class="btn btn-confirm-th-attendee py-3 px-4 px-md-5 d-inline-flex flex-column align-items-center justify-content-center" id="btn-confirm-th-{index}" data-index="{index}" style="max-width: 740px; width: 100%;">
+                    <div class="d-flex align-items-center justify-content-center gap-2 fw-bold text-white mb-1" style="font-size: 1.22rem;">
+                        <span style="font-size: 1.5rem; animation: bounce-hand 1.5s infinite; display: inline-block;">👇</span>
+                        <span>اضغط هنا لإظهار واقتراح البروتوكول العلاجي للشخص رقم <span class="th-attendee-number">{number}</span></span>
+                        <span style="font-size: 1.5rem; animation: bounce-hand 1.5s infinite; display: inline-block;">👇</span>
+                    </div>
                 </button>
             </div>
 
