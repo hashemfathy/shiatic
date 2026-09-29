@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\MassageProtocol;
+use App\Models\MassageTechnique;
+
 class TherapeuticMassageHelper
 {
     /**
@@ -31,102 +34,6 @@ class TherapeuticMassageHelper
     ];
 
     /**
-     * Map of techniques count per region for Severe Pain per blood type and weight bracket
-     */
-    public static array $severeTechniqueMap = [
-        'A' => [
-            '30_55' => [
-                1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 3, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '55_100' => [
-                1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 3, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '100_300' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-        ],
-        'AB' => [
-            '30_55' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '55_100' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '100_300' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-        ],
-        'B' => [
-            '30_55' => [
-                1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 3, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '55_100' => [
-                1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 3, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '100_300' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-        ],
-        'O' => [
-            '30_55' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '55_100' => [
-                1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 3, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-            '100_300' => [
-                1 => 3, 2 => 2, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 2, 10 => 2,
-                11 => 6, 12 => 6, 13 => 5, 14 => 5, 15 => 2, 16 => 2, 17 => 1, 18 => 2, 19 => 1, 20 => 1,
-                21 => 2, 22 => 1, 23 => 1, 24 => 1, 25 => 5, 26 => 3, 27 => 2, 28 => 2, 29 => 3, 30 => 2,
-                31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 2, 39 => 2,
-            ],
-        ],
-    ];
-
-    /**
-     * Map of techniques count per region for Moderate Pain
-     */
-    public static array $moderateTechniqueMap = [
-        1 => 3, 2 => 1, 3 => 2, 4 => 3, 5 => 3, 6 => 1, 7 => 2, 8 => 3, 9 => 1, 10 => 1,
-        11 => 3, 12 => 3, 13 => 2, 14 => 2, 15 => 1, 16 => 1, 17 => 1, 18 => 1, 19 => 1, 20 => 1,
-        21 => 1, 22 => 1, 23 => 1, 24 => 1, 25 => 4, 26 => 1, 27 => 2, 28 => 4, 29 => 1, 30 => 2,
-        31 => 1, 32 => 1, 33 => 1, 34 => 1, 35 => 1, 36 => 1, 37 => 2, 38 => 1, 39 => 1,
-    ];
-
-    /**
      * Determine weight bracket key based on weight in kg
      */
     public static function getWeightBracket(float $weight): string
@@ -140,15 +47,27 @@ class TherapeuticMassageHelper
     }
 
     /**
+     * Get active MassageProtocol from database
+     */
+    public static function getProtocol(string $bloodType, string $painLevel, string $weightBracket): ?MassageProtocol
+    {
+        try {
+            $bloodTypeKey = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'O';
+            return MassageProtocol::with(['techniques' => function ($query) {
+                $query->where('is_active', true)->orderBy('order');
+            }])
+            ->where('blood_type', $bloodTypeKey)
+            ->where('pain_level', $painLevel)
+            ->where('weight_bracket', $weightBracket)
+            ->where('is_active', true)
+            ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Calculate therapeutic massage duration, pricing, and technique details
-     * based on Blood Type, Weight, and Severe & Moderate Pain Severities.
-     * 
-     * @param string $bloodType Blood Type ('A', 'B', 'AB', 'O')
-     * @param float $weight Weight in kg
-     * @param array $severeRegions Selected severe pain region numbers
-     * @param array $moderateRegions Selected moderate pain region numbers
-     * @param string $style 'intensive' or 'economy'
-     * @return array
      */
     public static function calculate(
         string $bloodType,
@@ -161,74 +80,104 @@ class TherapeuticMassageHelper
         if (empty($bloodType) || $bloodType === 'dont_know') {
             $bloodType = 'O';
         }
-        $bloodTypeKey = strtoupper($bloodType);
-        if (!isset(static::$bloodTypeMatrix[$bloodTypeKey])) {
-            $bloodTypeKey = 'O';
-        }
-
+        $bloodTypeKey = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'O';
+        $styleKey = in_array($style, ['intensive', 'economy']) ? $style : 'intensive';
         $bracket = static::getWeightBracket($weight);
-        $bloodMap = static::$severeTechniqueMap[$bloodTypeKey] ?? static::$severeTechniqueMap['O'];
-        $sevMap = $bloodMap[$bracket] ?? $bloodMap['55_100'];
 
-        $severeTechniqueCount = 0;
-        foreach ($severeRegions as $rNum) {
-            $severeTechniqueCount += $sevMap[(int)$rNum] ?? 1;
-        }
+        $severeRegions = array_values(array_unique(array_filter(array_map('intval', $severeRegions))));
+        $moderateRegions = array_values(array_unique(array_filter(array_map('intval', $moderateRegions))));
 
-        $moderateTechniqueCount = 0;
-        foreach ($moderateRegions as $rNum) {
-            $moderateTechniqueCount += static::$moderateTechniqueMap[(int)$rNum] ?? 1;
-        }
+        $totalSevereCount = count($severeRegions);
+        $totalModerateCount = count($moderateRegions);
 
-        $totalTechniques = $severeTechniqueCount + $moderateTechniqueCount;
-
-        if ($totalTechniques === 0) {
+        if ($totalSevereCount === 0 && $totalModerateCount === 0) {
             return [
                 'blood_type' => $bloodTypeKey,
+                'blood_type_label' => static::$bloodTypeMatrix[$bloodTypeKey]['label'] ?? "فصيلة {$bloodTypeKey}",
                 'weight' => $weight,
+                'weight_bracket' => $bracket,
                 'duration' => 0,
                 'total_price' => 0,
                 'technique' => 'لم يتم اختيار مناطق ألم',
+                'pressure' => static::$bloodTypeMatrix[$bloodTypeKey]['pressure'] ?? '',
+                'severe_count' => 0,
+                'moderate_count' => 0,
+                'severe_techniques' => 0,
+                'moderate_techniques' => 0,
+                'total_techniques' => 0,
             ];
         }
 
-        $bracket = static::getWeightBracket($weight);
+        // Fetch Severe and Moderate protocols
+        $severeProto = static::getProtocol($bloodTypeKey, 'severe', $bracket);
+        $moderateProto = static::getProtocol($bloodTypeKey, 'moderate', $bracket);
 
-        // Parameters per region based on bracket & severity (Severe & Moderate)
-        $severeParams = [
-            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 19.5], 'economy' => ['duration' => 1.0, 'price' => 13.0]],
-            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 30.0], 'economy' => ['duration' => 1.5, 'price' => 22.5]],
-            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 42.5], 'economy' => ['duration' => 2.0, 'price' => 34.0]],
+        $severeTechniquesList = [];
+        if ($severeProto && !empty($severeRegions)) {
+            $severeTechniquesList = $severeProto->techniques->filter(function ($tech) use ($severeRegions) {
+                return in_array((int)$tech->region_number, $severeRegions, true);
+            });
+        }
+
+        $moderateTechniquesList = [];
+        if ($moderateProto && !empty($moderateRegions)) {
+            $moderateTechniquesList = $moderateProto->techniques->filter(function ($tech) use ($moderateRegions) {
+                return in_array((int)$tech->region_number, $moderateRegions, true);
+            });
+        }
+
+        $severeTechCount = $severeTechniquesList->count();
+        $moderateTechCount = $moderateTechniquesList->count();
+
+        // Fallbacks if database not seeded
+        if ($severeTechCount === 0 && $totalSevereCount > 0) {
+            $severeTechCount = $totalSevereCount * 2;
+        }
+        if ($moderateTechCount === 0 && $totalModerateCount > 0) {
+            $moderateTechCount = $totalModerateCount * 1;
+        }
+
+        $totalTechniques = $severeTechCount + $moderateTechCount;
+
+        // Pricing & Duration from Severe protocol (or fallback)
+        $sevPrice = ($styleKey === 'intensive')
+            ? ($severeProto?->luxury_price_per_technique ?? 21.0)
+            : ($severeProto?->economy_price_per_technique ?? 14.0);
+        $sevDuration = ($styleKey === 'intensive')
+            ? ($severeProto?->luxury_duration_minutes ?? 1.5)
+            : ($severeProto?->economy_duration_minutes ?? 1.0);
+
+        // Pricing & Duration from Moderate protocol (or fallback)
+        $modPrice = ($styleKey === 'intensive')
+            ? ($moderateProto?->luxury_price_per_technique ?? 21.0)
+            : ($moderateProto?->economy_price_per_technique ?? 14.0);
+        $modDuration = ($styleKey === 'intensive')
+            ? ($moderateProto?->luxury_duration_minutes ?? 1.5)
+            : ($moderateProto?->economy_duration_minutes ?? 1.0);
+
+        $totalDuration = ($severeTechCount * $sevDuration) + ($moderateTechCount * $modDuration);
+        $totalPrice = ($severeTechCount * $sevPrice) + ($moderateTechCount * $modPrice);
+
+        $matrixInfo = static::$bloodTypeMatrix[$bloodTypeKey] ?? [
+            'label' => "فصيلة {$bloodTypeKey}",
+            'base_technique' => 'مساج علاجي مخصص',
+            'pressure' => "شدة {$severeProto?->intensity_percent}% وسرعة {$severeProto?->speed_percent}%",
         ];
-
-        $moderateParams = [
-            '30_55'   => ['intensive' => ['duration' => 1.5, 'price' => 19.5], 'economy' => ['duration' => 1.0, 'price' => 13.0]],
-            '55_100'  => ['intensive' => ['duration' => 2.0, 'price' => 30.0], 'economy' => ['duration' => 1.5, 'price' => 22.5]],
-            '100_300' => ['intensive' => ['duration' => 2.5, 'price' => 42.5], 'economy' => ['duration' => 2.0, 'price' => 34.0]],
-        ];
-
-        $sev = $severeParams[$bracket][$style];
-        $mod = $moderateParams[$bracket][$style];
-
-        $totalDuration = ($severeTechniqueCount * $sev['duration']) + ($moderateTechniqueCount * $mod['duration']);
-        $totalPrice = ($severeTechniqueCount * $sev['price']) + ($moderateTechniqueCount * $mod['price']);
-
-        $matrixInfo = static::$bloodTypeMatrix[$bloodTypeKey];
 
         return [
-            'blood_type'             => $bloodTypeKey,
-            'blood_type_label'       => $matrixInfo['label'],
-            'weight'                 => $weight,
-            'weight_bracket'         => $bracket,
-            'duration'               => round($totalDuration, 1),
-            'total_price'            => round($totalPrice, 2),
-            'technique'              => $matrixInfo['base_technique'],
-            'pressure'               => $matrixInfo['pressure'],
-            'severe_count'           => count($severeRegions),
-            'moderate_count'         => count($moderateRegions),
-            'severe_techniques'      => $severeTechniqueCount,
-            'moderate_techniques'    => $moderateTechniqueCount,
-            'total_techniques'       => $totalTechniques,
+            'blood_type'          => $bloodTypeKey,
+            'blood_type_label'    => $matrixInfo['label'],
+            'weight'              => $weight,
+            'weight_bracket'      => $bracket,
+            'duration'            => round($totalDuration, 1),
+            'total_price'         => round($totalPrice, 2),
+            'technique'           => $matrixInfo['base_technique'],
+            'pressure'            => $matrixInfo['pressure'],
+            'severe_count'        => $totalSevereCount,
+            'moderate_count'      => $totalModerateCount,
+            'severe_techniques'   => $severeTechCount,
+            'moderate_techniques' => $moderateTechCount,
+            'total_techniques'    => $totalTechniques,
         ];
     }
 
@@ -368,12 +317,8 @@ class TherapeuticMassageHelper
         $allPain = array_unique(array_merge($severeRegions, $moderateRegions));
         $chiroCalc = \App\Helpers\TherapeuticChiropracticHelper::calculate($allPain, $protocol);
 
-        $hasAnyPain = (count($severeRegions) > 0 || count($moderateRegions) > 0);
-        $rehabDuration = $hasAnyPain ? 5 : 0;
-        $rehabPrice = $rehabDuration * 12; // 60 EGP (5 min @ 12 EGP/min)
-
-        $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration'] + $rehabDuration);
-        $baseTotal = $massageCalc['total_price'] + $chiroCalc['total_price'] + $rehabPrice;
+        $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration']);
+        $baseTotal = $massageCalc['total_price'] + $chiroCalc['total_price'];
 
         $urgentFee = 0;
         if ($isUrgent) {
@@ -394,9 +339,7 @@ class TherapeuticMassageHelper
         $chiroNames = $chiroCalc['active_group_names'] ?? $chiroCalc['active_groups_names'] ?? [];
         $chiroGroupsStr = !empty($chiroNames) ? implode(' + ', $chiroNames) : 'لا يوجد';
         $descParts[] = "الكيروبراكتيك العلاجي [المناطق: {$chiroGroupsStr} | عدد التكنيكات: {$chiroCalc['total_techniques']} | السعر: {$chiroCalc['total_price']} ج.م | المدة: {$chiroCalc['duration']} دقيقة]";
-        if ($rehabDuration > 0) {
-            $descParts[] = "التأهيل [برنامج تمارين تأهيلية | السعر: {$rehabPrice} ج.م | المدة: {$rehabDuration} دقيقة]";
-        }
+        
         $hasSevere = count($severeRegions) > 0;
         if ($protocol === 'intensive') {
             $expectedSessionsPlan = $hasSevere ? '5 إلى 7 سيشن (ويفضل 3 سيشن أسبوعياً)' : '3 إلى 5 سيشن (ويفضل 2 سيشن أسبوعياً)';
@@ -413,9 +356,6 @@ class TherapeuticMassageHelper
         }
 
         $serviceParts = ['مساج علاجي', 'كيروبراكتيك علاجي'];
-        if ($rehabDuration > 0) {
-            $serviceParts[] = 'تأهيل';
-        }
 
         return [
             'total_price' => $finalPrice,
@@ -426,13 +366,16 @@ class TherapeuticMassageHelper
             'packages' => [$protocol],
             'massage' => $massageCalc,
             'chiro' => $chiroCalc,
-            'rehab_duration' => $rehabDuration,
-            'rehab_price' => $rehabPrice,
+            'rehab_duration' => 0,
+            'rehab_price' => 0,
             'urgent_fee' => $urgentFee,
             'expected_sessions' => $expectedSessionsPlan,
         ];
     }
 
+    /**
+     * Render detailed techniques table from database
+     */
     public static function renderDetailedTechniquesTable($record)
     {
         $desc = $record->description ?? $record->complaint ?? '';
@@ -441,61 +384,31 @@ class TherapeuticMassageHelper
         }
 
         $parsed = self::parseTherapeuticDescription($desc);
-        $bloodType = in_array($parsed['blood_type'], ['A', 'B', 'AB', 'O']) ? $parsed['blood_type'] : 'A';
+        $bloodType = in_array($parsed['blood_type'], ['A', 'B', 'AB', 'O']) ? $parsed['blood_type'] : 'O';
         $weight = $parsed['weight'];
         $bracket = self::getWeightBracket($weight);
         $protocol = $parsed['protocol'];
         $severeRegions = $parsed['severe_regions'];
         $moderateRegions = $parsed['moderate_regions'];
 
-        $jsonPath = storage_path('app/therapeutic_techniques.json');
-        if (!file_exists($jsonPath)) {
-            return new \Illuminate\Support\HtmlString('ملف التكنيكات غير متوفر.');
+        $severeProto = static::getProtocol($bloodType, 'severe', $bracket);
+        $moderateProto = static::getProtocol($bloodType, 'moderate', $bracket);
+
+        $severeRows = collect();
+        if ($severeProto && !empty($severeRegions)) {
+            $severeRows = $severeProto->techniques->filter(function ($tech) use ($severeRegions) {
+                return in_array((int)$tech->region_number, $severeRegions, true);
+            });
         }
 
-        $db = json_decode(file_get_contents($jsonPath), true);
-        $typeData = $db[$bloodType] ?? [];
-
-        $severeRows = [];
-        if (!empty($severeRegions) && isset($typeData['severe'][$bracket])) {
-            foreach ($typeData['severe'][$bracket] as $row) {
-                if (in_array((int)$row['region'], $severeRegions)) {
-                    $severeRows[] = $row;
-                }
-            }
+        $moderateRows = collect();
+        if ($moderateProto && !empty($moderateRegions)) {
+            $moderateRows = $moderateProto->techniques->filter(function ($tech) use ($moderateRegions) {
+                return in_array((int)$tech->region_number, $moderateRegions, true);
+            });
         }
 
-        $moderateRows = [];
-        if (!empty($moderateRegions) && isset($typeData['moderate'][$bracket])) {
-            foreach ($typeData['moderate'][$bracket] as $row) {
-                if (in_array((int)$row['region'], $moderateRegions)) {
-                    $moderateRows[] = $row;
-                }
-            }
-        }
-
-        // Fallback: If any moderate region was not found in moderate rows, check severe rows for it
-        if (!empty($moderateRegions)) {
-            $foundModRegions = array_map(fn($r) => (int)$r['region'], $moderateRows);
-            $missingInMod = array_values(array_diff($moderateRegions, $foundModRegions));
-            if (!empty($missingInMod) && isset($typeData['severe'][$bracket])) {
-                foreach ($typeData['severe'][$bracket] as $row) {
-                    if (in_array((int)$row['region'], $missingInMod)) {
-                        $fallbackRow = $row;
-                        $reps = $fallbackRow['reps'] ?? '20/15';
-                        if (str_contains($reps, '/')) {
-                            $parts = explode('/', $reps);
-                            $fallbackRow['reps'] = trim($parts[1] ?? $parts[0]);
-                        } else {
-                            $fallbackRow['reps'] = '15';
-                        }
-                        $moderateRows[] = $fallbackRow;
-                    }
-                }
-            }
-        }
-
-        if (empty($severeRows) && empty($moderateRows)) {
+        if ($severeRows->isEmpty() && $moderateRows->isEmpty()) {
             return new \Illuminate\Support\HtmlString('لا توجد تكنيكات مسجلة لمناطق الألم المحددة.');
         }
 
@@ -503,8 +416,8 @@ class TherapeuticMassageHelper
         $counter = 1;
 
         foreach ($severeRows as $r) {
-            $repVal = $r['reps'];
-            if (str_contains($repVal, '/')) {
+            $repVal = $r->reps_display ?? ($protocol === 'intensive' ? $severeProto?->luxury_reps : $severeProto?->economy_reps);
+            if (is_string($repVal) && str_contains($repVal, '/')) {
                 $parts = explode('/', $repVal);
                 $repVal = ($protocol === 'intensive') ? trim($parts[0]) : trim($parts[1]);
             }
@@ -512,21 +425,21 @@ class TherapeuticMassageHelper
             <tr style='border-bottom: 1px solid #334155; background: rgba(239, 68, 68, 0.05);'>
                 <td style='padding: 10px 8px; border: 1px solid #334155; color: #94a3b8; font-weight: bold;'>{$counter}</td>
                 <td style='padding: 10px 8px; border: 1px solid #334155;'><span style='background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;'>🔴 شديد</span></td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #ff9d42;'>منطقة {$r['region']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: 600; color: #f8fafc;'>{$r['name']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #38bdf8;'>{$r['technique']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r['tool']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r['direction']}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #ff9d42;'>منطقة {$r->region_number}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: 600; color: #f8fafc;'>{$r->region_name}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #38bdf8;'>{$r->massage_type}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r->tool}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r->direction}</td>
                 <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #34d399;'>{$repVal}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #f59e0b;'>{$r['intensity']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #a855f7;'>{$r['speed']}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #f59e0b;'>{$r->intensity_percent}%</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #a855f7;'>{$r->speed_percent}%</td>
             </tr>";
             $counter++;
         }
 
         foreach ($moderateRows as $r) {
-            $repVal = $r['reps'];
-            if (str_contains($repVal, '/')) {
+            $repVal = $r->reps_display ?? ($protocol === 'intensive' ? $moderateProto?->luxury_reps : $moderateProto?->economy_reps);
+            if (is_string($repVal) && str_contains($repVal, '/')) {
                 $parts = explode('/', $repVal);
                 $repVal = ($protocol === 'intensive') ? trim($parts[0]) : trim($parts[1]);
             }
@@ -534,25 +447,29 @@ class TherapeuticMassageHelper
             <tr style='border-bottom: 1px solid #334155; background: rgba(245, 158, 11, 0.05);'>
                 <td style='padding: 10px 8px; border: 1px solid #334155; color: #94a3b8; font-weight: bold;'>{$counter}</td>
                 <td style='padding: 10px 8px; border: 1px solid #334155;'><span style='background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;'>🟠 متوسط</span></td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #ff9d42;'>منطقة {$r['region']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: 600; color: #f8fafc;'>{$r['name']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #38bdf8;'>{$r['technique']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r['tool']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r['direction']}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #ff9d42;'>منطقة {$r->region_number}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: 600; color: #f8fafc;'>{$r->region_name}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #38bdf8;'>{$r->massage_type}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r->tool}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #cbd5e1;'>{$r->direction}</td>
                 <td style='padding: 10px 8px; border: 1px solid #334155; font-weight: bold; color: #34d399;'>{$repVal}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #f59e0b;'>{$r['intensity']}</td>
-                <td style='padding: 10px 8px; border: 1px solid #334155; color: #a855f7;'>{$r['speed']}</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #f59e0b;'>{$r->intensity_percent}%</td>
+                <td style='padding: 10px 8px; border: 1px solid #334155; color: #a855f7;'>{$r->speed_percent}%</td>
             </tr>";
             $counter++;
         }
 
-        $protoLabel = ($protocol === 'intensive') ? 'بروتوكول مكثف' : 'بروتوكول اقتصادي';
+        $protoLabel = ($protocol === 'intensive') ? 'بروتوكول مكثف (Luxury)' : 'بروتوكول اقتصادي (Economy)';
         $weightLabel = match($bracket) {
             '30_55' => '30 إلى 55 كجم',
             '55_100' => '55 إلى 100 كجم',
             '100_300' => '100 إلى 300 كجم',
             default => '55 إلى 100 كجم'
         };
+
+        $massageCalc = self::calculate($bloodType, $weight, $severeRegions, $moderateRegions, $protocol);
+        $massageDuration = $massageCalc['duration'] ?? 0;
+        $massagePrice = $massageCalc['total_price'] ?? 0;
 
         return new \Illuminate\Support\HtmlString("
         <div style='direction: rtl; text-align: right; font-family: sans-serif; margin-top: 15px;'>
@@ -564,6 +481,8 @@ class TherapeuticMassageHelper
                     <span style='background: #1e293b; color: #38bdf8; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>🩸 فصيلة {$bloodType}</span>
                     <span style='background: #1e293b; color: #a855f7; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>⚖️ فئة الوزن ({$weightLabel})</span>
                     <span style='background: #1e293b; color: #22c55e; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>🎯 {$protoLabel}</span>
+                    <span style='background: #1e293b; color: #38bdf8; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #0284c7;'>⏱️ مدة المساج: {$massageDuration} دقيقة</span>
+                    <span style='background: #1e293b; color: #ff9d42; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #d97706;'>💰 سعر المساج: {$massagePrice} ج.م</span>
                 </div>
             </div>
             <div style='overflow-x: auto;'>
@@ -866,4 +785,3 @@ class TherapeuticMassageHelper
         return new \Illuminate\Support\HtmlString($massageTable->toHtml() . $chiroTable->toHtml());
     }
 }
-

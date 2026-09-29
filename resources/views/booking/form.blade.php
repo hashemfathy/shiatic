@@ -733,10 +733,10 @@
                     <div class="card-body p-4">
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد الاستشارة</h4>
                         
-                        <!-- Urgent Booking Toggle -->
+                        <!-- Urgent Booking Checkbox -->
                         <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check form-switch d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="cs_is_urgent" name="consultation_is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
+                            <div class="form-check d-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" id="cs_is_urgent" name="consultation_is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
                                 <label class="form-check-label text-dark fw-bold" for="cs_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
@@ -893,10 +893,10 @@
                     <div class="card-body p-4">
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد السيشن  </h4>
                         
-                        <!-- Urgent Booking Toggle -->
+                        <!-- Urgent Booking Checkbox -->
                         <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check form-switch d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
+                            <div class="form-check d-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
                                 <label class="form-check-label text-dark fw-bold" for="is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
@@ -1044,10 +1044,10 @@
                     <div class="card-body p-4">
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد السيشن</h4>
                         
-                        <!-- Urgent Booking Toggle -->
+                        <!-- Urgent Booking Checkbox -->
                         <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check form-switch d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 2.5rem; height: 1.25rem; accent-color: #e67e22; margin-left: 1rem; cursor: pointer;">
+                            <div class="form-check d-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
                                 <label class="form-check-label text-dark fw-bold" for="th_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
@@ -1653,7 +1653,6 @@
                             <!-- مكونات البروتوكول الاقتصادي -->
                             <div class="p-1.5 px-2 mb-1 rounded-2 text-start" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); font-size: 0.82rem; line-height: 1.5;">
                                 <div class="fw-bold text-danger py-0.5">✔️ 🦴 الكيروبراكتيك العلاجي (اقتصادي)</div>
-                                <div class="text-muted py-0.5" style="opacity: 0.75;">✖️ 🏋️ التأهيل (غير مشمول)</div>
                                 <div class="fw-bold text-danger py-0.5">✔️ 💆‍♂️ المساج العلاجي (اقتصادي)</div>
                             </div>
 
@@ -1701,7 +1700,6 @@
                             <!-- مكونات البروتوكول المكثف -->
                             <div class="p-1.5 px-2 mb-1 rounded-2 text-start" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); font-size: 0.82rem; line-height: 1.5;">
                                 <div class="fw-bold text-success py-0.5">✔️ 🦴 كيروبراكتيك الخاص بشياتيك</div>
-                                <div class="fw-bold text-success py-0.5">✔️ 🏋️ برنامج شياتيك التأهيلي (5 دقائق)</div>
                                 <div class="fw-bold text-success py-0.5">✔️ 💆‍♂️ مساج شياتيك المميز</div>
                             </div>
 
@@ -3021,26 +3019,9 @@
             31: 1, 32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 37: 1, 38: 1, 39: 1
         };
 
-        // Chiropractic 5 Region Groups from كيروبراكتيك علاجي.pdf
-        const thRegionToChiroGroup = {
-            15: 1, 16: 1, 37: 1,
-            17: 2, 18: 2, 19: 2, 20: 2, 21: 2, 22: 2, 23: 2, 24: 2, 33: 2, 34: 2, 35: 2, 36: 2,
-            13: 3, 14: 3,
-            9: 4, 10: 4, 11: 4, 12: 4,
-            1: 5, 2: 5, 3: 5, 4: 5, 5: 5, 6: 5, 7: 5, 8: 5, 25: 5, 26: 5, 27: 5, 28: 5, 29: 5, 30: 5, 31: 5, 32: 5, 38: 5, 39: 5
-        };
-
-        const thChiroGroupTechniques = {
-            intensive: { 1: 10, 2: 10, 3: 10, 4: 11, 5: 12 },
-            economy:   { 1: 8,  2: 8,  3: 8,  4: 8,  5: 8 }
-        };
-
-        const thChiroGroupPricePerTechnique = {
-            intensive: { 1: 20.0, 2: 7.0, 3: 12.0, 4: 20.0, 5: 10.0 },
-            economy:   { 1: 18.0, 2: 7.0, 3: 12.0, 4: 20.0, 5: 10.0 }
-        };
-
-        const thChiroDurationPerTechnique = 0.25; // 15 seconds per technique (0.25 min)
+        // Dynamic configurations loaded from Database Models (ChiropracticRegion & MassageProtocol)
+        const dynamicChiroConfig = @json($chiroConfig ?? []);
+        const dynamicMassageConfig = @json($massageConfig ?? []);
 
         function calculateTherapeuticPricing(weightVal, effectiveBloodType, severeRegionsSet, moderateRegionsSet) {
             let bracket = '30_55';
@@ -3051,52 +3032,62 @@
             }
 
             const bloodKey = ['A', 'B', 'AB', 'O'].includes(effectiveBloodType) ? effectiveBloodType : 'O';
-            const severeParams = {
-                '30_55':   { intensive: { duration: 1.5, price: 19.5 }, economy: { duration: 1.0, price: 13.0 } },
-                '55_100':  { intensive: { duration: 2.0, price: 30.0 }, economy: { duration: 1.5, price: 22.5 } },
-                '100_300': { intensive: { duration: 2.5, price: 42.5 }, economy: { duration: 2.0, price: 34.0 } }
-            };
-            const moderateParams = {
-                '30_55':   { intensive: { duration: 1.5, price: 19.5 }, economy: { duration: 1.0, price: 13.0 } },
-                '55_100':  { intensive: { duration: 2.0, price: 30.0 }, economy: { duration: 1.5, price: 22.5 } },
-                '100_300': { intensive: { duration: 2.5, price: 42.5 }, economy: { duration: 2.0, price: 34.0 } }
-            };
 
-            const sevMap = (thSevereTechniqueMaps[bloodKey] && thSevereTechniqueMaps[bloodKey][bracket]) ? thSevereTechniqueMaps[bloodKey][bracket] : thSevereTechniqueMaps['O'][bracket];
+            // 1. Dynamic Massage Calculation from Database Massage Protocols
+            let sevIntPricePerTech = 28.0, sevIntDurPerTech = 2.0;
+            let sevEcoPricePerTech = 21.0, sevEcoDurPerTech = 1.5;
+            let modIntPricePerTech = 28.0, modIntDurPerTech = 2.0;
+            let modEcoPricePerTech = 21.0, modEcoDurPerTech = 1.5;
 
-            let sevIntCount = 0, sevEcoCount = 0;
+            if (dynamicMassageConfig && dynamicMassageConfig.params && dynamicMassageConfig.params[bloodKey]) {
+                const sevP = dynamicMassageConfig.params[bloodKey]['severe']?.[bracket];
+                if (sevP) {
+                    sevIntPricePerTech = sevP.intensive?.price ?? sevIntPricePerTech;
+                    sevIntDurPerTech = sevP.intensive?.duration ?? sevIntDurPerTech;
+                    sevEcoPricePerTech = sevP.economy?.price ?? sevEcoPricePerTech;
+                    sevEcoDurPerTech = sevP.economy?.duration ?? sevEcoDurPerTech;
+                }
+                const modP = dynamicMassageConfig.params[bloodKey]['moderate']?.[bracket];
+                if (modP) {
+                    modIntPricePerTech = modP.intensive?.price ?? modIntPricePerTech;
+                    modIntDurPerTech = modP.intensive?.duration ?? modIntDurPerTech;
+                    modEcoPricePerTech = modP.economy?.price ?? modEcoPricePerTech;
+                    modEcoDurPerTech = modP.economy?.duration ?? modEcoDurPerTech;
+                }
+            }
+
+            // Technique count per region from DB
+            const dbSevCounts = dynamicMassageConfig?.techniqueCounts?.['severe']?.[bloodKey]?.[bracket] || {};
+            const dbModCounts = dynamicMassageConfig?.techniqueCounts?.['moderate']?.[bloodKey]?.[bracket] || {};
+
+            let sevCount = 0;
             severeRegionsSet.forEach(rNum => {
-                const count = sevMap[rNum] || 2;
-                sevIntCount += count;
-                sevEcoCount += Math.max(1, count - 1);
+                const count = dbSevCounts[rNum] ?? (thSevereTechniqueMaps?.[bloodKey]?.[bracket]?.[rNum] ?? 2);
+                sevCount += count;
             });
 
-            let modIntCount = 0, modEcoCount = 0;
+            let modCount = 0;
             moderateRegionsSet.forEach(rNum => {
-                const count = thModerateTechniqueMap[rNum] || 1;
-                modIntCount += count;
-                modEcoCount += Math.max(1, count - 1);
+                const count = dbModCounts[rNum] ?? (thModerateTechniqueMap?.[rNum] ?? 1);
+                modCount += count;
             });
 
-            const intSevParams = severeParams[bracket].intensive;
-            const ecoSevParams = severeParams[bracket].economy;
-            const intModParams = moderateParams[bracket].intensive;
-            const ecoModParams = moderateParams[bracket].economy;
+            const massageIntDuration = (sevCount * sevIntDurPerTech) + (modCount * modIntDurPerTech);
+            const massageIntPrice = (sevCount * sevIntPricePerTech) + (modCount * modIntPricePerTech);
 
-            const massageIntDuration = (sevIntCount * intSevParams.duration) + (modIntCount * intModParams.duration);
-            const massageIntPrice = (sevIntCount * intSevParams.price) + (modIntCount * intModParams.price);
+            const massageEcoDuration = (sevCount * sevEcoDurPerTech) + (modCount * modEcoDurPerTech);
+            const massageEcoPrice = (sevCount * sevEcoPricePerTech) + (modCount * modEcoPricePerTech);
 
-            const massageEcoDuration = (sevEcoCount * ecoSevParams.duration) + (modEcoCount * ecoModParams.duration);
-            const massageEcoPrice = (sevEcoCount * ecoSevParams.price) + (modEcoCount * ecoModParams.price);
-
-            // Chiropractic calculation from كيروبراكتيك علاجي.pdf
+            // 2. Dynamic Chiropractic Calculation from Database Chiropractic Regions
             const activeChiroGroups = new Set();
+            const regionToGroupMap = dynamicChiroConfig?.regionToGroup || thRegionToChiroGroup;
+
             severeRegionsSet.forEach(rNum => {
-                const gId = thRegionToChiroGroup[rNum] || 5;
+                const gId = regionToGroupMap[rNum] || 5;
                 activeChiroGroups.add(gId);
             });
             moderateRegionsSet.forEach(rNum => {
-                const gId = thRegionToChiroGroup[rNum] || 5;
+                const gId = regionToGroupMap[rNum] || 5;
                 activeChiroGroups.add(gId);
             });
 
@@ -3104,14 +3095,23 @@
             let chiroEcoTechniques = 0;
             let chiroIntRawPrice = 0;
             let chiroEcoRawPrice = 0;
+            let chiroIntDuration = 0;
+            let chiroEcoDuration = 0;
 
             activeChiroGroups.forEach(gId => {
-                const intCount = (thChiroGroupTechniques.intensive[gId] || 0);
-                const ecoCount = (thChiroGroupTechniques.economy[gId] || 0);
+                const intCount = dynamicChiroConfig?.groupTechniques?.intensive?.[gId] ?? (thChiroGroupTechniques.intensive[gId] || 10);
+                const ecoCount = dynamicChiroConfig?.groupTechniques?.economy?.[gId] ?? (thChiroGroupTechniques.economy[gId] || 8);
+                const intPriceEach = dynamicChiroConfig?.groupPrices?.intensive?.[gId] ?? (thChiroGroupPricePerTechnique.intensive[gId] || 13.0);
+                const ecoPriceEach = dynamicChiroConfig?.groupPrices?.economy?.[gId] ?? (thChiroGroupPricePerTechnique.economy[gId] || 13.0);
+                const intDurEach = dynamicChiroConfig?.groupDurations?.intensive?.[gId] ?? 0.25;
+                const ecoDurEach = dynamicChiroConfig?.groupDurations?.economy?.[gId] ?? 0.25;
+
                 chiroIntTechniques += intCount;
                 chiroEcoTechniques += ecoCount;
-                chiroIntRawPrice += (intCount * (thChiroGroupPricePerTechnique.intensive[gId] || 19.0));
-                chiroEcoRawPrice += (ecoCount * (thChiroGroupPricePerTechnique.economy[gId] || 19.0));
+                chiroIntRawPrice += (intCount * intPriceEach);
+                chiroEcoRawPrice += (ecoCount * ecoPriceEach);
+                chiroIntDuration += (intCount * intDurEach);
+                chiroEcoDuration += (ecoCount * ecoDurEach);
             });
 
             // 15% discount on chiropractic if more than 3 regions (groups) selected
@@ -3121,21 +3121,12 @@
             const chiroIntPrice = Math.round((chiroIntRawPrice - chiroIntDiscount) * 100) / 100;
             const chiroEcoPrice = Math.round((chiroEcoRawPrice - chiroEcoDiscount) * 100) / 100;
 
-            const chiroIntDuration = chiroIntTechniques * thChiroDurationPerTechnique;
-            const chiroEcoDuration = chiroEcoTechniques * thChiroDurationPerTechnique;
+            // 3. Rehabilitation: Removed / Hidden completely
+            const totalIntDuration = massageIntDuration + chiroIntDuration;
+            const totalIntPrice = massageIntPrice + chiroIntPrice;
 
-            // Rehabilitation calculation: 5 mins (60 EGP)
-            const hasAnyPain = (severeRegionsSet.size > 0 || moderateRegionsSet.size > 0);
-            const intRehabDuration = hasAnyPain ? 5 : 0;
-            const intRehabPrice = hasAnyPain ? 60 : 0;
-            const ecoRehabDuration = hasAnyPain ? 5 : 0;
-            const ecoRehabPrice = hasAnyPain ? 60 : 0;
-
-            const totalIntDuration = massageIntDuration + chiroIntDuration + intRehabDuration;
-            const totalIntPrice = massageIntPrice + chiroIntPrice + intRehabPrice;
-
-            const totalEcoDuration = massageEcoDuration + chiroEcoDuration + ecoRehabDuration;
-            const totalEcoPrice = massageEcoPrice + chiroEcoPrice + ecoRehabPrice;
+            const totalEcoDuration = massageEcoDuration + chiroEcoDuration;
+            const totalEcoPrice = massageEcoPrice + chiroEcoPrice;
 
             return {
                 intensive: {
@@ -3447,7 +3438,28 @@
             }
 
             att.isConfirmed = true;
-            selectThAttendeeProtocol(index, 'economy');
+            att.selectedProtocol = null;
+            att.price = 0;
+            att.duration = 0;
+
+            const radioEco = document.getElementById(`th_proto_economy_${index}`);
+            const radioInt = document.getElementById(`th_proto_intensive_${index}`);
+            if (radioEco) radioEco.checked = false;
+            if (radioInt) radioInt.checked = false;
+
+            const cardEco = document.getElementById(`th-proto-economy-card-${index}`);
+            const cardInt = document.getElementById(`th-proto-intensive-card-${index}`);
+            if (cardEco) cardEco.classList.remove('selected-protocol');
+            if (cardInt) cardInt.classList.remove('selected-protocol');
+
+            const summaryProto = document.getElementById(`th_attendee_summary_protocol_${index}`);
+            const summaryPrice = document.getElementById(`th_attendee_summary_price_${index}`);
+            const summaryDur = document.getElementById(`th_attendee_summary_duration_${index}`);
+            if (summaryProto) summaryProto.textContent = 'يرجى اختيار البروتوكول أعلاه';
+            if (summaryPrice) summaryPrice.textContent = '0.00';
+            if (summaryDur) summaryDur.textContent = '0';
+
+            updateTherapeuticGroupSummary();
         }
 
         function selectThAttendeeProtocol(index, protocolType) {
@@ -3816,7 +3828,7 @@
                             if (!feedbackEl) return;
                             feedbackEl.style.display = 'block';
                             if (data.valid) {
-                                thCouponDiscount = parseFloat(data.discount_amount) || 0;
+                                thCouponDiscount = parseFloat(data.discount_amount || data.discount) || 0;
                                 const submittedCoupon = document.getElementById('th_submitted_coupon_code');
                                 if (submittedCoupon) submittedCoupon.value = data.code;
                                 feedbackEl.style.color = '#27ae60';

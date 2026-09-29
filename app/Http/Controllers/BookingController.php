@@ -19,7 +19,76 @@ class BookingController extends Controller
     {
         $urgentBookingFee = (int)\App\Models\Setting::get('urgent_booking_fee', 200);
         $minBookingAmount = (int)\App\Models\Setting::get('min_booking_amount', 2100);
-        return view('booking.form', compact('urgentBookingFee', 'minBookingAmount'));
+
+        // Fetch Dynamic Chiropractic Data from Database
+        $chiroRegions = \App\Models\ChiropracticRegion::with(['techniques' => fn($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->get();
+
+        $chiroConfig = [
+            'groupPrices' => ['intensive' => [], 'economy' => []],
+            'groupDurations' => ['intensive' => [], 'economy' => []],
+            'groupTechniques' => ['intensive' => [], 'economy' => []],
+            'regionToGroup' => [],
+        ];
+
+        foreach ($chiroRegions as $cr) {
+            $plan = $cr->plan_type === 'economy' ? 'economy' : 'intensive';
+            $gNum = (int)$cr->region_number;
+            $chiroConfig['groupPrices'][$plan][$gNum] = (float)$cr->price_per_technique;
+            $chiroConfig['groupDurations'][$plan][$gNum] = ((int)$cr->duration_seconds) / 60.0;
+            $chiroConfig['groupTechniques'][$plan][$gNum] = $cr->techniques->count();
+
+            if (is_array($cr->diagram_numbers)) {
+                foreach ($cr->diagram_numbers as $diagNum) {
+                    $chiroConfig['regionToGroup'][(int)$diagNum] = $gNum;
+                }
+            }
+        }
+
+        // Fetch Dynamic Massage Data from Database
+        $massageProtocols = \App\Models\MassageProtocol::with(['techniques' => fn($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->get();
+
+        $massageConfig = [
+            'params' => [],
+            'techniqueCounts' => [
+                'severe' => [],
+                'moderate' => [],
+            ],
+        ];
+
+        foreach ($massageProtocols as $mp) {
+            $bType = $mp->blood_type;
+            $pLevel = $mp->pain_level;
+            $wBracket = $mp->weight_bracket;
+
+            $massageConfig['params'][$bType][$pLevel][$wBracket] = [
+                'intensive' => [
+                    'price' => (float)$mp->luxury_price_per_technique,
+                    'duration' => (float)$mp->luxury_duration_minutes,
+                    'reps' => (int)$mp->luxury_reps,
+                ],
+                'economy' => [
+                    'price' => (float)$mp->economy_price_per_technique,
+                    'duration' => (float)$mp->economy_duration_minutes,
+                    'reps' => (int)$mp->economy_reps,
+                ],
+                'intensity' => (int)$mp->intensity_percent,
+                'speed' => (int)$mp->speed_percent,
+            ];
+
+            // Count techniques per region
+            $counts = [];
+            foreach ($mp->techniques as $tech) {
+                $rNum = (int)$tech->region_number;
+                $counts[$rNum] = ($counts[$rNum] ?? 0) + 1;
+            }
+            $massageConfig['techniqueCounts'][$pLevel][$bType][$wBracket] = $counts;
+        }
+
+        return view('booking.form', compact('urgentBookingFee', 'minBookingAmount', 'chiroConfig', 'massageConfig'));
     }
 
     // Store the booking request
@@ -424,13 +493,9 @@ class BookingController extends Controller
             $allPainRegions = array_unique(array_merge($severeRegions, $moderateRegions));
             $chiroCalc = \App\Helpers\TherapeuticChiropracticHelper::calculate($allPainRegions, $protocol);
 
-            // 3. Calculate Rehabilitation
-            $hasAnyPain = (count($severeRegions) > 0 || count($moderateRegions) > 0);
-            $rehabDuration = ($hasAnyPain && $protocol === 'intensive') ? 5 : 0;
-            $rehabPrice = $rehabDuration * 12; // 60 ج.م
-
-            $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration'] + $rehabDuration);
-            $totalAttendeePrice = $massageCalc['total_price'] + $chiroCalc['total_price'] + $rehabPrice;
+            // 3. Total Calculation (Rehabilitation removed)
+            $totalDuration = (int)round($massageCalc['duration'] + $chiroCalc['duration']);
+            $totalAttendeePrice = $massageCalc['total_price'] + $chiroCalc['total_price'];
 
             // Build detailed description for Filament
             $descParts = [];
@@ -443,9 +508,7 @@ class BookingController extends Controller
             $descParts[] = "المساج العلاجي [التكنيك: {$massageCalc['technique']} | عدد التكنيكات: {$massageCalc['total_techniques']} | السعر: {$massageCalc['total_price']} ج.م | المدة: {$massageCalc['duration']} دقيقة]";
             $chiroGroupsStr = !empty($chiroCalc['active_groups_names']) ? implode(' + ', $chiroCalc['active_groups_names']) : 'لا يوجد';
             $descParts[] = "الكيروبراكتيك العلاجي [المناطق: {$chiroGroupsStr} | عدد التكنيكات: {$chiroCalc['total_techniques']} | السعر: {$chiroCalc['total_price']} ج.م | المدة: {$chiroCalc['duration']} دقيقة]";
-            if ($rehabDuration > 0) {
-                $descParts[] = "التأهيل [برنامج تمارين تأهيلية | السعر: {$rehabPrice} ج.م | المدة: {$rehabDuration} دقيقة]";
-            }
+            
             $hasSevere = count($severeRegions) > 0;
             if ($protocol === 'intensive') {
                 $expectedSessionsPlan = $hasSevere ? '5 إلى 7 سيشن (ويفضل 3 سيشن أسبوعياً)' : '3 إلى 5 سيشن (ويفضل 2 سيشن أسبوعياً)';
@@ -454,9 +517,7 @@ class BookingController extends Controller
             }
             $descParts[] = "الخطة المقترحة [عدد السيشن المتوقعة: {$expectedSessionsPlan}]";
 
-            $serviceTypeParts = ['مساج علاجي', 'كيروبراكتيك علاجي'];
-            if ($rehabDuration > 0) $serviceTypeParts[] = 'تأهيل';
-            $serviceType = implode(' + ', $serviceTypeParts);
+            $serviceType = 'مساج علاجي + كيروبراكتيك علاجي';
 
             // Region repetitions maps
             $bloodTypeKey = in_array(strtoupper($bloodType), ['A', 'B', 'AB', 'O']) ? strtoupper($bloodType) : 'O';
@@ -1334,6 +1395,7 @@ class BookingController extends Controller
             'type' => $coupon->type,
             'value' => $coupon->value,
             'discount' => $discount,
+            'discount_amount' => $discount,
             'message' => 'تم تطبيق الكوبون بنجاح! خصم بقيمة ' . $discount . ' ج.م.'
         ]);
     }

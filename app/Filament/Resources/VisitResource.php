@@ -179,10 +179,12 @@ class VisitResource extends Resource
                                     );
 
                                     $massagePrice = $calc['massage']['total_price'] ?? 0;
+                                    $massageDuration = $calc['massage']['duration'] ?? 0;
                                     $crackingPrice = $calc['chiro']['total_price'] ?? 0;
-                                    $rehabPrice = $calc['rehab_price'] ?? 0;
+                                    $crackingDuration = $calc['chiro']['duration'] ?? 0;
                                     $urgentFee = $calc['urgent_fee'] ?? 0;
                                     $finalPrice = $calc['total_price'] ?? 0;
+                                    $finalDuration = (int)round($massageDuration + $crackingDuration);
 
                                     $urgentFeeBox = '';
                                     if ($urgentFee > 0) {
@@ -190,16 +192,6 @@ class VisitResource extends Resource
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #ff8c00; font-size: 0.85rem; margin-bottom: 0.25rem;'>🔥 رسوم مستعجل</div>
                                                 <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$urgentFee} EGP</div>
-                                            </div>
-                                        ";
-                                    }
-
-                                    $rehabBox = '';
-                                    if ($rehabPrice > 0) {
-                                        $rehabBox = "
-                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏃‍♂️ سعر التأهيل</div>
-                                                <div style='color: #06b6d4; font-size: 1.25rem; font-weight: bold;'>{$rehabPrice} EGP</div>
                                             </div>
                                         ";
                                     }
@@ -217,21 +209,40 @@ class VisitResource extends Resource
                                     $pricingHtml = '';
                                     if (auth()->user()?->type !== 'specialist') {
                                         $pricingHtml = "
-                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
                                                 <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ سعر المساج</div>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ المساج العلاجي</div>
                                                     <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$massagePrice} EGP</div>
+                                                    <div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$massageDuration} دقيقة</div>
                                                 </div>
                                                 <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ سعر الكيروبراكتيك</div>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ الكيروبراكتيك العلاجي</div>
                                                     <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingPrice} EGP</div>
+                                                    <div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$crackingDuration} دقيقة</div>
                                                 </div>
-                                                {$rehabBox}
                                                 {$urgentFeeBox}
                                                 {$couponBox}
                                                 <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
                                                     <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
                                                     <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
+                                                    <div style='color: #22c55e; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة الكلية: {$finalDuration} دقيقة</div>
+                                                </div>
+                                            </div>
+                                        ";
+                                    } else {
+                                        $pricingHtml = "
+                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                                <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ مدة المساج العلاجي</div>
+                                                    <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$massageDuration} دقيقة</div>
+                                                </div>
+                                                <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                    <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ مدة الكيروبراكتيك</div>
+                                                    <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingDuration} دقيقة</div>
+                                                </div>
+                                                <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                                    <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>⏱️ المدة الإجمالية للسيشن</div>
+                                                    <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$finalDuration} دقيقة</div>
                                                 </div>
                                             </div>
                                         ";
@@ -256,8 +267,13 @@ class VisitResource extends Resource
                                 $massagePrice = $basePrices['massage'] ?? 0;
                                 $crackingPrice = $basePrices['cracking'] ?? 0;
                                 $hijamaPrice = $basePrices['hijama'] ?? 0;
-                                $rehabPrice = $basePrices['rehab'] ?? 0;
                                 
+                                $durationPricing = \App\Filament\Resources\RequestResource::calculatePricingAndDuration($request);
+                                $massageDuration = $durationPricing['massage_duration'] ?? 0;
+                                $crackingDuration = $durationPricing['cracking_duration'] ?? 0;
+                                $hijamaDuration = $durationPricing['hijama_duration'] ?? 0;
+                                $finalDuration = (int)round($request->total_duration ?: ($durationPricing['total_duration'] ?? 0));
+
                                 $urgentFee = $request->is_urgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
                                 $totalBase = array_sum($basePrices) + $urgentFee;
 
@@ -276,16 +292,6 @@ class VisitResource extends Resource
                                     ";
                                 }
 
-                                $rehabBox = '';
-                                if ($rehabPrice > 0) {
-                                    $rehabBox = "
-                                        <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
-                                            <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏃‍♂️ سعر التأهيل</div>
-                                            <div style='color: #06b6d4; font-size: 1.25rem; font-weight: bold;'>{$rehabPrice} EGP</div>
-                                        </div>
-                                    ";
-                                }
-
                                 $couponBox = '';
                                 if ($couponDiscount > 0) {
                                     $couponCode = $get('coupon_code') ?? $record?->coupon_code ?? 'خصم الكوبون';
@@ -299,26 +305,54 @@ class VisitResource extends Resource
 
                                 $pricingHtml = '';
                                 if (auth()->user()?->type !== 'specialist') {
+                                    $massageDurationText = $massageDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$massageDuration} دقيقة</div>" : "";
+                                    $crackingDurationText = $crackingDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$crackingDuration} دقيقة</div>" : "";
+                                    $hijamaDurationText = $hijamaDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$hijamaDuration} دقيقة</div>" : "";
+
                                     $pricingHtml = "
-                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ سعر المساج</div>
                                                 <div style='color: #ff9d42; font-size: 1.25rem; font-weight: bold;'>{$massagePrice} EGP</div>
+                                                {$massageDurationText}
                                             </div>
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ سعر التقويم</div>
                                                 <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingPrice} EGP</div>
+                                                {$crackingDurationText}
                                             </div>
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 سعر الحجامة</div>
                                                 <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaPrice} EGP</div>
+                                                {$hijamaDurationText}
                                             </div>
-                                            {$rehabBox}
                                             {$urgentFeeBox}
                                             {$couponBox}
                                             <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
                                                 <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>💰 الإجمالي بعد الخصم</div>
                                                 <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$finalPrice} EGP</div>
+                                                <div style='color: #22c55e; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة الكلية: {$finalDuration} دقيقة</div>
+                                            </div>
+                                        </div>
+                                    ";
+                                } else {
+                                    $pricingHtml = "
+                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ مدة المساج</div>
+                                                <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$massageDuration} دقيقة</div>
+                                            </div>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ مدة التقويم</div>
+                                                <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingDuration} دقيقة</div>
+                                            </div>
+                                            <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
+                                                <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 مدة الحجامة</div>
+                                                <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaDuration} دقيقة</div>
+                                            </div>
+                                            <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                                <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>⏱️ المدة الإجمالية للسيشن</div>
+                                                <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$finalDuration} دقيقة</div>
                                             </div>
                                         </div>
                                     ";

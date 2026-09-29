@@ -2,54 +2,28 @@
 
 namespace App\Helpers;
 
+use App\Models\ChiropracticRegion;
+use App\Models\ChiropracticTechnique;
 use App\Models\Request as BookingRequest;
 use App\Models\Visit;
+use Illuminate\Support\Facades\Cache;
 
 class TherapeuticChiropracticHelper
 {
     /**
-     * Price per chiropractic technique in EGP
+     * Default Price per chiropractic technique in EGP
      */
-    public static float $pricePerTechnique = 19.0;
+    public static float $pricePerTechnique = 13.0;
 
     /**
-     * Price per chiropractic technique by protocol style in EGP
-     */
-    public static array $pricePerTechniqueMap = [
-        'intensive' => 19.0,
-        'economy' => 19.23,
-    ];
-
-    /**
-     * Price per chiropractic technique by region group and protocol style in EGP
-     * Extracted from كيروبراكتيك علاجي.pdf
-     */
-    public static array $groupPricePerTechniqueMap = [
-        'intensive' => [
-            1 => 20.0, // منطقة 1 العنقية (20 ج للتكنيك)
-            2 => 7.0,  // منطقة 2 الأكتاف والذراعين (7 ج للتكنيك)
-            3 => 12.0, // منطقة 3 الصدرية (12 ج للتكنيك)
-            4 => 20.0, // منطقة 4 القطنية (20 ج للتكنيك)
-            5 => 10.0, // منطقة 5 القدمين والطرف السفلي (10 ج للتكنيك)
-        ],
-        'economy' => [
-            1 => 18.0, // منطقة 1 العنقية (18 ج للتكنيك)
-            2 => 7.0,  // منطقة 2 الأكتاف والذراعين (7 ج للتكنيك)
-            3 => 12.0, // منطقة 3 الصدرية (12 ج للتكنيك)
-            4 => 20.0, // منطقة 4 القطنية (20 ج للتكنيك)
-            5 => 10.0, // منطقة 5 القدمين والطرف السفلي (10 ج للتكنيك)
-        ],
-    ];
-
-    /**
-     * Duration per chiropractic technique in minutes (15 seconds = 0.25 min)
+     * Default Duration per chiropractic technique in minutes (15 seconds = 0.25 min)
      */
     public static float $durationPerTechnique = 0.25;
 
     /**
-     * Map of 5 Main Body Region Groups with assigned region numbers (1 to 39)
+     * Fallback Map of 5 Main Body Region Groups with assigned region numbers (1 to 39)
      */
-    public static array $regionGroups = [
+    public static array $defaultRegionGroups = [
         1 => [
             'name' => 'منطقة 1 العنقية',
             'regions' => [15, 16, 37]
@@ -73,153 +47,51 @@ class TherapeuticChiropracticHelper
     ];
 
     /**
-     * Total techniques count per region group based on style (intensive vs economy)
+     * Get active regions from database or cache
      */
-    public static array $groupTechniquesMap = [
-        'intensive' => [
-            1 => 10, // العنقية (10 تكنيكات)
-            2 => 10, // الأكتاف والذراعين (10 تكنيكات)
-            3 => 10, // الصدرية (10 تكنيكات)
-            4 => 11, // القطنية (11 تكنيك)
-            5 => 12  // القدمين والطرف السفلي (12 تكنيك)
-        ],
-        'economy' => [
-            1 => 8,  // العنقية (8 تكنيكات)
-            2 => 8,  // الأكتاف والذراعين (8 تكنيكات)
-            3 => 8,  // الصدرية (8 تكنيكات)
-            4 => 8,  // القطنية (8 تكنيكات)
-            5 => 8   // القدمين والطرف السفلي (8 تكنيكات)
-        ]
-    ];
-
-    /**
-     * Full detailed techniques catalog extracted from كيروبراكتيك علاجي.pdf
-     */
-    public static array $techniques = [
-        'intensive' => [
-            // منطقة 1 العنقية (10 تكنيكات)
-            ['group' => 1, 'region' => '16', 'name' => 'الاذن اليمنى', 'position' => 'الجلوس', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 1, 'region' => '15', 'name' => 'الاذن اليسرى', 'position' => 'الجلوس', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'اماله 1', 'position' => 'الجلوس', 'direction' => 'كتف مرتفع', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'اماله 2', 'position' => 'الجلوس', 'direction' => 'كتف منخفض', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 1', 'position' => 'النوم على الوجه', 'direction' => 'كتف مرتفع', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 2', 'position' => 'النوم على الوجه', 'direction' => 'كتف منخفض', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 3', 'position' => 'النوم على الظهر', 'direction' => 'كتف مرتفع', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 4', 'position' => 'النوم على الظهر', 'direction' => 'كتف منخفض', 'rep' => 2],
-            ['group' => 1, 'region' => '16', 'name' => 'الفك الايمن', 'position' => 'النوم على الظهر', 'direction' => 'امام اسفل', 'rep' => 2],
-            ['group' => 1, 'region' => '15', 'name' => 'الفك الايسر', 'position' => 'النوم على الظهر', 'direction' => 'امام اسفل', 'rep' => 2],
-
-            // منطقة 2 الاكتاف والذراعين (10 تكنيكات)
-            ['group' => 2, 'region' => '20', 'name' => 'تيبس كتف ايمن', 'position' => 'جلوس', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '20', 'name' => 'اختناق وتر كتف ايمن', 'position' => 'جلوس', 'direction' => 'للخلف', 'rep' => 3],
-            ['group' => 2, 'region' => '17', 'name' => 'تيبس كتف ايسر', 'position' => 'جلوس', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '17', 'name' => 'اختناق وتر كتف ايسر', 'position' => 'جلوس', 'direction' => 'للخلف', 'rep' => 3],
-            ['group' => 2, 'region' => '22', 'name' => 'رسغ ايمن', 'position' => 'نوم على الظهر', 'direction' => 'فصل', 'rep' => 3],
-            ['group' => 2, 'region' => '21', 'name' => 'جولف ايمن', 'position' => 'نوم على الظهر', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '20/21/22', 'name' => 'رسغ كوع كتف ايمن', 'position' => 'نوم على الظهر', 'direction' => 'نطر', 'rep' => 3],
-            ['group' => 2, 'region' => '19', 'name' => 'رسغ ايسر', 'position' => 'نوم على الظهر', 'direction' => 'فصل', 'rep' => 3],
-            ['group' => 2, 'region' => '18', 'name' => 'جولف ايسر', 'position' => 'نوم على الظهر', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '17/18/19', 'name' => 'رسغ كوع كتف ايسر', 'position' => 'نوم على الظهر', 'direction' => 'نطر', 'rep' => 3],
-
-            // منطقة 3 الصدرية (10 تكنيكات)
-            ['group' => 3, 'region' => '13/14', 'name' => 'فراشه مغلقه فوطه', 'position' => 'الوقوف او الجلوس', 'direction' => 'لالعلى', 'rep' => 5],
-            ['group' => 3, 'region' => '13/14', 'name' => 'فراشه مفتوحه فوطه', 'position' => 'الوقوف او الجلوس', 'direction' => 'لالعلى', 'rep' => 5],
-            ['group' => 3, 'region' => '14', 'name' => 'السفليه اليمنى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '14', 'name' => 'علويه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '13', 'name' => 'سفليه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '13', 'name' => 'علويه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '14', 'name' => 'تريجر سفلي ايمن', 'position' => 'النوم على الوجه', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 3, 'region' => '14', 'name' => 'تريجر علوي ايمن', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 3, 'region' => '13', 'name' => 'تريجر سفلي ايسر', 'position' => 'النوم على الوجه', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 3, 'region' => '13', 'name' => 'تريجر علوي ايسر', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 3],
-
-            // منطقة 4 القطنية (11 تكنيك)
-            ['group' => 4, 'region' => '11/12', 'name' => 'دائري 1', 'position' => 'الجلوس او الوقوف', 'direction' => 'قدم المنخفض', 'rep' => 4],
-            ['group' => 4, 'region' => '11/12', 'name' => 'دائري 2', 'position' => 'الجلوس او الوقوف', 'direction' => 'قدم البروز', 'rep' => 4],
-            ['group' => 4, 'region' => '11/12', 'name' => 'فراشه قطنيه', 'position' => 'الجلوس او الوقوف', 'direction' => 'لالعلى', 'rep' => 4],
-            ['group' => 4, 'region' => '10', 'name' => 'الحوض الايمن', 'position' => 'النوم على الوجه', 'direction' => 'اسفل واعلى', 'rep' => 3],
-            ['group' => 4, 'region' => '12', 'name' => 'قطنيه سفليه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '12', 'name' => 'قطنيه علويه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '9', 'name' => 'الحوض الايسر', 'position' => 'النوم على الوجه', 'direction' => 'اسفل واعلى', 'rep' => 3],
-            ['group' => 4, 'region' => '11', 'name' => 'قطنيه سفليه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '11', 'name' => 'قطنيه علويه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '9/10', 'name' => 'شد القدم الطويله', 'position' => 'النوم على الظهر', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 4, 'region' => '9/10', 'name' => 'شد القدم القصيره', 'position' => 'النوم على الظهر', 'direction' => 'لالسفل', 'rep' => 4],
-
-            // منطقة 5 القدمين (12 تكنيك)
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 1', 'position' => 'النوم على الوجه', 'direction' => 'للداخل', 'rep' => 2],
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 2', 'position' => 'النوم على الوجه', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 3', 'position' => 'النوم على الوجه', 'direction' => 'اخليس', 'rep' => 2],
-            ['group' => 5, 'region' => '6', 'name' => 'ركبه يمنى 1', 'position' => 'النوم على الوجه', 'direction' => 'ثني', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 1', 'position' => 'النوم على الوجه', 'direction' => 'للداخل', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 2', 'position' => 'النوم على الوجه', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 3', 'position' => 'النوم على الوجه', 'direction' => 'اخليس', 'rep' => 2],
-            ['group' => 5, 'region' => '2', 'name' => 'ركبه يسرى 1', 'position' => 'النوم على الوجه', 'direction' => 'ثني', 'rep' => 2],
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 6', 'position' => 'النوم على الظهر', 'direction' => 'جذب', 'rep' => 2],
-            ['group' => 5, 'region' => '6', 'name' => 'ركبه يمنى 2', 'position' => 'النوم على الظهر', 'direction' => 'تقويم خ', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 6', 'position' => 'النوم على الظهر', 'direction' => 'جذب', 'rep' => 2],
-            ['group' => 5, 'region' => '2', 'name' => 'ركبه يسرى 2', 'position' => 'النوم على الظهر', 'direction' => 'تقويم خ', 'rep' => 2],
-        ],
-        'economy' => [
-            // منطقة 1 العنقية (8 تكنيكات)
-            ['group' => 1, 'region' => '16', 'name' => 'الاذن اليمنى', 'position' => 'الجلوس', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 1, 'region' => '15', 'name' => 'الاذن اليسرى', 'position' => 'الجلوس', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'اماله 1', 'position' => 'الجلوس', 'direction' => 'كتف مرتفع', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'اماله 2', 'position' => 'الجلوس', 'direction' => 'كتف منخفض', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 3', 'position' => 'النوم على الظهر', 'direction' => 'كتف مرتفع', 'rep' => 2],
-            ['group' => 1, 'region' => '37', 'name' => 'دائري 4', 'position' => 'النوم على الظهر', 'direction' => 'كتف منخفض', 'rep' => 2],
-            ['group' => 1, 'region' => '16', 'name' => 'الفك الايمن', 'position' => 'النوم على الظهر', 'direction' => 'امام اسفل', 'rep' => 2],
-            ['group' => 1, 'region' => '15', 'name' => 'الفك الايسر', 'position' => 'النوم على الظهر', 'direction' => 'امام اسفل', 'rep' => 2],
-
-            // منطقة 2 الاكتاف والذراعين (8 تكنيكات)
-            ['group' => 2, 'region' => '20', 'name' => 'تيبس كتف ايمن', 'position' => 'جلوس', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '17', 'name' => 'تيبس كتف ايسر', 'position' => 'جلوس', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '22', 'name' => 'رسغ ايمن', 'position' => 'نوم على الظهر', 'direction' => 'فصل', 'rep' => 3],
-            ['group' => 2, 'region' => '21', 'name' => 'جولف ايمن', 'position' => 'نوم على الظهر', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '20/21/22', 'name' => 'رسغ كوع كتف ايمن', 'position' => 'نوم على الظهر', 'direction' => 'نطر', 'rep' => 3],
-            ['group' => 2, 'region' => '19', 'name' => 'رسغ ايسر', 'position' => 'نوم على الظهر', 'direction' => 'فصل', 'rep' => 3],
-            ['group' => 2, 'region' => '18', 'name' => 'جولف ايسر', 'position' => 'نوم على الظهر', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 2, 'region' => '17/18/19', 'name' => 'رسغ كوع كتف ايسر', 'position' => 'نوم على الظهر', 'direction' => 'نطر', 'rep' => 3],
-
-            // منطقة 3 الصدرية (8 تكنيكات)
-            ['group' => 3, 'region' => '14', 'name' => 'السفليه اليمنى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '14', 'name' => 'علويه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '13', 'name' => 'سفليه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '13', 'name' => 'علويه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'اعلى فقط', 'rep' => 4],
-            ['group' => 3, 'region' => '14', 'name' => 'تريجر سفلي ايمن', 'position' => 'النوم على الوجه', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 3, 'region' => '14', 'name' => 'تريجر علوي ايمن', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 3],
-            ['group' => 3, 'region' => '13', 'name' => 'تريجر سفلي ايسر', 'position' => 'النوم على الوجه', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 3, 'region' => '13', 'name' => 'تريجر علوي ايسر', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 3],
-
-            // منطقة 4 القطنية (8 تكنيكات)
-            ['group' => 4, 'region' => '10', 'name' => 'الحوض الايمن', 'position' => 'النوم على الوجه', 'direction' => 'اسفل واعلى', 'rep' => 3],
-            ['group' => 4, 'region' => '12', 'name' => 'قطنيه سفليه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '12', 'name' => 'قطنيه علويه يمنى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '9', 'name' => 'الحوض الايسر', 'position' => 'النوم على الوجه', 'direction' => 'اسفل واعلى', 'rep' => 3],
-            ['group' => 4, 'region' => '11', 'name' => 'قطنيه سفليه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '11', 'name' => 'قطنيه علويه يسرى', 'position' => 'النوم على الوجه', 'direction' => 'لالعلى', 'rep' => 2],
-            ['group' => 4, 'region' => '9/10', 'name' => 'شد القدم الطويله', 'position' => 'النوم على الظهر', 'direction' => 'لالسفل', 'rep' => 2],
-            ['group' => 4, 'region' => '9/10', 'name' => 'شد القدم القصيره', 'position' => 'النوم على الظهر', 'direction' => 'لالسفل', 'rep' => 4],
-
-            // منطقة 5 القدمين (8 تكنيكات)
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 1', 'position' => 'النوم على الوجه', 'direction' => 'للداخل', 'rep' => 2],
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 2', 'position' => 'النوم على الوجه', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 5, 'region' => '8', 'name' => 'انكل ايمن 3', 'position' => 'النوم على الوجه', 'direction' => 'اخليس', 'rep' => 2],
-            ['group' => 5, 'region' => '6', 'name' => 'ركبه يمنى 1', 'position' => 'النوم على الوجه', 'direction' => 'ثني', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 1', 'position' => 'النوم على الوجه', 'direction' => 'للداخل', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 2', 'position' => 'النوم على الوجه', 'direction' => 'للخارج', 'rep' => 2],
-            ['group' => 5, 'region' => '4', 'name' => 'انكل ايسر 3', 'position' => 'النوم على الوجه', 'direction' => 'اخليس', 'rep' => 2],
-            ['group' => 5, 'region' => '2', 'name' => 'ركبه يسرى 1', 'position' => 'النوم على الوجه', 'direction' => 'ثني', 'rep' => 2],
-        ]
-    ];
-
-    /**
-     * Get the price per technique for a given style ('intensive' or 'economy')
-     */
-    public static function getPricePerTechnique(string $style = 'intensive'): float
+    public static function getActiveRegions(): array
     {
-        $styleKey = ($style === 'economy') ? 'economy' : 'intensive';
-        return static::$pricePerTechniqueMap[$styleKey] ?? static::$pricePerTechnique;
+        try {
+            $regions = ChiropracticRegion::with(['techniques' => function ($query) {
+                $query->where('is_active', true)->orderBy('order');
+            }])->where('is_active', true)->get();
+
+            if ($regions->isNotEmpty()) {
+                return $regions->toArray();
+            }
+        } catch (\Throwable $e) {
+            // In case tables do not exist yet
+        }
+
+        return [];
+    }
+
+    /**
+     * Get region groups configuration dynamically
+     */
+    public static function getRegionGroups(): array
+    {
+        $activeRegions = static::getActiveRegions();
+        if (empty($activeRegions)) {
+            return static::$defaultRegionGroups;
+        }
+
+        $groups = [];
+        foreach ($activeRegions as $reg) {
+            $gNum = (int)$reg['region_number'];
+            if (!isset($groups[$gNum])) {
+                $diagramNums = is_array($reg['diagram_numbers']) 
+                    ? array_map('intval', $reg['diagram_numbers']) 
+                    : (static::$defaultRegionGroups[$gNum]['regions'] ?? []);
+
+                $groups[$gNum] = [
+                    'name' => $reg['name'],
+                    'regions' => $diagramNums,
+                ];
+            }
+        }
+
+        return !empty($groups) ? $groups : static::$defaultRegionGroups;
     }
 
     /**
@@ -227,7 +99,8 @@ class TherapeuticChiropracticHelper
      */
     public static function getGroupForRegion(int $regionNumber): int
     {
-        foreach (static::$regionGroups as $groupId => $groupInfo) {
+        $groups = static::getRegionGroups();
+        foreach ($groups as $groupId => $groupInfo) {
             if (in_array((int)$regionNumber, $groupInfo['regions'], true)) {
                 return $groupId;
             }
@@ -236,33 +109,45 @@ class TherapeuticChiropracticHelper
     }
 
     /**
-     * Get all techniques for given group IDs based on style
-     * 
-     * @param array $groupIds List of active group IDs (1 to 5)
-     * @param string $style 'intensive' or 'economy'
-     * @return array
+     * Get all techniques for given group IDs based on style ('intensive' or 'economy')
      */
     public static function getTechniquesForGroups(array $groupIds, string $style = 'intensive'): array
     {
         $styleKey = ($style === 'economy') ? 'economy' : 'intensive';
-        $all = static::$techniques[$styleKey] ?? static::$techniques['intensive'];
-        $filtered = [];
+        $activeRegions = static::getActiveRegions();
 
-        foreach ($all as $item) {
-            if (in_array((int)$item['group'], $groupIds, true)) {
-                $filtered[] = $item;
+        if (!empty($activeRegions)) {
+            $filtered = [];
+            foreach ($activeRegions as $reg) {
+                if ($reg['plan_type'] === $styleKey && in_array((int)$reg['region_number'], $groupIds, true)) {
+                    foreach ($reg['techniques'] as $tech) {
+                        $filtered[] = [
+                            'group' => (int)$reg['region_number'],
+                            'group_name' => $reg['name'],
+                            'region' => $tech['target_region_code'],
+                            'name' => $tech['name'],
+                            'position' => $tech['position'],
+                            'direction' => $tech['direction'],
+                            'rep' => (int)$tech['rep'],
+                            'order' => (int)$tech['order'],
+                            'price' => (float)$reg['price_per_technique'],
+                            'duration_seconds' => (int)$reg['duration_seconds'],
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($filtered)) {
+                usort($filtered, fn($a, $b) => ($a['group'] <=> $b['group']) ?: ($a['order'] <=> $b['order']));
+                return $filtered;
             }
         }
 
-        return $filtered;
+        return [];
     }
 
     /**
      * Calculate total techniques, duration, price and active groups for selected regions
-     * 
-     * @param array $regions Selected region numbers (1-39)
-     * @param string $style 'intensive' or 'economy'
-     * @return array
      */
     public static function calculate(array $regions, string $style = 'intensive'): array
     {
@@ -281,17 +166,33 @@ class TherapeuticChiropracticHelper
         $styleKey = ($style === 'economy') ? 'economy' : 'intensive';
         $totalTechniques = 0;
         $rawTotalPrice = 0.0;
+        $totalDurationMinutes = 0.0;
         $activeGroupNames = [];
 
-        foreach ($activeGroupIds as $gId) {
-            $techCount = static::$groupTechniquesMap[$styleKey][$gId] ?? 0;
-            $pricePerTech = static::$groupPricePerTechniqueMap[$styleKey][$gId] ?? (static::$pricePerTechniqueMap[$styleKey] ?? 19.0);
-            $totalTechniques += $techCount;
-            $rawTotalPrice += ($techCount * $pricePerTech);
-            $activeGroupNames[] = static::$regionGroups[$gId]['name'];
+        $allTechniques = static::getTechniquesForGroups($activeGroupIds, $styleKey);
+        $groupsConfig = static::getRegionGroups();
+
+        if (!empty($allTechniques)) {
+            foreach ($allTechniques as $tech) {
+                $totalTechniques++;
+                $rawTotalPrice += ($tech['price'] ?? 13.0);
+                $totalDurationMinutes += (($tech['duration_seconds'] ?? 15) / 60.0);
+            }
+
+            foreach ($activeGroupIds as $gId) {
+                $activeGroupNames[] = $groupsConfig[$gId]['name'] ?? "منطقة {$gId}";
+            }
+        } else {
+            // Fallback default calculation if database empty
+            $totalTechniques = count($activeGroupIds) * 10;
+            $rawTotalPrice = count($activeGroupIds) * 10 * 13.0;
+            $totalDurationMinutes = $totalTechniques * 0.25;
+            foreach ($activeGroupIds as $gId) {
+                $activeGroupNames[] = static::$defaultRegionGroups[$gId]['name'] ?? "منطقة {$gId}";
+            }
         }
 
-        $duration = round($totalTechniques * static::$durationPerTechnique, 2);
+        $duration = round($totalDurationMinutes, 2);
 
         // Apply 15% discount on chiropractic when selecting more than 3 regions (groups)
         $discountAmount = 0.0;
@@ -374,7 +275,7 @@ class TherapeuticChiropracticHelper
         $rowsHtml = '';
         foreach ($techniques as $index => $tech) {
             $counter = $index + 1;
-            $groupName = static::$regionGroups[$tech['group']]['name'] ?? "المجموعة {$tech['group']}";
+            $groupName = $tech['group_name'] ?? (static::getRegionGroups()[$tech['group']]['name'] ?? "المجموعة {$tech['group']}");
 
             $rowsHtml .= "
             <tr style='border-bottom: 1px solid #334155; background: rgba(56, 189, 248, 0.03);'>
