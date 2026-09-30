@@ -1565,29 +1565,56 @@ class RequestResource extends Resource
         return $data;
     }
 
+    public static function calculatePricingAndDuration($data) {
+        return self::calculatePricing($data);
+    }
+
     public static function calculatePricing($data) {
-        $bookingType = $data['booking_type'] ?? 'وقائية';
+        $bookingType = is_array($data) ? ($data['booking_type'] ?? 'وقائية') : ($data->booking_type ?? 'وقائية');
         
-        $packages = $data['packages'] ?? [];
+        $packages = is_array($data) ? ($data['packages'] ?? []) : ($data->packages ?? []);
+        $massageRegions = is_array($data) ? ($data['massage_regions'] ?? []) : ($data->massage_regions ?? []);
+        $massageStyle = is_array($data) ? ($data['massage_style'] ?? 'intensive') : ($data->massage_style ?? 'intensive');
+        $massageIntensity = is_array($data) ? ($data['massage_intensity'] ?? 'medium') : ($data->massage_intensity ?? 'medium');
+
+        $crackingType = is_array($data) ? ($data['cracking_type'] ?? 'none') : ($data->cracking_type ?? 'none');
+        $crackingStyle = is_array($data) ? ($data['cracking_style'] ?? 'intensive') : ($data->cracking_style ?? 'intensive');
+        $crackingRegions = is_array($data) ? ($data['cracking_regions'] ?? []) : ($data->cracking_regions ?? []);
+
+        $hijamaType = is_array($data) ? ($data['hijama_type'] ?? 'none') : ($data->hijama_type ?? 'none');
+        $hijamaStyle = is_array($data) ? ($data['hijama_style'] ?? 'intensive') : ($data->hijama_style ?? 'intensive');
+        $hijamaRegions = is_array($data) ? ($data['hijama_regions'] ?? []) : ($data->hijama_regions ?? []);
+
+        $description = null;
+        if (is_object($data)) {
+            $description = $data->description ?? $data->complaint ?? null;
+        } elseif (is_array($data)) {
+            $description = $data['description'] ?? $data['complaint'] ?? null;
+        }
+
+        if (!empty($description)) {
+            $parsed = self::parseDescription($description);
+            if (empty($packages) && !empty($parsed['packages'])) $packages = $parsed['packages'];
+            if (empty($massageRegions) && !empty($parsed['massage_regions'])) $massageRegions = $parsed['massage_regions'];
+            if (empty($massageStyle) && !empty($parsed['massage_style'])) $massageStyle = $parsed['massage_style'];
+            if (empty($massageIntensity) && !empty($parsed['massage_intensity'])) $massageIntensity = $parsed['massage_intensity'];
+            if ($crackingType === 'none' && !empty($parsed['cracking_type']) && $parsed['cracking_type'] !== 'none') $crackingType = $parsed['cracking_type'];
+            if (empty($crackingStyle) && !empty($parsed['cracking_style'])) $crackingStyle = $parsed['cracking_style'];
+            if (empty($crackingRegions) && !empty($parsed['cracking_regions'])) $crackingRegions = $parsed['cracking_regions'];
+            if ($hijamaType === 'none' && !empty($parsed['hijama_type']) && $parsed['hijama_type'] !== 'none') $hijamaType = $parsed['hijama_type'];
+            if (empty($hijamaStyle) && !empty($parsed['hijama_style'])) $hijamaStyle = $parsed['hijama_style'];
+            if (empty($hijamaRegions) && !empty($parsed['hijama_regions'])) $hijamaRegions = $parsed['hijama_regions'];
+        }
+
         if (is_string($packages)) $packages = empty($packages) ? [] : array_map('trim', explode(',', $packages));
         elseif (!is_array($packages)) $packages = [];
 
-        $massageRegions = $data['massage_regions'] ?? [];
         if (is_string($massageRegions)) $massageRegions = empty($massageRegions) ? [] : array_map('trim', explode(',', $massageRegions));
         elseif (!is_array($massageRegions)) $massageRegions = [];
 
-        $massageStyle = $data['massage_style'] ?? 'intensive';
-        $massageIntensity = $data['massage_intensity'] ?? 'medium';
-
-        $crackingType = $data['cracking_type'] ?? 'none';
-        $crackingStyle = $data['cracking_style'] ?? 'intensive';
-        $crackingRegions = $data['cracking_regions'] ?? [];
         if (is_string($crackingRegions)) $crackingRegions = empty($crackingRegions) ? [] : array_map('trim', explode(',', $crackingRegions));
         elseif (!is_array($crackingRegions)) $crackingRegions = [];
 
-        $hijamaType = $data['hijama_type'] ?? 'none';
-        $hijamaStyle = $data['hijama_style'] ?? 'intensive';
-        $hijamaRegions = $data['hijama_regions'] ?? [];
         if (is_string($hijamaRegions)) $hijamaRegions = empty($hijamaRegions) ? [] : array_map('trim', explode(',', $hijamaRegions));
         elseif (!is_array($hijamaRegions)) $hijamaRegions = [];
 
@@ -1752,8 +1779,9 @@ class RequestResource extends Resource
             $hijamaPrice = $totalCups * $cupPrice;
         }
 
+        $isUrgent = is_array($data) ? ($data['is_urgent'] ?? false) : ($data->is_urgent ?? false);
         $totalPrice = $massagePrice + $crackingPrice + $hijamaPrice;
-        if ($data['is_urgent'] ?? false) {
+        if ($isUrgent) {
             $urgentFee = (int)\App\Models\Setting::get('urgent_booking_fee', 200);
             $totalPrice += $urgentFee;
         }
@@ -1762,7 +1790,13 @@ class RequestResource extends Resource
         return [
             'total_price' => $totalPrice,
             'total_duration' => $totalDuration,
-            'deposit' => ceil($totalPrice * 0.40)
+            'deposit' => ceil($totalPrice * 0.40),
+            'massage_price' => $massagePrice,
+            'massage_duration' => $massageDuration,
+            'cracking_price' => $crackingPrice,
+            'cracking_duration' => $crackingDuration,
+            'hijama_price' => $hijamaPrice,
+            'hijama_duration' => $hijamaDuration,
         ];
     }
 
