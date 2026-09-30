@@ -768,14 +768,16 @@
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد الاستشارة</h4>
                         
                         <!-- Urgent Booking Checkbox -->
-                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="cs_is_urgent" name="consultation_is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
-                                <label class="form-check-label text-dark fw-bold" for="cs_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
+                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.06); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 16px; text-align: right;">
+                            <div class="form-check d-flex align-items-start p-0 m-0">
+                                <input class="form-check-input" type="checkbox" id="cs_is_urgent" name="consultation_is_urgent" value="1" style="width: 1.85rem; height: 1.85rem; min-width: 1.85rem; min-height: 1.85rem; accent-color: #e67e22; border: 2px solid #e67e22; margin-left: 0.85rem; margin-top: 0.2rem; cursor: pointer; border-radius: 6px; flex-shrink: 0;">
+                                <label class="form-check-label text-dark fw-bold" for="cs_is_urgent" style="cursor: pointer; font-size: 1.15rem; flex-grow: 1; user-select: none; line-height: 1.4;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
-                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
+                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.88rem; line-height: 1.45;">
                                         يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
-                                        رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        <div class="mt-1">
+                                            رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        </div>
                                     </div>
                                 </label>
                             </div>
@@ -928,14 +930,16 @@
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد السيشن  </h4>
                         
                         <!-- Urgent Booking Checkbox -->
-                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
-                                <label class="form-check-label text-dark fw-bold" for="is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
+                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.06); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 16px; text-align: right;">
+                            <div class="form-check d-flex align-items-start p-0 m-0">
+                                <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" style="width: 1.85rem; height: 1.85rem; min-width: 1.85rem; min-height: 1.85rem; accent-color: #e67e22; border: 2px solid #e67e22; margin-left: 0.85rem; margin-top: 0.2rem; cursor: pointer; border-radius: 6px; flex-shrink: 0;">
+                                <label class="form-check-label text-dark fw-bold" for="is_urgent" style="cursor: pointer; font-size: 1.15rem; flex-grow: 1; user-select: none; line-height: 1.4;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
-                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
+                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.88rem; line-height: 1.45;">
                                         يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
-                                        رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        <div class="mt-1">
+                                            رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        </div>
                                     </div>
                                 </label>
                             </div>
@@ -1079,14 +1083,16 @@
                         <h4 class="mb-4 text-center" style="font-weight: 700; color: #ff9d42;">تحديد موعد السيشن</h4>
                         
                         <!-- Urgent Booking Checkbox -->
-                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.05); border: 1px dashed rgba(230, 126, 34, 0.3); border-radius: 16px; text-align: right;">
-                            <div class="form-check d-flex align-items-center">
-                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 1.4rem; height: 1.4rem; accent-color: #e67e22; margin-left: 0.75rem; cursor: pointer; border-radius: 4px;">
-                                <label class="form-check-label text-dark fw-bold" for="th_is_urgent" style="cursor: pointer; font-size: 1.1rem; flex-grow: 1;">
+                        <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.06); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 16px; text-align: right;">
+                            <div class="form-check d-flex align-items-start p-0 m-0">
+                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 1.85rem; height: 1.85rem; min-width: 1.85rem; min-height: 1.85rem; accent-color: #e67e22; border: 2px solid #e67e22; margin-left: 0.85rem; margin-top: 0.2rem; cursor: pointer; border-radius: 6px; flex-shrink: 0;">
+                                <label class="form-check-label text-dark fw-bold" for="th_is_urgent" style="cursor: pointer; font-size: 1.15rem; flex-grow: 1; user-select: none; line-height: 1.4;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
-                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.85rem;">
+                                    <div class="text-muted fw-normal mt-1" style="font-size: 0.88rem; line-height: 1.45;">
                                         يتيح لك الحجز في أي تاريخ ووقت (حتى خارج أوقات العمل الرسمية وأيام العطلات).
-                                        رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        <div class="mt-1">
+                                            رسوم الحجز المستعجل الإضافية للطلب: <span class="text-warning fw-bold">{{ $urgentBookingFee }} ج.م</span>
+                                        </div>
                                     </div>
                                 </label>
                             </div>
