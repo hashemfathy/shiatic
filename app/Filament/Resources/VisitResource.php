@@ -1074,15 +1074,28 @@ class VisitResource extends Resource
                                     ->reactive()
                                     ->options(function (callable $get) {
                                         $parentDate = $get('../../date');
+                                        $parentHour = $get('../../hour');
                                         $dayOfWeek = $parentDate ? strtolower(\Carbon\Carbon::parse($parentDate)->format('l')) : null;
 
-                                        return Employee::all()->mapWithKeys(function ($employee) use ($dayOfWeek) {
+                                        return Employee::all()->mapWithKeys(function ($employee) use ($parentDate, $parentHour, $dayOfWeek) {
                                             $label = $employee->name;
-                                            if ($dayOfWeek && in_array($dayOfWeek, $employee->work_days ?? [])) {
+
+                                            // Check if on day off
+                                            $dayOff = \App\Models\SpecialistDayOff::getSpecialistDayOff($employee->id, $parentDate, $parentHour);
+                                            if ($dayOff) {
+                                                $timeInfo = $dayOff->is_full_day ? 'إجازة طوال اليوم' : ('إجازة من ' . ($dayOff->start_time ? date('h:i A', strtotime($dayOff->start_time)) : '') . ' إلى ' . ($dayOff->end_time ? date('h:i A', strtotime($dayOff->end_time)) : ''));
+                                                $label = "🚫 " . $label . " ({$timeInfo})";
+                                            } elseif ($dayOfWeek && in_array($dayOfWeek, $employee->work_days ?? [])) {
                                                 $label = "✅ " . $label;
                                             }
                                             return [$employee->id => $label];
                                         })->toArray();
+                                    })
+                                    ->disableOptionWhen(function (string $value, callable $get) {
+                                        $parentDate = $get('../../date');
+                                        $parentHour = $get('../../hour');
+                                        if (!$parentDate) return false;
+                                        return (bool)\App\Models\SpecialistDayOff::getSpecialistDayOff($value, $parentDate, $parentHour);
                                     })
                                     ->required(),
 

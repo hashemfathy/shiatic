@@ -114,16 +114,30 @@ class TherapeuticMassageHelper
 
         $severeTechniquesList = collect();
         if ($severeProto && !empty($severeRegions)) {
-            $severeTechniquesList = $severeProto->techniques->filter(function ($tech) use ($severeRegions) {
-                return in_array((int)$tech->region_number, $severeRegions, true);
-            });
+            $techniques = $severeProto->techniques ?? collect();
+            if (is_array($techniques)) {
+                $techniques = collect($techniques);
+            }
+            if ($techniques instanceof \Illuminate\Support\Collection) {
+                $severeTechniquesList = $techniques->filter(function ($tech) use ($severeRegions) {
+                    $regNum = is_object($tech) ? ($tech->region_number ?? null) : ($tech['region_number'] ?? null);
+                    return in_array((int)$regNum, $severeRegions, true);
+                });
+            }
         }
 
         $moderateTechniquesList = collect();
         if ($moderateProto && !empty($moderateRegions)) {
-            $moderateTechniquesList = $moderateProto->techniques->filter(function ($tech) use ($moderateRegions) {
-                return in_array((int)$tech->region_number, $moderateRegions, true);
-            });
+            $techniques = $moderateProto->techniques ?? collect();
+            if (is_array($techniques)) {
+                $techniques = collect($techniques);
+            }
+            if ($techniques instanceof \Illuminate\Support\Collection) {
+                $moderateTechniquesList = $techniques->filter(function ($tech) use ($moderateRegions) {
+                    $regNum = is_object($tech) ? ($tech->region_number ?? null) : ($tech['region_number'] ?? null);
+                    return in_array((int)$regNum, $moderateRegions, true);
+                });
+            }
         }
 
         $severeTechCount = count($severeTechniquesList);
@@ -396,16 +410,30 @@ class TherapeuticMassageHelper
 
         $severeRows = collect();
         if ($severeProto && !empty($severeRegions)) {
-            $severeRows = $severeProto->techniques->filter(function ($tech) use ($severeRegions) {
-                return in_array((int)$tech->region_number, $severeRegions, true);
-            });
+            $techniques = $severeProto->techniques ?? collect();
+            if (is_array($techniques)) {
+                $techniques = collect($techniques);
+            }
+            if ($techniques instanceof \Illuminate\Support\Collection) {
+                $severeRows = $techniques->filter(function ($tech) use ($severeRegions) {
+                    $regNum = is_object($tech) ? ($tech->region_number ?? null) : ($tech['region_number'] ?? null);
+                    return in_array((int)$regNum, $severeRegions, true);
+                });
+            }
         }
 
         $moderateRows = collect();
         if ($moderateProto && !empty($moderateRegions)) {
-            $moderateRows = $moderateProto->techniques->filter(function ($tech) use ($moderateRegions) {
-                return in_array((int)$tech->region_number, $moderateRegions, true);
-            });
+            $techniques = $moderateProto->techniques ?? collect();
+            if (is_array($techniques)) {
+                $techniques = collect($techniques);
+            }
+            if ($techniques instanceof \Illuminate\Support\Collection) {
+                $moderateRows = $techniques->filter(function ($tech) use ($moderateRegions) {
+                    $regNum = is_object($tech) ? ($tech->region_number ?? null) : ($tech['region_number'] ?? null);
+                    return in_array((int)$regNum, $moderateRegions, true);
+                });
+            }
         }
 
         if ($severeRows->isEmpty() && $moderateRows->isEmpty()) {

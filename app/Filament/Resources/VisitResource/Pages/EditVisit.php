@@ -34,6 +34,30 @@ class EditVisit extends EditRecord
                 $client->update(['gender' => $data['gender']]);
             }
         }
+
+        // Validate specialist days off
+        if (isset($data['sessions']) && is_array($data['sessions'])) {
+            foreach ($data['sessions'] as $session) {
+                $empId = $session['employee_id'] ?? null;
+                if ($empId && !empty($data['date'])) {
+                    $dayOff = \App\Models\SpecialistDayOff::getSpecialistDayOff($empId, $data['date'], $data['hour'] ?? null);
+                    if ($dayOff) {
+                        $employee = \App\Models\Employee::find($empId);
+                        $empName = $employee?->name ?: 'المختص';
+                        $timeInfo = $dayOff->is_full_day ? 'طوال اليوم' : ('من ' . ($dayOff->start_time ? date('h:i A', strtotime($dayOff->start_time)) : '') . ' إلى ' . ($dayOff->end_time ? date('h:i A', strtotime($dayOff->end_time)) : ''));
+                        
+                        \Filament\Notifications\Notification::make()
+                            ->title('تعارض في موعد المختص!')
+                            ->body("المختص [{$empName}] غير متاح في هذا الموعد ({$timeInfo}) بتاريخ {$data['date']}. يرجى اختيار مختص آخر.")
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                        $this->halt();
+                    }
+                }
+            }
+        }
+
         return $data;
     }
 

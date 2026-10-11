@@ -25,4 +25,9 @@ class Employee extends Model
     {
         return $this->hasMany(Session::class);
     }
+
+    public function daysOff()
+    {
+        return $this->hasMany(SpecialistDayOff::class, 'employee_id');
+    }
 }

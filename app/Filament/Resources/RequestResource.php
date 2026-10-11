@@ -867,17 +867,31 @@ class RequestResource extends Resource
                                             ->required(),
                                         Forms\Components\Select::make('employee_id')
                                             ->label('المختص المعالج')
+                                            ->reactive()
                                             ->options(function (callable $get) {
                                                 $date = $get('../../visit_date');
+                                                $hour = $get('../../visit_hour');
                                                 $dayOfWeek = $date ? strtolower(\Carbon\Carbon::parse($date)->format('l')) : null;
 
-                                                return \App\Models\Employee::all()->mapWithKeys(function ($employee) use ($dayOfWeek) {
+                                                return \App\Models\Employee::all()->mapWithKeys(function ($employee) use ($date, $hour, $dayOfWeek) {
                                                     $label = $employee->name;
-                                                    if ($dayOfWeek && in_array($dayOfWeek, $employee->work_days ?? [])) {
+
+                                                    // Check if specialist is on leave / day off
+                                                    $dayOff = \App\Models\SpecialistDayOff::getSpecialistDayOff($employee->id, $date, $hour);
+                                                    if ($dayOff) {
+                                                        $timeInfo = $dayOff->is_full_day ? 'إجازة طوال اليوم' : ('إجازة من ' . ($dayOff->start_time ? date('h:i A', strtotime($dayOff->start_time)) : '') . ' إلى ' . ($dayOff->end_time ? date('h:i A', strtotime($dayOff->end_time)) : ''));
+                                                        $label = "🚫 " . $label . " ({$timeInfo})";
+                                                    } elseif ($dayOfWeek && in_array($dayOfWeek, $employee->work_days ?? [])) {
                                                         $label = "✅ " . $label;
                                                     }
                                                     return [$employee->id => $label];
                                                 })->toArray();
+                                            })
+                                            ->disableOptionWhen(function (string $value, callable $get) {
+                                                $date = $get('../../visit_date');
+                                                $hour = $get('../../visit_hour');
+                                                if (!$date) return false;
+                                                return (bool)\App\Models\SpecialistDayOff::getSpecialistDayOff($value, $date, $hour);
                                             })
                                             ->required(),
                                     ])
@@ -1108,6 +1122,28 @@ class RequestResource extends Resource
                         ];
                     })
                     ->action(function (Request $record, array $data): void {
+                        // Validate specialist days off
+                        $sessionsData = $data['sessions'] ?? [];
+                        foreach ($sessionsData as $sessionItem) {
+                            $empId = $sessionItem['employee_id'] ?? null;
+                            if ($empId) {
+                                $dayOff = \App\Models\SpecialistDayOff::getSpecialistDayOff($empId, $data['visit_date'], $data['visit_hour']);
+                                if ($dayOff) {
+                                    $employee = \App\Models\Employee::find($empId);
+                                    $empName = $employee?->name ?: 'المختص';
+                                    $timeInfo = $dayOff->is_full_day ? 'إجازة طوال اليوم' : ('إجازة من ' . ($dayOff->start_time ? date('h:i A', strtotime($dayOff->start_time)) : '') . ' إلى ' . ($dayOff->end_time ? date('h:i A', strtotime($dayOff->end_time)) : ''));
+                                    
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('تعارض في موعد المختص!')
+                                        ->body("المختص [{$empName}] غير متاح في هذا الموعد ({$timeInfo}) بتاريخ {$data['visit_date']}. يرجى اختيار مختص آخر أو تعديل موعد الزيارة.")
+                                        ->danger()
+                                        ->persistent()
+                                        ->send();
+                                    return;
+                                }
+                            }
+                        }
+
                         // 1. Find or create Client
                         $client = \App\Models\Client::where('phone', $data['phone'])->first();
                         if (!$client) {
