@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandLogo(fn () => asset('images/shiatic.png'))
+            ->brandLogoHeight('3rem')
+            ->favicon(asset('images/shiatic.png'))
             ->font('Oxanium')
             ->colors([
                 'primary' => Color::Amber,

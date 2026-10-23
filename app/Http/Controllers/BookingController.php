@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Request as BookingRequest;
 use App\Models\RequestRegion;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -411,6 +412,7 @@ class BookingController extends Controller
                 'therapeutic_attendees.*.weight' => 'required|numeric|min:20|max:300',
                 'therapeutic_attendees.*.blood_type' => 'nullable|string',
                 'therapeutic_attendees.*.protocol' => 'required|string|in:intensive,economy',
+                'therapeutic_attendees.*.numbness' => 'nullable|string',
             ]);
             $attendeesInput = $request->input('therapeutic_attendees');
         } else {
@@ -422,6 +424,7 @@ class BookingController extends Controller
                 'therapeutic_weight' => 'required|numeric|min:20|max:300',
                 'therapeutic_blood_type' => 'nullable|string',
                 'therapeutic_protocol' => 'required|string|in:intensive,economy',
+                'therapeutic_numbness' => 'nullable|string',
             ]);
             $attendeesInput = [
                 [
@@ -432,6 +435,7 @@ class BookingController extends Controller
                     'weight' => $request->input('therapeutic_weight'),
                     'blood_type' => $request->input('therapeutic_blood_type'),
                     'protocol' => $request->input('therapeutic_protocol'),
+                    'numbness' => $request->input('therapeutic_numbness', 'لا يوجد'),
                     'severe_regions' => $request->input('therapeutic_severe_regions', ''),
                     'moderate_regions' => $request->input('therapeutic_moderate_regions', ''),
                 ]
@@ -502,6 +506,12 @@ class BookingController extends Controller
             $protocolLabel = ($protocol === 'intensive') ? 'مكثف' : 'اقتصادي';
             $descParts[] = "نوع الجلسة: سيشن علاجية [البروتوكول: {$protocolLabel}]";
             $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+            $numbness = $attData['numbness'] ?? 'لا يوجد';
+            if (!empty($numbness) && $numbness !== 'لا يوجد') {
+                $descParts[] = "تنميل أو خدر بالقدمين أو اليدين: {$numbness}";
+            } else {
+                $descParts[] = "تنميل أو خدر بالقدمين أو اليدين: لا يوجد";
+            }
             $severeStr = !empty($severeRegions) ? implode(', ', $severeRegions) : 'لا يوجد';
             $moderateStr = !empty($moderateRegions) ? implode(', ', $moderateRegions) : 'لا يوجد';
             $descParts[] = "مناطق الألم: شديد [{$severeStr}] | متوسط [{$moderateStr}]";
@@ -529,6 +539,7 @@ class BookingController extends Controller
                 'name' => $name,
                 'phone' => $phone,
                 'gender' => $gender,
+                'numbness' => $numbness,
                 'total_price' => $totalAttendeePrice,
                 'total_duration' => $totalDuration,
                 'protocol' => $protocol,
@@ -625,6 +636,7 @@ class BookingController extends Controller
                 'name' => $att['name'],
                 'phone' => $att['phone'],
                 'gender' => $att['gender'],
+                'numbness' => $att['numbness'] ?? 'لا يوجد',
                 'booking_type' => 'علاجية',
                 'service_type' => $att['service_type'],
                 'packages' => [$att['protocol']],
@@ -693,6 +705,7 @@ class BookingController extends Controller
             'attendees.*.blood_type' => 'nullable|string',
             'attendees.*.weight' => 'nullable|numeric|between:10,350',
             'attendees.*.notes' => 'nullable|string|max:2000',
+            'attendees.*.numbness' => 'nullable|string',
             'consultation_date' => 'nullable|date',
             'consultation_time' => 'nullable|string',
             'date' => 'nullable|date',
@@ -748,6 +761,7 @@ class BookingController extends Controller
                 $bloodType = 'O';
             }
             $notes = trim($attData['notes'] ?? ($attData['complaint'] ?? ''));
+            $numbness = $attData['numbness'] ?? 'لا يوجد';
 
             $duration = 15;
             $price = 200.0;
@@ -755,6 +769,11 @@ class BookingController extends Controller
             $descParts = [];
             $descParts[] = "نوع الجلسة: موعد مع مختص [استشارة]";
             $descParts[] = "بيانات المريض: السن ({$age}) | فصيلة الدم ({$bloodType}) | الوزن ({$weight} كجم)";
+            if (!empty($numbness) && $numbness !== 'لا يوجد') {
+                $descParts[] = "تنميل أو خدر بالقدمين أو اليدين: {$numbness}";
+            } else {
+                $descParts[] = "تنميل أو خدر بالقدمين أو اليدين: لا يوجد";
+            }
             if (!empty($notes)) {
                 $descParts[] = "الشكوى أو سبب الاستشارة: {$notes}";
             }
@@ -768,6 +787,7 @@ class BookingController extends Controller
                 'weight' => $weight,
                 'blood_type' => $bloodType,
                 'notes' => $notes,
+                'numbness' => $numbness,
                 'total_price' => $price,
                 'total_duration' => $duration,
                 'description' => implode(' | ', $descParts),
@@ -851,6 +871,7 @@ class BookingController extends Controller
                 'name' => $att['name'],
                 'phone' => $att['phone'],
                 'gender' => $att['gender'],
+                'numbness' => $att['numbness'] ?? 'لا يوجد',
                 'booking_type' => 'موعد مع مختص',
                 'service_type' => 'موعد مع مختص',
                 'packages' => ['consultation'],
@@ -1011,6 +1032,9 @@ class BookingController extends Controller
             }
         } else {
             // Standard slots: contiguous around existing bookings, base slots, and increment scans
+            // Fetch visits intervals for this date
+            [$visitIntervals, $handledRequestIds] = self::getVisitIntervalsForDate($date);
+
             // Fetch existing requests starts/ends for contiguous checking
             $existing = BookingRequest::whereDate('date', $date)
                 ->where(function($query) {
@@ -1026,12 +1050,22 @@ class BookingController extends Controller
                         $query->orWhereNull('gender')->orWhere('gender', '');
                     }
                 })
-                ->get(['time', 'total_duration']);
+                ->get(['id', 'time', 'total_duration', 'duration']);
 
             $existingIntervals = [];
+
+            // Add matching visit intervals
+            foreach ($visitIntervals as $vInt) {
+                if (($hasFemale && $vInt['gender'] === 'female') || ($hasMale && $vInt['gender'] === 'male')) {
+                    $existingIntervals[] = [$vInt['start'], $vInt['end']];
+                }
+            }
+
+            // Add request intervals (excluding those with a visit already)
             foreach ($existing as $booking) {
                 if (!$booking->time) continue;
-                $startMin = $this->timeToMinutes($booking->time);
+                if ($booking->id && in_array((int)$booking->id, $handledRequestIds)) continue;
+                $startMin = self::timeToMinutes($booking->time);
                 $dur = $booking->total_duration ?: (int)$booking->duration ?: 30;
                 $existingIntervals[] = [$startMin, $startMin + $dur];
             }
@@ -1231,7 +1265,7 @@ class BookingController extends Controller
         return response()->json(['available' => true, 'message' => 'هذا الوقت متاح للحجز!']);
     }
 
-    private function isSlotAvailable($date, $genderOrAttendees, $candidateStart, $duration = null, $excludeId = null)
+    public function isSlotAvailable($date, $genderOrAttendees, $candidateStart, $duration = null, $excludeId = null)
     {
         if (is_array($genderOrAttendees)) {
             $attendees = $genderOrAttendees;
@@ -1252,19 +1286,43 @@ class BookingController extends Controller
         $maxMaleBookings = (int)\App\Models\Setting::get('max_male_bookings', 3);
         $maxTotalBookings = (int)\App\Models\Setting::get('max_total_bookings', 3);
 
-        // Fetch existing bookings
+        // Fetch visits intervals for this date
+        [$visitIntervals, $handledRequestIds] = self::getVisitIntervalsForDate($date);
+
+        // Fetch existing requests
         $existing = BookingRequest::whereDate('date', $date)
             ->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds))
             ->where(function($query) {
                 $query->whereIn('status', ['pending', 'confirmed'])
                       ->orWhereNull('status');
             })
-            ->get(['time', 'total_duration', 'gender']);
+            ->get(['id', 'time', 'total_duration', 'duration', 'gender']);
 
         $overlapping = [];
+
+        // 1. Overlapping visits (skip if visit belongs to an excluded request)
+        foreach ($visitIntervals as $vInt) {
+            if (!empty($vInt['request_id']) && in_array((int)$vInt['request_id'], $excludeIds)) {
+                continue;
+            }
+
+            if (max($candidateStart, $vInt['start']) < min($candidateEnd, $vInt['end']) - 5) {
+                $overlapping[] = [
+                    'start' => $vInt['start'],
+                    'end' => $vInt['end'],
+                    'gender' => $vInt['gender'] ?: 'male',
+                ];
+            }
+        }
+
+        // 2. Overlapping requests (skip if already accounted for by a visit)
         foreach ($existing as $booking) {
             if (!$booking->time) continue;
-            $startMin = $this->timeToMinutes($booking->time);
+            if ($booking->id && in_array((int)$booking->id, $handledRequestIds)) {
+                continue;
+            }
+
+            $startMin = self::timeToMinutes($booking->time);
             $dur = $booking->total_duration ?: (int)$booking->duration ?: 30;
             $endMin = $startMin + $dur;
 
@@ -1309,7 +1367,7 @@ class BookingController extends Controller
                 }
             }
 
-            // Count database bookings that overlap this test point
+            // Count database bookings & visits that overlap this test point
             foreach ($overlapping as $o) {
                 if ($t >= $o['start'] && $t < $o['end'] - 5) {
                     if ($o['gender'] === 'female') {
@@ -1400,23 +1458,121 @@ class BookingController extends Controller
         ]);
     }
 
-    private function timeToMinutes($timeStr)
+    public static function timeToMinutes($timeStr)
     {
-        if (!$timeStr) return 0;
+        if (is_null($timeStr) || $timeStr === '') return 0;
+        $timeStr = trim((string)$timeStr);
+
         if (stripos($timeStr, 'PM') !== false || stripos($timeStr, 'AM') !== false) {
             $timestamp = strtotime($timeStr);
             return ((int)date('H', $timestamp) * 60) + (int)date('i', $timestamp);
         }
-        
-        $parts = explode(':', $timeStr);
-        if (count($parts) < 2) return 0;
-        $hrs = (int)$parts[0];
-        $mins = (int)$parts[1];
-        
-        if ($hrs >= 1 && $hrs <= 8) {
-            $hrs += 12;
+
+        if (str_contains($timeStr, ':')) {
+            $parts = explode(':', $timeStr);
+            $hrs = (int)$parts[0];
+            $mins = (int)($parts[1] ?? 0);
+            if ($hrs >= 1 && $hrs <= 8) {
+                $hrs += 12;
+            }
+            return ($hrs * 60) + $mins;
         }
-        
-        return ($hrs * 60) + $mins;
+
+        if (is_numeric($timeStr)) {
+            $floatVal = (float)$timeStr;
+            $hrs = (int)floor($floatVal);
+            $fraction = $floatVal - $hrs;
+            if ($hrs >= 1 && $hrs <= 8) {
+                $hrs += 12;
+            }
+            return (int)round(($hrs * 60) + ($fraction * 60));
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get booked intervals and attendee genders from visits table for a given date.
+     *
+     * @param string $date
+     * @return array [array $intervals, array $handledRequestIds]
+     */
+    public static function getVisitIntervalsForDate($date)
+    {
+        $visits = Visit::whereDate('date', $date)
+            ->with(['client', 'request'])
+            ->get();
+
+        $intervals = [];
+        $handledRequestIds = [];
+
+        foreach ($visits as $visit) {
+            if ($visit->request_id) {
+                $handledRequestIds[] = (int)$visit->request_id;
+            }
+
+            $startMin = self::timeToMinutes($visit->hour);
+            if ($startMin <= 0 && empty($visit->hour)) {
+                continue;
+            }
+
+            $dur = 30;
+            if ($visit->request_id && $visit->request) {
+                $dur = (int)($visit->request->total_duration ?: $visit->request->duration ?: 30);
+            } elseif (!empty($visit->complaint)) {
+                if (preg_match('/المدة:\s*(\d+(?:\.\d+)?)\s*دقيقة/u', $visit->complaint, $m)) {
+                    $dur = (int)$m[1];
+                } elseif (preg_match('/مدة الموعد:\s*(\d+(?:\.\d+)?)\s*دقيقة/u', $visit->complaint, $m)) {
+                    $dur = (int)$m[1];
+                }
+            }
+
+            if ($visit->type === 'حجز غرفة' && $dur < 15) {
+                $dur = (int)\App\Models\Setting::get('room_rental_duration', 60);
+            }
+            if ($dur <= 0) {
+                $dur = 30;
+            }
+
+            $endMin = $startMin + $dur;
+
+            // Check if multiple attendees exist in room rental notes
+            if ($visit->type === 'حجز غرفة' && !empty($visit->notes)) {
+                $maleCount = substr_count($visit->notes, '(ذكر)');
+                $femaleCount = substr_count($visit->notes, '(أنثى)');
+                if ($maleCount + $femaleCount > 0) {
+                    for ($i = 0; $i < $maleCount; $i++) {
+                        $intervals[] = [
+                            'start' => $startMin,
+                            'end' => $endMin,
+                            'gender' => 'male',
+                            'request_id' => $visit->request_id,
+                            'source' => 'visit',
+                        ];
+                    }
+                    for ($i = 0; $i < $femaleCount; $i++) {
+                        $intervals[] = [
+                            'start' => $startMin,
+                            'end' => $endMin,
+                            'gender' => 'female',
+                            'request_id' => $visit->request_id,
+                            'source' => 'visit',
+                        ];
+                    }
+                    continue;
+                }
+            }
+
+            $gender = $visit->client?->gender ?: 'male';
+            $intervals[] = [
+                'start' => $startMin,
+                'end' => $endMin,
+                'gender' => $gender,
+                'request_id' => $visit->request_id,
+                'source' => 'visit',
+            ];
+        }
+
+        return [$intervals, array_unique($handledRequestIds)];
     }
 }

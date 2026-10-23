@@ -26,12 +26,21 @@ class ManageSettings extends Page implements HasForms
 
     public function mount(): void
     {
+        $defaultPricePerMinute = Setting::get('room_rental_price_per_minute');
+        if ($defaultPricePerMinute === null) {
+            $oldPrice = (float)Setting::get('room_rental_price', 0);
+            $oldDuration = (float)Setting::get('room_rental_duration', 0);
+            $defaultPricePerMinute = ($oldPrice > 0 && $oldDuration > 0) ? round($oldPrice / $oldDuration, 2) : 5;
+        }
+
         $this->form->fill([
             'urgent_booking_fee' => Setting::get('urgent_booking_fee', 200),
             'max_female_bookings' => Setting::get('max_female_bookings', 1),
             'max_male_bookings' => Setting::get('max_male_bookings', 3),
             'max_total_bookings' => Setting::get('max_total_bookings', 3),
             'min_booking_amount' => Setting::get('min_booking_amount', 2100),
+            'room_rental_duration' => Setting::get('room_rental_duration', 60),
+            'room_rental_price_per_minute' => $defaultPricePerMinute,
         ]);
     }
 
@@ -64,6 +73,18 @@ class ManageSettings extends Page implements HasForms
                     ->numeric()
                     ->required()
                     ->default(2100),
+                TextInput::make('room_rental_price_per_minute')
+                    ->label('سعر حجز الغرفة للدقيقة (EGP/دقيقة)')
+                    ->numeric()
+                    ->required()
+                    ->default(5)
+                    ->helperText('يتم احتساب إجمالي تكلفة حجز الغرفة بناءً على سعر الدقيقة × مدة الحجز بالدقائق'),
+                TextInput::make('room_rental_duration')
+                    ->label('المدة الافتراضية لحجز الغرفة (بالدقائق)')
+                    ->numeric()
+                    ->required()
+                    ->default(60)
+                    ->helperText('المدة الافتراضية المقترحة في صفحة حجز الغرفة للمختصين'),
             ])
             ->statePath('data');
     }
@@ -77,6 +98,8 @@ class ManageSettings extends Page implements HasForms
         Setting::set('max_male_bookings', $state['max_male_bookings'] ?? 3);
         Setting::set('max_total_bookings', $state['max_total_bookings'] ?? 3);
         Setting::set('min_booking_amount', $state['min_booking_amount'] ?? 2100);
+        Setting::set('room_rental_price_per_minute', $state['room_rental_price_per_minute'] ?? 5);
+        Setting::set('room_rental_duration', $state['room_rental_duration'] ?? 60);
 
         Notification::make()
             ->title('تم حفظ الإعدادات بنجاح')

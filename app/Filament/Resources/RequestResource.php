@@ -118,6 +118,16 @@ class RequestResource extends Resource
                             ->afterStateUpdated(function (callable $set, callable $get) {
                                 self::updateTotals($set, $get);
                             }),
+                        Forms\Components\Select::make('numbness')
+                            ->label('هل يوجد تنميل أو خدر بالقدمين أو اليدين؟')
+                            ->options([
+                                'لا يوجد' => 'لا يوجد تنميل أو خدر',
+                                'نعم، في القدمين' => 'نعم، في القدمين',
+                                'نعم، في اليدين' => 'نعم، في اليدين',
+                                'نعم، في القدمين واليدين' => 'نعم، في القدمين واليدين',
+                            ])
+                            ->default('لا يوجد')
+                            ->visible(fn (callable $get) => in_array($get('booking_type'), ['علاجية', 'موعد مع مختص'])),
                         Forms\Components\Toggle::make('is_urgent')
                             ->label('حجز مستعجل (Urgent Booking)')
                             ->reactive()
@@ -1178,6 +1188,7 @@ class RequestResource extends Resource
                             'type' => $record->booking_type ?? 'وقائية',
                             'coupon_code' => $data['coupon_code'] ?? null,
                             'coupon_discount' => $data['coupon_discount'] ?? 0,
+                            'numbness' => $record->numbness ?? ($data['numbness'] ?? null),
                         ]);
 
                         // 3. Create Session for each active service
@@ -1368,18 +1379,7 @@ class RequestResource extends Resource
 
     public static function timeToMinutes($timeStr)
     {
-        if (!$timeStr) return 0;
-        
-        $parts = explode(':', $timeStr);
-        if (count($parts) < 2) return 0;
-        $hrs = (int)$parts[0];
-        $mins = (int)$parts[1];
-        
-        if ($hrs >= 1 && $hrs <= 8) {
-            $hrs += 12;
-        }
-        
-        return ($hrs * 60) + $mins;
+        return \App\Http\Controllers\BookingController::timeToMinutes($timeStr);
     }
 
     public static function getOverlapValidationRule(callable $get, $record, bool $isRepeater = false)
@@ -1438,6 +1438,9 @@ class RequestResource extends Resource
             $maxMaleBookings = (int)\App\Models\Setting::get('max_male_bookings', 3);
             $maxTotalBookings = (int)\App\Models\Setting::get('max_total_bookings', 3);
 
+            // Fetch visits intervals for this date
+            [$visitIntervals, $handledRequestIds] = \App\Http\Controllers\BookingController::getVisitIntervalsForDate($date);
+
             // Fetch bookings (not gender filtered since we need to check total capacity)
             $existing = \App\Models\Request::whereDate('date', $date)
                 ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
@@ -1445,12 +1448,29 @@ class RequestResource extends Resource
                     $query->whereIn('status', ['pending', 'confirmed'])
                           ->orWhereNull('status');
                 })
-                ->get(['time', 'total_duration', 'gender']);
+                ->get(['id', 'time', 'total_duration', 'gender']);
                 
             // Find overlapping intervals
             $overlapping = [];
+
+            // 1. Visits intervals
+            foreach ($visitIntervals as $vInt) {
+                if ($record && !empty($vInt['request_id']) && (int)$vInt['request_id'] === (int)$record->id) {
+                    continue;
+                }
+                if (max($candidateStart, $vInt['start']) < min($candidateEnd, $vInt['end']) - 5) {
+                    $overlapping[] = [
+                        'start' => $vInt['start'],
+                        'end' => $vInt['end'],
+                        'gender' => $vInt['gender'] ?: 'male',
+                    ];
+                }
+            }
+
+            // 2. Requests intervals (excluding those already accounted for by a visit)
             foreach ($existing as $booking) {
                 if (!$booking->time) continue;
+                if ($booking->id && in_array((int)$booking->id, $handledRequestIds)) continue;
                 $startMin = self::timeToMinutes($booking->time);
                 $dur = $booking->total_duration ?: (int)$booking->duration ?: 30;
                 $endMin = $startMin + $dur;

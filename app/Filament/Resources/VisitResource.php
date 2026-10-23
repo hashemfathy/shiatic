@@ -95,6 +95,25 @@ class VisitResource extends Resource
                 // Section 2: Visit Details (Allow editing complaint & notes)
                 Forms\Components\Section::make('تفاصيل الزيارة')
                     ->schema([
+                        Forms\Components\Select::make('type')
+                            ->label('نوع الزيارة')
+                            ->options([
+                                'وقائية' => 'وقائية',
+                                'علاجية' => 'علاجية',
+                                'موعد مع مختص' => 'موعد مع مختص',
+                                'حجز غرفة' => 'حجز غرفة',
+                            ])
+                            ->reactive(),
+                        Forms\Components\Select::make('numbness')
+                            ->label('هل يوجد تنميل أو خدر بالقدمين أو اليدين؟')
+                            ->options([
+                                'لا يوجد' => 'لا يوجد تنميل أو خدر',
+                                'نعم، في القدمين' => 'نعم، في القدمين',
+                                'نعم، في اليدين' => 'نعم، في اليدين',
+                                'نعم، في القدمين واليدين' => 'نعم، في القدمين واليدين',
+                            ])
+                            ->default('لا يوجد')
+                            ->visible(fn (callable $get, ?Visit $record) => in_array($get('type') ?? $record?->type ?? $record?->request?->booking_type, ['علاجية', 'موعد مع مختص'])),
                         Forms\Components\Textarea::make('complaint')
                             ->label('الشكوى / تفاصيل الخدمة')
                             ->required()
@@ -1738,6 +1757,10 @@ class VisitResource extends Resource
         $request->update([
             'total_price' => array_sum($basePrices),
         ]);
+
+        if (isset($data['numbness'])) {
+            $request->update(['numbness' => $data['numbness']]);
+        }
 
         \App\Models\RequestRegion::where('request_id', $request->id)->delete();
         $allRegions = array_merge(

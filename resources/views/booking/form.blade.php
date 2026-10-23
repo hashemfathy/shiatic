@@ -689,7 +689,7 @@
                                         <span class="fw-bold text-dark" style="font-size: 0.9rem;">إنستا باي</span>
                                     </div>
                                     <img src="{{ asset('images/instapay-qr.jpeg') }}" alt="Instapay QR" class="img-fluid rounded border mb-2" style="max-height: 160px; width: auto; object-fit: contain;">
-                                    <div class="text-muted" style="font-size: 0.8rem;">العنوان الإملائي: <strong>01064344092</strong></div>
+                                    <div class="text-muted" style="font-size: 0.8rem;">رقم الهاتف / العنوان: <strong>01278887676</strong></div>
                                 </div>
                             </div>
                         </div>
@@ -708,7 +708,12 @@
                 </div>
             </div>
         @else
-            <h1>حجز سيشن جديدة</h1>
+            <div class="text-center mb-3">
+                <a href="{{ url('/') }}" class="d-inline-block">
+                    <img src="{{ asset('images/shiatic.png') }}" alt="Shiatic Logo" style="height: 105px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(220, 38, 38, 0.12));">
+                </a>
+            </div>
+            <h1>حجز سيشن جديدة أو موعد</h1>
 
             <!-- ملحوظة قبل الاختيار -->
             <div class="text-center mb-4">
@@ -1622,6 +1627,15 @@
                         </select>
                         <input type="hidden" id="th_effective_blood_type_{index}" name="therapeutic_attendees[{index}][effective_blood_type]" value="O">
                     </div>
+                    <div class="col-md-6">
+                        <label for="th_numbness_{index}" class="form-label">هل يوجد تنميل أو خدر بالقدمين أو اليدين؟ *</label>
+                        <select class="form-select th-input-track" id="th_numbness_{index}" name="therapeutic_attendees[{index}][numbness]" required>
+                            <option value="لا يوجد" selected>لا يوجد تنميل أو خدر</option>
+                            <option value="نعم، في القدمين">نعم، في القدمين</option>
+                            <option value="نعم، في اليدين">نعم، في اليدين</option>
+                            <option value="نعم، في القدمين واليدين">نعم، في القدمين واليدين</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -1847,6 +1861,15 @@
                             <option value="AB">AB</option>
                             <option value="O">O</option>
                             <option value="dont_know">لا اعرف</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cs_numbness_{index}" class="form-label">هل يوجد تنميل أو خدر بالقدمين أو اليدين؟</label>
+                        <select class="form-select cs-input-track" id="cs_numbness_{index}" name="attendees[{index}][numbness]">
+                            <option value="لا يوجد" selected>لا يوجد تنميل أو خدر</option>
+                            <option value="نعم، في القدمين">نعم، في القدمين</option>
+                            <option value="نعم، في اليدين">نعم، في اليدين</option>
+                            <option value="نعم، في القدمين واليدين">نعم، في القدمين واليدين</option>
                         </select>
                     </div>
                     <div class="col-md-12">

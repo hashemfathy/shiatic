@@ -364,16 +364,20 @@
     
     <section class="hero">
         <div class="glass-container text-center">
-            <h1 class="m-0"><a href="{{ url('/') }}" class="navbar-brand-custom">Shiatic</a></h1>
-            <div class="tagline">Spine tune & Touch the moon</div>
-            <div class="service-tag">Chiropractic & Spine Therapy</div>
+            <div class="mb-3 text-center">
+                <a href="{{ url('/') }}" class="d-inline-flex flex-column align-items-center text-decoration-none">
+                    <img src="{{ asset('images/shiatic.png') }}" alt="مركز شياتك - Shiatic Logo" style="height: 145px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 6px 15px rgba(220, 38, 38, 0.1));">
+                    <h1 class="visually-hidden">مركز شياتك للكايروبراكتيك وتقويم العمود الفقري | Shiatic Center</h1>
+                </a>
+            </div>
+            <div class="service-tag mb-4">Chiropractic & Spine Therapy</div>
             
             <div class="nav-grid">
                 <!-- Book Session -->
                 <a href="{{ route('booking.form') }}" class="nav-card nav-card-primary" id="link-book-session">
                     <div class="nav-card-icon"><i class="fas fa-check-square"></i></div>
-                    <h3>حجز سيشن جديدة</h3>
-                    <p>احجز موعد جلستك العلاجية أو الوقائية الآن بسهولة</p>
+                    <h3>حجز سيشن / أو موعد</h3>
+                    <p>احجز موعد جلستك العلاجية أو الوقائية أو موعد مع مختص الآن بسهولة</p>
                 </a>
 
                 <!-- New Client -->
@@ -406,7 +410,7 @@
                     <div class="qr-card">
                         <img src="{{ asset('images/instapay-qr.jpeg') }}" class="qr-image" style="width: 100%; max-width: 180px; height: auto;" alt="Instapay QR">
                     </div>
-                    <div><span class="payment-badge">0128887676</span></div>
+                    <div><span class="payment-badge">01278887676</span></div>
                 </div>
 
                 <!-- Vodafone Cash -->

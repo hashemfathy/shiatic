@@ -27,7 +27,8 @@ class Request extends Model
         'user_agreement',
         'is_urgent',
         'coupon_code',
-        'coupon_discount'
+        'coupon_discount',
+        'numbness'
     ];
 
     protected $casts = [
