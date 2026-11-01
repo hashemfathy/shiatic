@@ -65,7 +65,8 @@ class EditVisit extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->visible(fn () => !in_array(auth()->user()?->type, ['specialist', 'sr.specialist'])),
         ];
     }
 

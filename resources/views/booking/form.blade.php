@@ -1090,7 +1090,7 @@
                         <!-- Urgent Booking Checkbox -->
                         <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(230, 126, 34, 0.06); border: 2px dashed rgba(230, 126, 34, 0.4); border-radius: 16px; text-align: right;">
                             <div class="form-check d-flex align-items-start p-0 m-0">
-                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" style="width: 1.85rem; height: 1.85rem; min-width: 1.85rem; min-height: 1.85rem; accent-color: #e67e22; border: 2px solid #e67e22; margin-left: 0.85rem; margin-top: 0.2rem; cursor: pointer; border-radius: 6px; flex-shrink: 0;">
+                                <input class="form-check-input" type="checkbox" id="th_is_urgent" name="therapeutic_is_urgent" value="1" {{ old('therapeutic_is_urgent') ? 'checked' : '' }} style="width: 1.85rem; height: 1.85rem; min-width: 1.85rem; min-height: 1.85rem; accent-color: #e67e22; border: 2px solid #e67e22; margin-left: 0.85rem; margin-top: 0.2rem; cursor: pointer; border-radius: 6px; flex-shrink: 0;">
                                 <label class="form-check-label text-dark fw-bold" for="th_is_urgent" style="cursor: pointer; font-size: 1.15rem; flex-grow: 1; user-select: none; line-height: 1.4;">
                                     🔥 فتح موعد من اختياري / موعد مستعجل
                                     <div class="text-muted fw-normal mt-1" style="font-size: 0.88rem; line-height: 1.45;">
@@ -1106,7 +1106,7 @@
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="th_appointment_date" class="form-label">اختر التاريخ *</label>
-                                <input type="date" class="form-control" id="th_appointment_date" name="therapeutic_date" min="{{ date('Y-m-d') }}">
+                                <input type="date" class="form-control" id="th_appointment_date" name="therapeutic_date" value="{{ old('therapeutic_date', '') }}" min="{{ date('Y-m-d') }}">
                             </div>
                             <!-- Regular Booking Time Select -->
                             <div class="col-md-6" id="th_regular_time_container">
@@ -1119,22 +1119,22 @@
                             <!-- Urgent Booking Time Input -->
                             <div class="col-md-6" id="th_urgent_time_container" style="display: none;">
                                 <label for="th_appointment_time_input" class="form-label">اختر الوقت المطلوب *</label>
-                                <input type="time" class="form-control" id="th_appointment_time_input">
+                                <input type="time" class="form-control" id="th_appointment_time_input" value="{{ old('therapeutic_time', '') }}">
                                 <div id="th_time_validation_feedback" class="mt-2 fw-bold" style="display: none; font-size: 0.9rem;"></div>
                             </div>
 
                             <!-- Hidden submitted time input -->
-                            <input type="hidden" id="th_appointment_time" name="therapeutic_time">
+                            <input type="hidden" id="th_appointment_time" name="therapeutic_time" value="{{ old('therapeutic_time', '') }}">
                         </div>
 
                         <!-- Coupon Input Section -->
                         <div class="mt-4 p-3 rounded-4 mb-4" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 16px; text-align: right;">
                             <label for="th_coupon_input" class="form-label fw-bold text-dark mb-2">🎟️ هل لديك كوبون خصم؟</label>
                             <div class="input-group">
-                                <input type="text" id="th_coupon_input" class="form-control" placeholder="أدخل كود الكوبون هنا" style="text-transform: uppercase; border-radius: 0 12px 12px 0;">
+                                <input type="text" id="th_coupon_input" class="form-control" value="{{ old('therapeutic_coupon_code', '') }}" placeholder="أدخل كود الكوبون هنا" style="text-transform: uppercase; border-radius: 0 12px 12px 0;">
                                 <button type="button" id="th_btn-apply-coupon" class="btn btn-warning fw-bold text-white px-4" style="border-radius: 12px 0 0 12px;">تطبيق</button>
                             </div>
-                            <input type="hidden" name="therapeutic_coupon_code" id="th_submitted_coupon_code">
+                            <input type="hidden" name="therapeutic_coupon_code" id="th_submitted_coupon_code" value="{{ old('therapeutic_coupon_code', '') }}">
                             <div id="th_coupon_feedback" class="mt-2 fw-bold" style="display: none; font-size: 0.95rem;"></div>
                         </div>
 
@@ -1205,7 +1205,7 @@
                             <label class="form-label d-block mb-3" style="font-weight: 700;">هل توافق على شروط الحجز والمقدم المالي أعلاه؟ *</label>
                             <div class="d-flex justify-content-center gap-4">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="therapeutic_user_agreement" id="th_agree_yes" value="موافق" style="accent-color: #2ecc71; width: 1.3rem; height: 1.3rem; margin-left: 0.5rem;">
+                                    <input class="form-check-input" type="radio" name="therapeutic_user_agreement" id="th_agree_yes" value="موافق" {{ old('therapeutic_user_agreement') == 'موافق' ? 'checked' : '' }} style="accent-color: #2ecc71; width: 1.3rem; height: 1.3rem; margin-left: 0.5rem;">
                                     <label class="form-check-label text-success fw-bold" for="th_agree_yes" style="cursor: pointer; font-size: 1.1rem;">موافق</label>
                                 </div>
                                 <div class="form-check form-check-inline">
@@ -1645,7 +1645,7 @@
             </div>
 
             <!-- خريطة موحدة لتحديد مناطق الألم (شديد 🔥 / متوسط ⚡) -->
-            <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 my-4 text-center" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.08) !important;">
+            <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 my-4 text-center" id="th-map-card-{index}" style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.08) !important;">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-2">
                     <div class="text-start">
                         <h5 class="fw-bold text-dark mb-1">🗺️ اضغط لتحديد مناطق الألم للشخص <span class="th-attendee-number">{number}</span></h5>
@@ -1689,7 +1689,7 @@
 
             <!-- زر التأكيد وتوليد البروتوكول العلاجي -->
             <div class="text-center my-4 py-2">
-                <button type="button" class="btn btn-confirm-th-attendee py-3 px-4 px-md-5 d-inline-flex flex-column align-items-center justify-content-center" id="btn-confirm-th-{index}" data-index="{index}" style="max-width: 740px; width: 100%;">
+                <button type="button" class="btn btn-confirm-th-attendee py-3 px-4 px-md-5 d-inline-flex flex-column align-items-center justify-content-center" id="btn-confirm-th-{index}" data-index="{index}" onclick="event.preventDefault(); event.stopPropagation();" style="max-width: 740px; width: 100%;">
                     <div class="d-flex align-items-center justify-content-center gap-2 fw-bold text-white mb-1" style="font-size: 1.22rem;">
                         <span style="font-size: 1.5rem; animation: bounce-hand 1.5s infinite; display: inline-block;">👇</span>
                         <span>اضغط هنا لإظهار واقتراح البروتوكول العلاجي للشخص رقم <span class="th-attendee-number">{number}</span></span>
@@ -2964,9 +2964,9 @@
                 if (therapeuticSec) therapeuticSec.style.display = 'block';
                 if (activeTabInput) activeTabInput.value = 'علاجية';
 
-                // Initialize 1st attendee if list is empty
+                // Initialize attendees from old input or default if list is empty
                 if (typeof therapeuticAttendees !== 'undefined' && therapeuticAttendees.length === 0) {
-                    addTherapeuticAttendee();
+                    initTherapeuticAttendees();
                 }
             } else {
                 if (btnConsultation) btnConsultation.classList.remove('active');
@@ -3213,7 +3213,7 @@
         let nextThAttendeeIndex = 0;
         let thCouponDiscount = 0;
 
-        function addTherapeuticAttendee() {
+        function addTherapeuticAttendee(initData = null) {
             const index = nextThAttendeeIndex++;
             const number = therapeuticAttendees.length + 1;
 
@@ -3250,7 +3250,107 @@
 
             initThAttendeeMap(index);
             setupThAttendeeEventListeners(index);
+
+            if (initData) {
+                const nameInput = document.getElementById(`th_name_${index}`);
+                const phoneInput = document.getElementById(`th_phone_${index}`);
+                const genderInput = document.getElementById(`th_gender_${index}`);
+                const ageInput = document.getElementById(`th_age_${index}`);
+                const weightInput = document.getElementById(`th_weight_${index}`);
+                const bloodInput = document.getElementById(`th_blood_type_${index}`);
+                const effInput = document.getElementById(`th_effective_blood_type_${index}`);
+                const numbnessInput = document.getElementById(`th_numbness_${index}`);
+
+                if (nameInput && initData.name) nameInput.value = initData.name;
+                if (phoneInput && initData.phone) phoneInput.value = initData.phone;
+                if (genderInput && initData.gender) genderInput.value = initData.gender;
+                if (ageInput && initData.age) ageInput.value = initData.age;
+                if (weightInput && initData.weight) weightInput.value = initData.weight;
+                if (bloodInput && initData.blood_type) bloodInput.value = initData.blood_type;
+                if (effInput && initData.effective_blood_type) effInput.value = initData.effective_blood_type;
+                if (numbnessInput && initData.numbness) numbnessInput.value = initData.numbness;
+
+                if (initData.severe_regions) {
+                    const sevArr = Array.isArray(initData.severe_regions) 
+                        ? initData.severe_regions 
+                        : String(initData.severe_regions).split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                    sevArr.forEach(rNum => {
+                        attendee.severeRegions.add(rNum);
+                        const hs = document.querySelector(`#th-map-unified-${index} .th-hotspot[data-region="${rNum}"]`);
+                        if (hs) hs.classList.add('selected-severe');
+                    });
+                }
+
+                if (initData.moderate_regions) {
+                    const modArr = Array.isArray(initData.moderate_regions) 
+                        ? initData.moderate_regions 
+                        : String(initData.moderate_regions).split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                    modArr.forEach(rNum => {
+                        attendee.moderateRegions.add(rNum);
+                        const hs = document.querySelector(`#th-map-unified-${index} .th-hotspot[data-region="${rNum}"]`);
+                        if (hs) hs.classList.add('selected-moderate');
+                    });
+                }
+
+                const sevBadge = document.getElementById(`th-severe-count-badge-${index}`);
+                const modBadge = document.getElementById(`th-moderate-count-badge-${index}`);
+                if (sevBadge) sevBadge.innerText = attendee.severeRegions.size;
+                if (modBadge) modBadge.innerText = attendee.moderateRegions.size;
+
+                if (initData.name && initData.phone && initData.gender && initData.weight) {
+                    confirmThAttendee(index);
+                    if (initData.protocol) {
+                        selectThAttendeeProtocol(index, initData.protocol);
+                    }
+                }
+            }
+
             updateTherapeuticGroupSummary();
+        }
+
+        function initTherapeuticAttendees() {
+            const oldAttendees = @json(old('therapeutic_attendees', []));
+            const oldArr = Array.isArray(oldAttendees) ? oldAttendees : Object.values(oldAttendees || {});
+
+            if (oldArr && oldArr.length > 0) {
+                oldArr.forEach(attData => {
+                    addTherapeuticAttendee(attData);
+                });
+            } else {
+                addTherapeuticAttendee();
+            }
+
+            const oldDate = @json(old('therapeutic_date', ''));
+            const oldTime = @json(old('therapeutic_time', ''));
+            const oldIsUrgent = @json(old('therapeutic_is_urgent', ''));
+            const oldCoupon = @json(old('therapeutic_coupon_code', ''));
+            const oldAgreement = @json(old('therapeutic_user_agreement', ''));
+
+            const thDateEl = document.getElementById('th_appointment_date');
+            const thTimeSelect = document.getElementById('th_appointment_time_select');
+            const thTimeInput = document.getElementById('th_appointment_time_input');
+            const thHiddenTime = document.getElementById('th_appointment_time');
+            const thUrgentToggle = document.getElementById('th_is_urgent');
+            const thCouponEl = document.getElementById('th_coupon_input');
+            const thSubmittedCoupon = document.getElementById('th_submitted_coupon_code');
+
+            if (oldDate && thDateEl) thDateEl.value = oldDate;
+            if (oldIsUrgent && thUrgentToggle) {
+                thUrgentToggle.checked = true;
+                thUrgentToggle.dispatchEvent(new Event('change'));
+            }
+            if (oldTime) {
+                if (thHiddenTime) thHiddenTime.value = oldTime;
+                if (thTimeInput) thTimeInput.value = oldTime;
+            }
+            if (oldCoupon) {
+                if (thCouponEl) thCouponEl.value = oldCoupon;
+                if (thSubmittedCoupon) thSubmittedCoupon.value = oldCoupon;
+            }
+            if (oldAgreement === 'موافق') {
+                const agreeRadio = document.getElementById('th_agree_yes');
+                if (agreeRadio) agreeRadio.checked = true;
+            }
         }
 
         function removeTherapeuticAttendee(index) {
@@ -3407,7 +3507,7 @@
 
         function resetThAttendeeConfirmation(index) {
             const att = therapeuticAttendees.find(a => a.index === index);
-            if (!att) return;
+            if (!att || !att.isConfirmed) return;
 
             att.isConfirmed = false;
             att.selectedProtocol = null;
@@ -3441,20 +3541,78 @@
             const att = therapeuticAttendees.find(a => a.index === index);
             if (!att) return;
 
-            const nameVal = document.getElementById(`th_name_${index}`)?.value.trim();
-            const phoneVal = document.getElementById(`th_phone_${index}`)?.value.trim();
-            const genderVal = document.getElementById(`th_gender_${index}`)?.value;
-            const ageVal = document.getElementById(`th_age_${index}`)?.value;
-            const weightVal = parseFloat(document.getElementById(`th_weight_${index}`)?.value);
-            const bloodSelect = document.getElementById(`th_blood_type_${index}`)?.value;
+            const nameInput = document.getElementById(`th_name_${index}`);
+            const phoneInput = document.getElementById(`th_phone_${index}`);
+            const genderInput = document.getElementById(`th_gender_${index}`);
+            const ageInput = document.getElementById(`th_age_${index}`);
+            const weightInput = document.getElementById(`th_weight_${index}`);
+            const bloodInput = document.getElementById(`th_blood_type_${index}`);
+
+            const nameVal = nameInput?.value.trim();
+            const phoneVal = phoneInput?.value.trim();
+            const genderVal = genderInput?.value;
+            const ageVal = parseInt(ageInput?.value);
+            const weightVal = parseFloat(weightInput?.value);
+            const bloodSelect = bloodInput?.value;
             const totalPainSpots = att.severeRegions.size + att.moderateRegions.size;
 
             const feedbackEl = document.getElementById(`th-validation-feedback-${index}`);
 
-            if (!nameVal || !phoneVal || !genderVal || !ageVal || isNaN(weightVal) || weightVal <= 0 || !bloodSelect || totalPainSpots === 0) {
+            // Clear previous validation highlights
+            [nameInput, phoneInput, genderInput, ageInput, weightInput, bloodInput].forEach(inp => {
+                if (inp) inp.classList.remove('is-invalid');
+            });
+            const mapCard = document.getElementById(`th-map-card-${index}`);
+            if (mapCard) mapCard.classList.remove('border', 'border-danger');
+
+            const missingFields = [];
+            let firstInvalidEl = null;
+
+            if (!nameVal) {
+                missingFields.push('الاسم الكامل');
+                nameInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = nameInput;
+            }
+            if (!phoneVal) {
+                missingFields.push('رقم التليفون');
+                phoneInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = phoneInput;
+            }
+            if (!genderVal) {
+                missingFields.push('تحديد الجنس (ذكر / أنثى)');
+                genderInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = genderInput;
+            }
+            if (!ageVal || isNaN(ageVal) || ageVal < 1 || ageVal > 120) {
+                missingFields.push('السن الصحيح (بين 1 و 120)');
+                ageInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = ageInput;
+            }
+            if (isNaN(weightVal) || weightVal < 20 || weightVal > 300) {
+                missingFields.push('الوزن الصحيح بالكيلوجرام (بين 20 و 300 كجم)');
+                weightInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = weightInput;
+            }
+            if (!bloodSelect) {
+                missingFields.push('فصيلة الدم');
+                bloodInput?.classList.add('is-invalid');
+                if (!firstInvalidEl) firstInvalidEl = bloodInput;
+            }
+            if (totalPainSpots === 0) {
+                missingFields.push('تحديد منطقة ألم واحدة على الأقل من الخريطة بالأسفل (شديد 🔥 أو متوسط ⚡)');
+                if (mapCard) mapCard.classList.add('border', 'border-danger');
+                if (!firstInvalidEl) firstInvalidEl = mapCard;
+            }
+
+            if (missingFields.length > 0) {
                 if (feedbackEl) {
+                    const attendeeNum = (therapeuticAttendees.indexOf(att) !== -1 ? therapeuticAttendees.indexOf(att) + 1 : index + 1);
+                    feedbackEl.innerHTML = `⚠️ <strong>يرجى استكمال البيانات المطلوبة للشخص رقم (${attendeeNum}):</strong><ul class="mb-0 mt-2 text-start d-inline-block" style="font-size: 0.95rem;">${missingFields.map(f => `<li>${f}</li>`).join('')}</ul>`;
                     feedbackEl.style.display = 'block';
                     feedbackEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                if (firstInvalidEl && typeof firstInvalidEl.focus === 'function') {
+                    firstInvalidEl.focus();
                 }
                 return;
             }
@@ -3505,28 +3663,34 @@
             }
 
             att.isConfirmed = true;
-            att.selectedProtocol = null;
-            att.price = 0;
-            att.duration = 0;
 
-            const radioEco = document.getElementById(`th_proto_economy_${index}`);
-            const radioInt = document.getElementById(`th_proto_intensive_${index}`);
-            if (radioEco) radioEco.checked = false;
-            if (radioInt) radioInt.checked = false;
+            // Preserve previously selected protocol if already selected
+            if (att.selectedProtocol && pricing[att.selectedProtocol]) {
+                selectThAttendeeProtocol(index, att.selectedProtocol);
+            } else {
+                att.selectedProtocol = null;
+                att.price = 0;
+                att.duration = 0;
 
-            const cardEco = document.getElementById(`th-proto-economy-card-${index}`);
-            const cardInt = document.getElementById(`th-proto-intensive-card-${index}`);
-            if (cardEco) cardEco.classList.remove('selected-protocol');
-            if (cardInt) cardInt.classList.remove('selected-protocol');
+                const radioEco = document.getElementById(`th_proto_economy_${index}`);
+                const radioInt = document.getElementById(`th_proto_intensive_${index}`);
+                if (radioEco) radioEco.checked = false;
+                if (radioInt) radioInt.checked = false;
 
-            const summaryProto = document.getElementById(`th_attendee_summary_protocol_${index}`);
-            const summaryPrice = document.getElementById(`th_attendee_summary_price_${index}`);
-            const summaryDur = document.getElementById(`th_attendee_summary_duration_${index}`);
-            if (summaryProto) summaryProto.textContent = 'يرجى اختيار البروتوكول أعلاه';
-            if (summaryPrice) summaryPrice.textContent = '0.00';
-            if (summaryDur) summaryDur.textContent = '0';
+                const cardEco = document.getElementById(`th-proto-economy-card-${index}`);
+                const cardInt = document.getElementById(`th-proto-intensive-card-${index}`);
+                if (cardEco) cardEco.classList.remove('selected-protocol');
+                if (cardInt) cardInt.classList.remove('selected-protocol');
 
-            updateTherapeuticGroupSummary();
+                const summaryProto = document.getElementById(`th_attendee_summary_protocol_${index}`);
+                const summaryPrice = document.getElementById(`th_attendee_summary_price_${index}`);
+                const summaryDur = document.getElementById(`th_attendee_summary_duration_${index}`);
+                if (summaryProto) summaryProto.textContent = 'يرجى اختيار البروتوكول أعلاه';
+                if (summaryPrice) summaryPrice.textContent = '0.00';
+                if (summaryDur) summaryDur.textContent = '0';
+
+                updateTherapeuticGroupSummary();
+            }
         }
 
         function selectThAttendeeProtocol(index, protocolType) {
@@ -3662,8 +3826,18 @@
             if (!cardEl) return;
 
             cardEl.querySelectorAll('.th-input-track').forEach(inp => {
-                inp.addEventListener('input', () => resetThAttendeeConfirmation(index));
-                inp.addEventListener('change', () => resetThAttendeeConfirmation(index));
+                inp.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    const feedbackEl = document.getElementById(`th-validation-feedback-${index}`);
+                    if (feedbackEl) feedbackEl.style.display = 'none';
+                    resetThAttendeeConfirmation(index);
+                });
+                inp.addEventListener('change', function() {
+                    this.classList.remove('is-invalid');
+                    const feedbackEl = document.getElementById(`th-validation-feedback-${index}`);
+                    if (feedbackEl) feedbackEl.style.display = 'none';
+                    resetThAttendeeConfirmation(index);
+                });
             });
 
             const btnSev = cardEl.querySelector('.btn-th-select-severe');
@@ -3683,7 +3857,11 @@
 
             const btnConfirm = cardEl.querySelector('.btn-confirm-th-attendee');
             if (btnConfirm) {
-                btnConfirm.addEventListener('click', () => confirmThAttendee(index));
+                btnConfirm.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    confirmThAttendee(index);
+                });
             }
 
             const cardEco = document.getElementById(`th-proto-economy-card-${index}`);
@@ -3922,6 +4100,14 @@
             // Form Submit Listener for Group Therapeutic Booking
             const thForm = document.getElementById('bookingFormTherapeutic');
             if (thForm) {
+                // Prevent Enter key inside text/number/tel inputs from unintentionally submitting the form
+                thForm.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'submit') {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+
                 thForm.addEventListener('submit', function(e) {
                     if (therapeuticAttendees.length === 0) {
                         e.preventDefault();

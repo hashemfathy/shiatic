@@ -498,6 +498,9 @@ class TherapeuticMassageHelper
         $massageCalc = self::calculate($bloodType, $weight, $severeRegions, $moderateRegions, $protocol);
         $massageDuration = $massageCalc['duration'] ?? 0;
         $massagePrice = $massageCalc['total_price'] ?? 0;
+        $priceBadge = auth()->user()?->type === 'admin'
+            ? "<span style='background: #1e293b; color: #ff9d42; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #d97706;'>💰 سعر المساج: {$massagePrice} ج.م</span>"
+            : "";
 
         return new \Illuminate\Support\HtmlString("
         <div style='direction: rtl; text-align: right; font-family: sans-serif; margin-top: 15px;'>
@@ -510,7 +513,7 @@ class TherapeuticMassageHelper
                     <span style='background: #1e293b; color: #a855f7; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>⚖️ فئة الوزن ({$weightLabel})</span>
                     <span style='background: #1e293b; color: #22c55e; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>🎯 {$protoLabel}</span>
                     <span style='background: #1e293b; color: #38bdf8; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #0284c7;'>⏱️ مدة المساج: {$massageDuration} دقيقة</span>
-                    <span style='background: #1e293b; color: #ff9d42; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #d97706;'>💰 سعر المساج: {$massagePrice} ج.م</span>
+                    {$priceBadge}
                 </div>
             </div>
             <div style='overflow-x: auto;'>
@@ -765,7 +768,7 @@ class TherapeuticMassageHelper
         ");
     }
 
-    public static function renderTherapeuticTechniquesForForm(callable $get, $record = null)
+    public static function renderTherapeuticTechniquesForForm(callable $get, $record = null, ?array $allowedServices = null)
     {
         $protocol = $get('therapeutic_protocol') ?: 'intensive';
         $bloodType = $get('therapeutic_blood_type') ?: 'O';
@@ -793,6 +796,14 @@ class TherapeuticMassageHelper
             ");
         }
 
+        if ($allowedServices !== null && empty($allowedServices)) {
+            return new \Illuminate\Support\HtmlString("
+                <div style='background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem; margin-top: 10px; direction: rtl;'>
+                    🔒 لا توجد تكنيكات لجلسات موكل بها لحسابك في هذه الزيارة.
+                </div>
+            ");
+        }
+
         $calc = self::buildTherapeuticDescription(
             $protocol,
             $bloodType,
@@ -807,9 +818,28 @@ class TherapeuticMassageHelper
             'complaint' => $calc['description'],
         ];
 
-        $massageTable = self::renderDetailedTechniquesTable($dummyObj);
-        $chiroTable = \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($dummyObj);
+        $html = '';
 
-        return new \Illuminate\Support\HtmlString($massageTable->toHtml() . $chiroTable->toHtml());
+        // If $allowedServices is null (Admin) or includes 'massage', render massage table
+        if ($allowedServices === null || in_array('massage', $allowedServices)) {
+            $massageTable = self::renderDetailedTechniquesTable($dummyObj);
+            $html .= ($massageTable instanceof \Illuminate\Contracts\Support\Htmlable ? $massageTable->toHtml() : $massageTable);
+        }
+
+        // If $allowedServices is null (Admin) or includes 'cracking', render chiro table
+        if ($allowedServices === null || in_array('cracking', $allowedServices)) {
+            $chiroTable = \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($dummyObj);
+            $html .= ($chiroTable instanceof \Illuminate\Contracts\Support\Htmlable ? $chiroTable->toHtml() : $chiroTable);
+        }
+
+        if (empty(trim($html))) {
+            return new \Illuminate\Support\HtmlString("
+                <div style='background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem; margin-top: 10px; direction: rtl;'>
+                    🔒 الجلسة الموكل بها لحسابك لا تتضمن جدول تكنيكات مساج أو كيروبراكتيك.
+                </div>
+            ");
+        }
+
+        return new \Illuminate\Support\HtmlString($html);
     }
 }

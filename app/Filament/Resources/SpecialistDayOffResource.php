@@ -45,39 +45,37 @@ class SpecialistDayOffResource extends Resource
         return trim($str);
     }
 
-    public static function getCurrentEmployeeId(): ?int
+    public static function getCurrentEmployeeIds(): array
     {
         $user = auth()->user();
         if (!$user) {
-            return null;
+            return [];
         }
+
+        $ids = [];
 
         // 1. Direct match by email
         if (!empty($user->email)) {
             $userEmail = trim(strtolower($user->email));
-            $emp = Employee::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->first();
-            if ($emp) {
-                return $emp->id;
-            }
+            $empEmails = Employee::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->pluck('id')->toArray();
+            $ids = array_merge($ids, $empEmails);
         }
 
-        // 2. Direct match by exact name
+        // 2. Matches by name
         if (!empty($user->name)) {
             $userName = trim($user->name);
-            $emp = Employee::where('name', $userName)->first();
-            if ($emp) {
-                return $emp->id;
-            }
 
-            // 3. Match by name LIKE
-            $emp = Employee::where('name', 'like', '%' . $userName . '%')
+            // 2.1 Direct match by exact name
+            $empNames = Employee::where('name', $userName)->pluck('id')->toArray();
+            $ids = array_merge($ids, $empNames);
+
+            // 2.2 Match by name LIKE
+            $empLike = Employee::where('name', 'like', '%' . $userName . '%')
                 ->orWhereRaw('? LIKE CONCAT("%", name, "%")', [$userName])
-                ->first();
-            if ($emp) {
-                return $emp->id;
-            }
+                ->pluck('id')->toArray();
+            $ids = array_merge($ids, $empLike);
 
-            // 4. Match using Arabic normalization across all employees
+            // 2.3 Match using Arabic normalization across all employees
             $normalizedUserName = self::normalizeArabic($userName);
             if (!empty($normalizedUserName)) {
                 $allEmployees = Employee::all();
@@ -87,29 +85,70 @@ class SpecialistDayOffResource extends Resource
                         if ($normalizedUserName === $normalizedEmpName || 
                             str_contains($normalizedEmpName, $normalizedUserName) || 
                             str_contains($normalizedUserName, $normalizedEmpName)) {
-                            return $employee->id;
+                            $ids[] = $employee->id;
                         }
                     }
                 }
             }
+
+            // 2.4 Match using common English-Arabic name mappings
+            $nameMappings = [
+                'aida' => 'عايده',
+                'moustafa' => 'مصطفى',
+                'mostafa' => 'مصطفى',
+                'abdulrahman' => 'عبد الرحمن',
+                'abdo' => 'عبد الرحمن',
+                'zaky' => 'ذكي',
+                'ahmed' => 'احمد',
+            ];
+
+            foreach ($nameMappings as $en => $ar) {
+                if (stripos($userName, $en) !== false || stripos($user->email ?? '', $en) !== false) {
+                    $matching = Employee::all()->filter(function ($e) use ($ar) {
+                        return mb_stripos(self::normalizeArabic($e->name ?? ''), self::normalizeArabic($ar)) !== false;
+                    })->pluck('id')->toArray();
+                    $ids = array_merge($ids, $matching);
+                }
+            }
         }
 
-        // 5. If still not found and user is specialist, ensure an employee record exists with defaults
-        if (self::isSpecialist() && !empty($user->name)) {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+        // 3. Fallback: if user is specialist and has no employee record, create one
+        if (empty($ids) && self::isSpecialist() && !empty($user->name)) {
+            $randomPhone = '00' . str_pad((string)mt_rand(1, 999999999), 9, '0', STR_PAD_LEFT);
             $emp = Employee::firstOrCreate(
                 ['name' => trim($user->name)],
                 [
                     'email' => $user->email ?? '',
-                    'phone' => '00000000000',
+                    'phone' => $randomPhone,
                     'age' => 30,
                     'employment_date' => now()->format('Y-m-d'),
                     'work_days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
                 ]
             );
-            return $emp->id;
+            $ids[] = (int)$emp->id;
         }
 
-        return null;
+        return $ids;
+    }
+
+    public static function getCurrentEmployeeId(): ?int
+    {
+        $ids = self::getCurrentEmployeeIds();
+        if (empty($ids)) {
+            return null;
+        }
+
+        if (count($ids) > 1) {
+            $best = Employee::whereIn('id', $ids)
+                ->withCount('sessions')
+                ->orderBy('sessions_count', 'desc')
+                ->first();
+            return $best?->id ?? $ids[0];
+        }
+
+        return $ids[0];
     }
 
     public static function canViewAny(): bool
@@ -188,12 +227,53 @@ class SpecialistDayOffResource extends Resource
                     ->schema([
                         ...$employeeSchema,
 
+                        Forms\Components\Select::make('type')
+                            ->label('نوع الإجازة')
+                            ->options([
+                                'specific_date' => 'يوم محدد (تاريخ معين)',
+                                'recurring' => 'يوم متكرر (أسبوعياً أو شهرياً)',
+                            ])
+                            ->required()
+                            ->default('specific_date')
+                            ->reactive(),
+
                         Forms\Components\DatePicker::make('date')
                             ->label('تاريخ الإجازة')
-                            ->required()
+                            ->required(fn (callable $get) => $get('type') === 'specific_date' || empty($get('type')))
+                            ->visible(fn (callable $get) => $get('type') === 'specific_date' || empty($get('type')))
                             ->default(now()->format('Y-m-d'))
                             ->minDate(now()->startOfDay())
+                            ->native(false)
+                            ->displayFormat('Y-m-d')
                             ->reactive(),
+
+                        Forms\Components\Select::make('day_of_week')
+                            ->label('اليوم من الأسبوع')
+                            ->options([
+                                0 => 'الأحد (Sunday)',
+                                1 => 'الأثنين (Monday)',
+                                2 => 'الثلاثاء (Tuesday)',
+                                3 => 'الأربعاء (Wednesday)',
+                                4 => 'الخميس (Thursday)',
+                                5 => 'الجمعة (Friday)',
+                                6 => 'السبت (Saturday)',
+                            ])
+                            ->required(fn (callable $get) => $get('type') === 'recurring')
+                            ->visible(fn (callable $get) => $get('type') === 'recurring'),
+
+                        Forms\Components\Select::make('monthly_week')
+                            ->label('التكرار في الشهر')
+                            ->options([
+                                'any' => 'كل أسابيع الشهر (أسبوعي متكرر)',
+                                'first' => 'الأسبوع الأول من كل شهر',
+                                'second' => 'الأسبوع الثاني من كل شهر',
+                                'third' => 'الأسبوع الثالث من كل شهر',
+                                'fourth' => 'الأسبوع الرابع من كل شهر',
+                                'last' => 'الأسبوع الأخير من كل شهر',
+                            ])
+                            ->required(fn (callable $get) => $get('type') === 'recurring')
+                            ->visible(fn (callable $get) => $get('type') === 'recurring')
+                            ->default('any'),
 
                         Forms\Components\Toggle::make('is_full_day')
                             ->label('إجازة يوم كامل (Full Day)')
@@ -237,10 +317,50 @@ class SpecialistDayOffResource extends Resource
                     ->sortable()
                     ->visible(!$isSpecialist),
 
+                Tables\Columns\TextColumn::make('type')
+                    ->label('نوع الإجازة')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'specific_date' => 'warning',
+                        'recurring' => 'success',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'specific_date' => 'تاريخ محدد',
+                        'recurring' => 'متكرر',
+                        default => $state ?? 'تاريخ محدد',
+                    }),
+
                 Tables\Columns\TextColumn::make('date')
-                    ->label('تاريخ الإجازة')
+                    ->label('التاريخ المحدد')
                     ->date('Y-m-d')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('—'),
+
+                Tables\Columns\TextColumn::make('day_of_week')
+                    ->label('اليوم')
+                    ->formatStateUsing(fn ($state, SpecialistDayOff $record): string => match ($record->type === 'recurring' ? (int)$state : null) {
+                        0 => 'الأحد',
+                        1 => 'الأثنين',
+                        2 => 'الثلاثاء',
+                        3 => 'الأربعاء',
+                        4 => 'الخميس',
+                        5 => 'الجمعة',
+                        6 => 'السبت',
+                        default => '—',
+                    }),
+
+                Tables\Columns\TextColumn::make('monthly_week')
+                    ->label('تكرار الشهر')
+                    ->formatStateUsing(fn ($state, SpecialistDayOff $record): string => match ($record->type === 'recurring' ? (string)$state : null) {
+                        'any' => 'كل أسبوع',
+                        'first' => 'الأسبوع الأول',
+                        'second' => 'الأسبوع الثاني',
+                        'third' => 'الأسبوع الثالث',
+                        'fourth' => 'الأسبوع الرابع',
+                        'last' => 'الأسبوع الأخير',
+                        default => '—',
+                    }),
 
                 Tables\Columns\IconColumn::make('is_full_day')
                     ->label('يوم كامل')
@@ -269,12 +389,31 @@ class SpecialistDayOffResource extends Resource
                     ->dateTime('Y-m-d H:i')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('date', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('employee_id')
                     ->label('المختص')
                     ->options(Employee::pluck('name', 'id'))
                     ->visible(!$isSpecialist),
+
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('نوع الإجازة')
+                    ->options([
+                        'specific_date' => 'تاريخ محدد',
+                        'recurring' => 'متكرر',
+                    ]),
+
+                Tables\Filters\SelectFilter::make('day_of_week')
+                    ->label('اليوم المتكرر')
+                    ->options([
+                        0 => 'الأحد',
+                        1 => 'الأثنين',
+                        2 => 'الثلاثاء',
+                        3 => 'الأربعاء',
+                        4 => 'الخميس',
+                        5 => 'الجمعة',
+                        6 => 'السبت',
+                    ]),
 
                 Tables\Filters\Filter::make('date')
                     ->form([

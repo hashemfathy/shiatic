@@ -18,10 +18,20 @@ class CreateSpecialistDayOff extends CreateRecord
         }
 
         $employeeId = $data['employee_id'];
-        $date = $data['date'];
+        $type = $data['type'] ?? 'specific_date';
+        $date = $data['date'] ?? null;
+        $dayOfWeek = isset($data['day_of_week']) ? (int)$data['day_of_week'] : null;
+        $monthlyWeek = $data['monthly_week'] ?? 'any';
         $isFullDay = (bool)($data['is_full_day'] ?? true);
         $startTime = $data['start_time'] ?? null;
         $endTime = $data['end_time'] ?? null;
+
+        if ($type === 'recurring') {
+            $data['date'] = null;
+        } else {
+            $data['day_of_week'] = null;
+            $data['monthly_week'] = null;
+        }
 
         if (!$isFullDay && (!empty($startTime) && !empty($endTime))) {
             if (strtotime($startTime) >= strtotime($endTime)) {
@@ -40,14 +50,18 @@ class CreateSpecialistDayOff extends CreateRecord
             $date,
             $isFullDay,
             $startTime,
-            $endTime
+            $endTime,
+            $type,
+            $dayOfWeek,
+            $monthlyWeek
         );
 
         if ($conflicts->isNotEmpty()) {
             $conflictList = $conflicts->map(function ($visit) {
                 $clientName = $visit->client?->name ?: 'عميل';
+                $visitDate = $visit->date ?: '';
                 $time = $visit->hour ?: 'غير محدد';
-                return "• زيارة العميل [{$clientName}] في تمام الساعة ({$time})";
+                return "• زيارة العميل [{$clientName}] بتاريخ ({$visitDate}) الساعة ({$time})";
             })->implode("\n");
 
             Notification::make()

@@ -146,8 +146,8 @@ class VisitResource extends Resource
                                     $isCurrent = $member->id === $req->id;
                                     $style = $isCurrent ? 'font-weight: bold; background: #3f3f46; border-right: 4px solid #ff9d42;' : 'background: #27272a; border-right: 4px solid #71717a;';
                                     $html .= "<div style=\"margin-bottom: 0.5rem; padding: 0.75rem; {$style} border-radius: 6px; color: #fff;\">";
-                                    $html .= e($member->name) . " (" . ($member->gender === 'female' ? 'أنثى' : 'ذكر') . ") - الهاتف: " . e($member->phone);
-                                    $html .= " | الخدمة: " . e($member->service_type ?: 'غير محدد') . " | السعر: " . e($member->total_price) . " ج.م";
+                                    $priceText = auth()->user()?->type === 'admin' ? " | السعر: " . e($member->total_price) . " ج.م" : "";
+                                    $html .= " | الخدمة: " . e($member->service_type ?: 'غير محدد') . $priceText;
                                     if ($member->id === $leader->id) {
                                         $html .= " <span style=\"background: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;\">قائد المجموعة</span>";
                                     }
@@ -164,7 +164,7 @@ class VisitResource extends Resource
 
                 // Section 3: Booking Prices & Techniques (Read-only dynamic section)
                 Forms\Components\Section::make('أسعار خدمات الحجز والتكنيكات')
-                    ->label(fn () => auth()->user()?->type === 'specialist' ? 'تكنيكات الحجز' : 'أسعار خدمات الحجز والتكنيكات')
+                    ->label(fn () => auth()->user()?->type === 'admin' ? 'أسعار خدمات الحجز والتكنيكات' : 'تكنيكات الحجز')
                     ->visible(fn (callable $get, ?Visit $record) => ($record?->request_id !== null || $get('request_id') !== null))
                     ->schema([
                         Forms\Components\Placeholder::make('booking_prices_techniques')
@@ -173,6 +173,16 @@ class VisitResource extends Resource
                                 $requestId = $record?->request_id ?? $get('request_id');
                                 $request = $requestId ? \App\Models\Request::find($requestId) : null;
                                 $isTherapeutic = ($get('type') === 'علاجية' || $record?->type === 'علاجية' || ($request && $request->booking_type === 'علاجية'));
+
+                                $allowedServices = self::getSpecialistAssignedServices($get, $record);
+
+                                if ($allowedServices !== null && empty($allowedServices)) {
+                                    return new \Illuminate\Support\HtmlString("
+                                        <div style='background: #1e293b; border: 1px dashed #475569; border-radius: 12px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 1rem; margin: 10px 0; direction: rtl;'>
+                                            🔒 لا توجد جلسات موكل بها لحسابك في هذه الزيارة لعرض تكنيكاتها.
+                                        </div>
+                                    ");
+                                }
 
                                 if ($isTherapeutic) {
                                     $protocol = $get('therapeutic_protocol') ?: 'intensive';
@@ -226,7 +236,7 @@ class VisitResource extends Resource
                                     }
 
                                     $pricingHtml = '';
-                                    if (auth()->user()?->type !== 'specialist') {
+                                    if (auth()->user()?->type === 'admin') {
                                         $pricingHtml = "
                                             <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
                                                 <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
@@ -249,25 +259,42 @@ class VisitResource extends Resource
                                             </div>
                                         ";
                                     } else {
-                                        $pricingHtml = "
-                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                        $durationBoxes = '';
+                                        $myDuration = 0;
+                                        if ($allowedServices === null || in_array('massage', $allowedServices)) {
+                                            $myDuration += $massageDuration;
+                                            $durationBoxes .= "
                                                 <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                     <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ مدة المساج العلاجي</div>
                                                     <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$massageDuration} دقيقة</div>
                                                 </div>
+                                            ";
+                                        }
+                                        if ($allowedServices === null || in_array('cracking', $allowedServices)) {
+                                            $myDuration += $crackingDuration;
+                                            $durationBoxes .= "
                                                 <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                     <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ مدة الكيروبراكتيك</div>
                                                     <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingDuration} دقيقة</div>
                                                 </div>
-                                                <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
-                                                    <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>⏱️ المدة الإجمالية للسيشن</div>
-                                                    <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$finalDuration} دقيقة</div>
-                                                </div>
+                                            ";
+                                        }
+                                        $totalDurationLabel = ($allowedServices === null) ? '⏱️ المدة الكلية' : '⏱️ مدة الجلسات الموكل بها';
+                                        $durationBoxes .= "
+                                            <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                                <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>{$totalDurationLabel}</div>
+                                                <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$myDuration} دقيقة</div>
+                                            </div>
+                                        ";
+
+                                        $pricingHtml = "
+                                            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                                {$durationBoxes}
                                             </div>
                                         ";
                                     }
 
-                                    $techniquesTable = \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
+                                    $techniquesTable = \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record, $allowedServices);
                                     $techniquesHtml = $techniquesTable instanceof \Illuminate\Contracts\Support\Htmlable
                                         ? $techniquesTable->toHtml()
                                         : $techniquesTable;
@@ -282,18 +309,42 @@ class VisitResource extends Resource
 
                                 if (!$request) return 'لا توجد تفاصيل حجز.';
 
-                                $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($request);
+                                $liveCrackingType = $get('cracking_type') ?? ($request->cracking_type ?? 'none');
+                                $liveCrackingRegions = (array)($get('cracking_regions') ?? []);
+                                if ($liveCrackingType === 'none' && !empty($liveCrackingRegions)) {
+                                    $liveCrackingType = 'regions';
+                                }
+
+                                $liveMassageRegions = (array)($get('massage_regions') ?? []);
+                                $livePackages = (array)($get('packages') ?? $request->packages ?? []);
+
+                                $liveRecord = (object)[
+                                    'booking_type' => 'وقائية',
+                                    'packages' => $livePackages,
+                                    'massage_regions' => $liveMassageRegions,
+                                    'massage_style' => $get('massage_style') ?? 'intensive',
+                                    'massage_intensity' => $get('massage_intensity') ?? 'medium',
+                                    'cracking_type' => $liveCrackingType,
+                                    'cracking_style' => $get('cracking_style') ?? 'intensive',
+                                    'cracking_regions' => $liveCrackingRegions,
+                                    'hijama_type' => $get('hijama_type') ?? 'none',
+                                    'hijama_style' => $get('hijama_style') ?? 'intensive',
+                                    'hijama_regions' => $get('hijama_regions') ?? [],
+                                    'is_urgent' => (bool)($get('is_urgent') ?: ($request->is_urgent ?? false)),
+                                ];
+
+                                $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($liveRecord);
                                 $massagePrice = $basePrices['massage'] ?? 0;
                                 $crackingPrice = $basePrices['cracking'] ?? 0;
                                 $hijamaPrice = $basePrices['hijama'] ?? 0;
                                 
-                                $durationPricing = \App\Filament\Resources\RequestResource::calculatePricingAndDuration($request);
+                                $durationPricing = \App\Filament\Resources\RequestResource::calculatePricingAndDuration($liveRecord);
                                 $massageDuration = $durationPricing['massage_duration'] ?? 0;
                                 $crackingDuration = $durationPricing['cracking_duration'] ?? 0;
                                 $hijamaDuration = $durationPricing['hijama_duration'] ?? 0;
-                                $finalDuration = (int)round($request->total_duration ?: ($durationPricing['total_duration'] ?? 0));
+                                $finalDuration = (int)round($durationPricing['total_duration'] ?? 0);
 
-                                $urgentFee = $request->is_urgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
+                                $urgentFee = $liveRecord->is_urgent ? (int)\App\Models\Setting::get('urgent_booking_fee', 200) : 0;
                                 $totalBase = array_sum($basePrices) + $urgentFee;
 
                                 $discount = (float)($get('discount_percentage') ?? 0);
@@ -323,7 +374,7 @@ class VisitResource extends Resource
                                 }
 
                                 $pricingHtml = '';
-                                if (auth()->user()?->type !== 'specialist') {
+                                if (auth()->user()?->type === 'admin') {
                                     $massageDurationText = $massageDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$massageDuration} دقيقة</div>" : "";
                                     $crackingDurationText = $crackingDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$crackingDuration} دقيقة</div>" : "";
                                     $hijamaDurationText = $hijamaDuration > 0 ? "<div style='color: #38bdf8; font-size: 0.85rem; margin-top: 0.35rem; font-weight: 600;'>⏱️ المدة: {$hijamaDuration} دقيقة</div>" : "";
@@ -355,34 +406,76 @@ class VisitResource extends Resource
                                         </div>
                                     ";
                                 } else {
-                                    $pricingHtml = "
-                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                    $durationBoxes = '';
+                                    $myDuration = 0;
+                                    if (($allowedServices === null || in_array('massage', $allowedServices)) && $massageDuration > 0) {
+                                        $myDuration += $massageDuration;
+                                        $durationBoxes .= "
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>💆‍♂️ مدة المساج</div>
                                                 <div style='color: #38bdf8; font-size: 1.25rem; font-weight: bold;'>{$massageDuration} دقيقة</div>
                                             </div>
+                                        ";
+                                    }
+                                    if (($allowedServices === null || in_array('cracking', $allowedServices)) && $crackingDuration > 0) {
+                                        $myDuration += $crackingDuration;
+                                        $durationBoxes .= "
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>⚡ مدة التقويم</div>
                                                 <div style='color: #a855f7; font-size: 1.25rem; font-weight: bold;'>{$crackingDuration} دقيقة</div>
                                             </div>
+                                        ";
+                                    }
+                                    if (($allowedServices === null || in_array('hijama', $allowedServices)) && $hijamaDuration > 0) {
+                                        $myDuration += $hijamaDuration;
+                                        $durationBoxes .= "
                                             <div style='background: #1e293b; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center;'>
                                                 <div style='color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;'>🏺 مدة الحجامة</div>
                                                 <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$hijamaDuration} دقيقة</div>
                                             </div>
-                                            <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
-                                                <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>⏱️ المدة الإجمالية للسيشن</div>
-                                                <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$finalDuration} دقيقة</div>
-                                            </div>
+                                        ";
+                                    }
+                                    $totalDurationLabel = ($allowedServices === null) ? '⏱️ المدة الكلية' : '⏱️ مدة الجلسات الموكل بها';
+                                    $durationBoxes .= "
+                                        <div style='background: #0f172a; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center;'>
+                                            <div style='color: #e2e8f0; font-size: 0.85rem; margin-bottom: 0.25rem;'>{$totalDurationLabel}</div>
+                                            <div style='color: #22c55e; font-size: 1.25rem; font-weight: bold;'>{$myDuration} دقيقة</div>
+                                        </div>
+                                    ";
+
+                                    $pricingHtml = "
+                                        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;'>
+                                            {$durationBoxes}
                                         </div>
                                     ";
                                 }
 
                                 $techniquesHtml = '';
-                                if ($massagePrice > 0) {
-                                    $techniquesTable = \App\Helpers\MassageHelper::renderTechniquesTable($request);
-                                    $techniquesHtml = $techniquesTable instanceof \Illuminate\Contracts\Support\Htmlable
+                                $showMassage = ($allowedServices === null || in_array('massage', $allowedServices));
+                                $showCracking = ($allowedServices === null || in_array('cracking', $allowedServices));
+
+                                if ($showMassage && $massagePrice > 0) {
+                                    $techniquesTable = \App\Helpers\MassageHelper::renderTechniquesTable($liveRecord);
+                                    $techniquesHtml .= $techniquesTable instanceof \Illuminate\Contracts\Support\Htmlable
                                         ? $techniquesTable->toHtml()
                                         : $techniquesTable;
+                                }
+
+                                if ($showCracking && $crackingPrice > 0) {
+                                    $crackingTable = \App\Helpers\CrackingHelper::renderTechniquesTable($liveRecord);
+                                    $techniquesHtml .= $crackingTable instanceof \Illuminate\Contracts\Support\Htmlable
+                                        ? $crackingTable->toHtml()
+                                        : $crackingTable;
+                                }
+
+                                if (empty(trim($techniquesHtml))) {
+                                    if ($allowedServices !== null) {
+                                        $techniquesHtml = "
+                                            <div style='background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem; margin-top: 10px; direction: rtl;'>
+                                                🔒 الجلسة الموكل بها لحسابك لا تتضمن جدول تكنيكات.
+                                            </div>
+                                        ";
+                                    }
                                 }
 
                                 return new \Illuminate\Support\HtmlString("
@@ -534,7 +627,15 @@ class VisitResource extends Resource
                         Forms\Components\Placeholder::make('therapeutic_live_techniques_display')
                             ->label('📋 جدول التكنيكات المعتمدة لمناطق الألم المختارة (تحديث فوري)')
                             ->content(function (callable $get, ?Visit $record) {
-                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record);
+                                $allowed = self::getSpecialistAssignedServices($get, $record);
+                                if ($allowed !== null && empty($allowed)) {
+                                    return new \Illuminate\Support\HtmlString("
+                                        <div style='background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem; margin-top: 10px; direction: rtl;'>
+                                            🔒 لا توجد تكنيكات لجلسات موكل بها لحسابك في هذه الزيارة.
+                                        </div>
+                                    ");
+                                }
+                                return \App\Helpers\TherapeuticMassageHelper::renderTherapeuticTechniquesForForm($get, $record, $allowed);
                             }),
                     ])
                     ->columnSpanFull(),
@@ -543,7 +644,16 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('💆‍♂️ المساج (Massage)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
+                    ->visible(function (callable $get, ?Visit $record) {
+                        if ($get('request_id') === null || $get('type') === 'علاجية' || $record?->type === 'علاجية') {
+                            return false;
+                        }
+                        $allowed = self::getSpecialistAssignedServices($get, $record);
+                        if ($allowed !== null && !in_array('massage', $allowed)) {
+                            return false;
+                        }
+                        return true;
+                    })
                     ->schema([
                         Forms\Components\CheckboxList::make('packages')
                             ->label('الباقات المطلوبة')
@@ -552,12 +662,15 @@ class VisitResource extends Resource
                                 'economy' => 'الجسم كامل اقتصادي (Economy Plan)',
                             ])
                             ->columns(2)
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 if (!empty($state)) {
                                     $set('massage_regions', []);
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'packages' => (array)($state ?: []),
+                                    'massage_regions' => !empty($state) ? [] : ($get('massage_regions') ?? []),
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -569,12 +682,15 @@ class VisitResource extends Resource
                             ->multiple()
                             ->options(array_combine(range(1, 39), range(1, 39)))
                             ->searchable()
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 if (!empty($state)) {
                                     $set('packages', []);
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'massage_regions' => (array)($state ?: []),
+                                    'packages' => !empty($state) ? [] : ($get('packages') ?? []),
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -595,9 +711,11 @@ class VisitResource extends Resource
                                 'economy' => 'اقتصادي',
                             ])
                             ->inline()
-                            ->reactive()
-                            ->afterStateUpdated(function (callable $set, callable $get) {
-                                self::updateSessionRepeaterPrices($set, $get);
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'massage_style' => $state,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -613,9 +731,11 @@ class VisitResource extends Resource
                             ])
                             ->default('medium')
                             ->inline()
-                            ->reactive()
-                            ->afterStateUpdated(function (callable $set, callable $get) {
-                                self::updateSessionRepeaterPrices($set, $get);
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'massage_intensity' => $state,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -628,7 +748,16 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('⚡ تقويم عمود فقري (Cracking)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
+                    ->visible(function (callable $get, ?Visit $record) {
+                        if ($get('request_id') === null || $get('type') === 'علاجية' || $record?->type === 'علاجية') {
+                            return false;
+                        }
+                        $allowed = self::getSpecialistAssignedServices($get, $record);
+                        if ($allowed !== null && !in_array('cracking', $allowed)) {
+                            return false;
+                        }
+                        return true;
+                    })
                     ->schema([
                         Forms\Components\Radio::make('cracking_type')
                             ->label('نوع تقويم العمود الفقري')
@@ -638,12 +767,15 @@ class VisitResource extends Resource
                                 'regions' => 'اختيار مناطق من الصورة',
                             ])
                             ->inline()
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 if ($state === 'none' || $state === 'whole_body') {
                                     $set('cracking_regions', []);
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'cracking_type' => $state,
+                                    'cracking_regions' => ($state === 'none' || $state === 'whole_body') ? [] : ($get('cracking_regions') ?? []),
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -658,10 +790,12 @@ class VisitResource extends Resource
                                 'economy' => 'اقتصادي',
                             ])
                             ->inline()
-                            ->reactive()
+                            ->live()
                             ->visible(fn (callable $get) => $get('cracking_type') !== 'none')
-                            ->afterStateUpdated(function (callable $set, callable $get) {
-                                self::updateSessionRepeaterPrices($set, $get);
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'cracking_style' => $state,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -679,12 +813,16 @@ class VisitResource extends Resource
                                 4 => 'منطقة 4',
                                 5 => 'منطقة 5',
                             ])
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $cType = !empty($state) ? 'regions' : ($get('cracking_type') ?? 'none');
                                 if (!empty($state)) {
                                     $set('cracking_type', 'regions');
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'cracking_regions' => (array)($state ?: []),
+                                    'cracking_type' => $cType,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -703,7 +841,16 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('🩸 الحجامة (Hijama / Cupping)')
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
+                    ->visible(function (callable $get, ?Visit $record) {
+                        if ($get('request_id') === null || $get('type') === 'علاجية' || $record?->type === 'علاجية') {
+                            return false;
+                        }
+                        $allowed = self::getSpecialistAssignedServices($get, $record);
+                        if ($allowed !== null && !in_array('hijama', $allowed)) {
+                            return false;
+                        }
+                        return true;
+                    })
                     ->schema([
                         Forms\Components\Radio::make('hijama_type')
                             ->label('نوع الحجامة')
@@ -714,16 +861,25 @@ class VisitResource extends Resource
                                 'regions' => 'اختيار مناطق من الصورة',
                             ])
                             ->inline()
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                $hRegions = [];
                                 if ($state === 'none') {
+                                    $hRegions = [];
                                     $set('hijama_regions', []);
                                 } elseif ($state === 'whole_back') {
-                                    $set('hijama_regions', [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37]);
+                                    $hRegions = [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37];
+                                    $set('hijama_regions', $hRegions);
                                 } elseif ($state === 'whole_front') {
-                                    $set('hijama_regions', [19, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36]);
+                                    $hRegions = [19, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36];
+                                    $set('hijama_regions', $hRegions);
+                                } else {
+                                    $hRegions = (array)($get('hijama_regions') ?? []);
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'hijama_type' => $state,
+                                    'hijama_regions' => $hRegions,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -738,9 +894,11 @@ class VisitResource extends Resource
                                 'economy' => 'اقتصادي',
                             ])
                             ->inline()
-                            ->reactive()
-                            ->afterStateUpdated(function (callable $set, callable $get) {
-                                self::updateSessionRepeaterPrices($set, $get);
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'hijama_style' => $state,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -753,7 +911,7 @@ class VisitResource extends Resource
                             ->multiple()
                             ->options(array_combine(range(1, 39), range(1, 39)))
                             ->searchable()
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 $wholeBackPreset = [1, 3, 5, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 37];
                                 $wholeFrontPreset = [19, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36];
@@ -761,16 +919,24 @@ class VisitResource extends Resource
                                 sort($stateArray);
                                 sort($wholeBackPreset);
                                 sort($wholeFrontPreset);
+                                $hType = 'none';
                                 if (empty($stateArray)) {
+                                    $hType = 'none';
                                     $set('hijama_type', 'none');
                                 } elseif ($stateArray === $wholeBackPreset) {
+                                    $hType = 'whole_back';
                                     $set('hijama_type', 'whole_back');
                                 } elseif ($stateArray === $wholeFrontPreset) {
+                                    $hType = 'whole_front';
                                     $set('hijama_type', 'whole_front');
                                 } else {
+                                    $hType = 'regions';
                                     $set('hijama_type', 'regions');
                                 }
-                                self::updateSessionRepeaterPrices($set, $get);
+                                self::updateSessionRepeaterPrices($set, $get, [
+                                    'hijama_regions' => (array)($state ?: []),
+                                    'hijama_type' => $hType,
+                                ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if ($record && $record->request) {
@@ -798,7 +964,11 @@ class VisitResource extends Resource
                     ->visible(fn (callable $get, ?Visit $record) => $get('request_id') !== null && $get('type') !== 'علاجية' && $record?->type !== 'علاجية')
                     ->schema([
                         Forms\Components\Section::make('خريطة المساج (Massage Chart)')
-                            ->visible(function (callable $get) {
+                            ->visible(function (callable $get, ?Visit $record) {
+                                $allowed = self::getSpecialistAssignedServices($get, $record);
+                                if ($allowed !== null && !in_array('massage', $allowed)) {
+                                    return false;
+                                }
                                 $tempRecord = (object)[
                                     'booking_type' => 'وقائية',
                                     'packages' => $get('packages') ?? [],
@@ -884,7 +1054,11 @@ class VisitResource extends Resource
                             ->collapsed(false),
 
                         Forms\Components\Section::make('خريطة التقويم (Cracking Chart)')
-                            ->visible(function (callable $get) {
+                            ->visible(function (callable $get, ?Visit $record) {
+                                $allowed = self::getSpecialistAssignedServices($get, $record);
+                                if ($allowed !== null && !in_array('cracking', $allowed)) {
+                                    return false;
+                                }
                                 $tempRecord = (object)[
                                     'booking_type' => 'وقائية',
                                     'packages' => $get('packages') ?? [],
@@ -938,7 +1112,11 @@ class VisitResource extends Resource
                             ->collapsed(false),
 
                         Forms\Components\Section::make('خريطة الحجامة (Hijama Chart)')
-                            ->visible(function (callable $get) {
+                            ->visible(function (callable $get, ?Visit $record) {
+                                $allowed = self::getSpecialistAssignedServices($get, $record);
+                                if ($allowed !== null && !in_array('hijama', $allowed)) {
+                                    return false;
+                                }
                                 $tempRecord = (object)[
                                     'booking_type' => 'وقائية',
                                     'packages' => $get('packages') ?? [],
@@ -1029,6 +1207,9 @@ class VisitResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('Sessions')
                             ->relationship('sessions')
+                            ->deletable(fn () => !in_array(auth()->user()?->type, ['specialist', 'sr.specialist']))
+                            ->addable(fn () => !in_array(auth()->user()?->type, ['specialist', 'sr.specialist']))
+                            ->reorderable(fn () => !in_array(auth()->user()?->type, ['specialist', 'sr.specialist']))
                             ->reactive()
                             ->afterStateUpdated(function (callable $set, callable $get) {
                                 self::updateVisitTotals($set, $get);
@@ -1123,8 +1304,8 @@ class VisitResource extends Resource
                                     ->numeric()
                                     ->prefix('EGP')
                                     ->reactive()
-                                    ->hidden(fn () => auth()->user()?->type === 'specialist')
-                                    ->dehydrated(fn () => auth()->user()?->type !== 'specialist')
+                                    ->hidden(fn () => auth()->user()?->type !== 'admin')
+                                    ->dehydrated(true)
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         self::updateVisitTotals($set, $get);
                                     })
@@ -1143,6 +1324,7 @@ class VisitResource extends Resource
 
                 // Section 7: Accounts & Finance
                 Forms\Components\Section::make('الحسابات والمالية')
+                    ->visible(fn () => !in_array(auth()->user()?->type, ['specialist', 'sr.specialist']))
                     ->schema([
                         Forms\Components\TextInput::make('price')
                             ->label('السعر النهائي (بعد الخصم)')
@@ -1392,12 +1574,14 @@ class VisitResource extends Resource
         ];
     }
 
-    public static function updateVisitTotals(callable $set, callable $get)
+    public static function updateVisitTotals(callable $set, callable $get, ?array $sessions = null)
     {
         $isInsideRepeater = $get('../../discount_percentage') !== null;
         $prefix = $isInsideRepeater ? '../../' : '';
 
-        $sessions = $get($prefix . 'Sessions') ?: [];
+        if ($sessions === null) {
+            $sessions = $get($prefix . 'Sessions') ?: ($get($prefix . 'sessions') ?: []);
+        }
         $discount = (float)($get($prefix . 'discount_percentage') ?? 0);
         $paid = (float)($get($prefix . 'paid') ?? 0);
         $couponDiscount = (float)($get($prefix . 'coupon_discount') ?? 0);
@@ -1532,9 +1716,9 @@ class VisitResource extends Resource
         return 0;
     }
 
-    public static function updateSessionRepeaterPrices(callable $set, callable $get)
+    public static function updateSessionRepeaterPrices(callable $set, callable $get, array $overrides = [])
     {
-        $sessions = $get('Sessions') ?? [];
+        $sessions = $get('Sessions') ?: ($get('sessions') ?: []);
         if (empty($sessions)) return;
 
         $requestId = $get('request_id');
@@ -1553,31 +1737,55 @@ class VisitResource extends Resource
                 } elseif (str_contains($type, 'تأهيل')) {
                     $price = $basePrices['rehab'] ?? 0;
                 }
-                $sessions[$uuid]['price'] = round($price, 2);
+                $roundedPrice = round($price, 2);
+                $sessions[$uuid]['price'] = $roundedPrice;
+                $set("Sessions.{$uuid}.price", $roundedPrice);
+                $set("sessions.{$uuid}.price", $roundedPrice);
             }
             $set('Sessions', $sessions);
-            self::updateVisitTotals($set, $get);
+            $set('sessions', $sessions);
+            self::updateVisitTotals($set, $get, $sessions);
             return;
         }
 
+        $packages = array_key_exists('packages', $overrides) ? (array)$overrides['packages'] : (array)($get('packages') ?? []);
+        $massageRegions = array_key_exists('massage_regions', $overrides) ? (array)$overrides['massage_regions'] : (array)($get('massage_regions') ?? []);
+        $massageStyle = $overrides['massage_style'] ?? ($get('massage_style') ?: 'intensive');
+        $massageIntensity = $overrides['massage_intensity'] ?? ($get('massage_intensity') ?: 'medium');
+
+        $crackingRegions = array_key_exists('cracking_regions', $overrides) ? (array)$overrides['cracking_regions'] : (array)($get('cracking_regions') ?? []);
+        $crackingType = $overrides['cracking_type'] ?? $get('cracking_type');
+        if (empty($crackingType) || $crackingType === 'none') {
+            if (!empty($crackingRegions)) {
+                $crackingType = 'regions';
+            } else {
+                $crackingType = 'none';
+            }
+        }
+        $crackingStyle = $overrides['cracking_style'] ?? ($get('cracking_style') ?: 'intensive');
+
+        $hijamaRegions = array_key_exists('hijama_regions', $overrides) ? (array)$overrides['hijama_regions'] : (array)($get('hijama_regions') ?? []);
+        $hijamaType = $overrides['hijama_type'] ?? ($get('hijama_type') ?: 'none');
+        $hijamaStyle = $overrides['hijama_style'] ?? ($get('hijama_style') ?: 'intensive');
+
         $tempRecord = (object)[
             'booking_type' => 'وقائية',
-            'packages' => $get('packages') ?? [],
-            'massage_regions' => $get('massage_regions') ?? [],
-            'massage_style' => $get('massage_style') ?? 'intensive',
-            'massage_intensity' => $get('massage_intensity') ?? 'medium',
-            'cracking_type' => $get('cracking_type') ?? 'none',
-            'cracking_style' => $get('cracking_style') ?? 'intensive',
-            'cracking_regions' => $get('cracking_regions') ?? [],
-            'hijama_type' => $get('hijama_type') ?? 'none',
-            'hijama_style' => $get('hijama_style') ?? 'intensive',
-            'hijama_regions' => $get('hijama_regions') ?? [],
+            'packages' => $packages,
+            'massage_regions' => $massageRegions,
+            'massage_style' => $massageStyle,
+            'massage_intensity' => $massageIntensity,
+            'cracking_type' => $crackingType,
+            'cracking_style' => $crackingStyle,
+            'cracking_regions' => $crackingRegions,
+            'hijama_type' => $hijamaType,
+            'hijama_style' => $hijamaStyle,
+            'hijama_regions' => $hijamaRegions,
         ];
 
         $basePrices = \App\Helpers\MassageHelper::calculateServiceBasePrices($tempRecord);
 
         foreach ($sessions as $uuid => $session) {
-            $type = $session['type'];
+            $type = $session['type'] ?? '';
             $price = 0;
             $isMassage = (str_contains($type, 'مساج') || str_contains($type, 'تنشيط عضلي'));
             $isCracking = (str_contains($type, 'كيروبراكتيك') || str_contains($type, 'تمارين') || str_contains($type, 'شيروث') || str_contains($type, 'توك سين') || str_contains($type, 'تصريف ليمفاوي') || str_contains($type, 'ابرة') || str_contains($type, 'تقويم'));
@@ -1593,11 +1801,15 @@ class VisitResource extends Resource
             } elseif ($isRehab) {
                 $price = $basePrices['rehab'] ?? 0;
             }
-            $sessions[$uuid]['price'] = round($price, 2);
+            $roundedPrice = round($price, 2);
+            $sessions[$uuid]['price'] = $roundedPrice;
+            $set("Sessions.{$uuid}.price", $roundedPrice);
+            $set("sessions.{$uuid}.price", $roundedPrice);
         }
 
         $set('Sessions', $sessions);
-        self::updateVisitTotals($set, $get);
+        $set('sessions', $sessions);
+        self::updateVisitTotals($set, $get, $sessions);
     }
 
     public static function updateTherapeuticVisitTotals(callable $set, callable $get)
@@ -1765,6 +1977,7 @@ class VisitResource extends Resource
         \App\Models\RequestRegion::where('request_id', $request->id)->delete();
         $allRegions = array_merge(
             $data['massage_regions'] ?? [],
+            $data['cracking_regions'] ?? [],
             $data['hijama_regions'] ?? []
         );
         foreach (array_unique($allRegions) as $rNum) {
@@ -1778,7 +1991,7 @@ class VisitResource extends Resource
 
     protected static function getMapStylesAndScript(): string
     {
-        return '
+        return <<<'HTML'
             <style>
                 .hotspot {
                     position: absolute;
@@ -1816,6 +2029,14 @@ class VisitResource extends Resource
                 if (typeof window.toggleFilamentRegion === "undefined") {
                     window.toggleFilamentRegion = function(el, fieldName) {
                         let region = parseInt(el.dataset.region);
+                        
+                        // Immediate visual feedback
+                        if (el.classList.contains("selected")) {
+                            el.classList.remove("selected");
+                        } else {
+                            el.classList.add("selected");
+                        }
+
                         let wireEl = el;
                         while (wireEl && !wireEl.hasAttribute("wire:id")) {
                             wireEl = wireEl.parentElement;
@@ -1829,23 +2050,107 @@ class VisitResource extends Resource
                                 }
                             }
                         }
+
+                        let wire = null;
                         if (wireEl && window.Livewire) {
-                            let component = window.Livewire.find(wireEl.getAttribute("wire:id"));
-                            if (component) {
-                                let current = (component.get("data." + fieldName) || []).map(Number);
-                                let idx = current.indexOf(region);
-                                if (idx > -1) {
-                                    current.splice(idx, 1);
-                                } else {
-                                    current.push(region);
+                            wire = window.Livewire.find(wireEl.getAttribute("wire:id"));
+                        }
+                        if (!wire && window.Livewire && typeof window.Livewire.first === "function") {
+                            wire = window.Livewire.first();
+                        }
+                        if (!wire && typeof window.Alpine !== "undefined" && typeof window.Alpine.$wire === "function") {
+                            wire = window.Alpine.$wire(el);
+                        }
+
+                        if (wire) {
+                            let toNumArray = function(val) {
+                                if (!val) return [];
+                                if (Array.isArray(val)) return val.map(Number);
+                                if (typeof val === "object") return Object.values(val).map(Number);
+                                return [Number(val)];
+                            };
+
+                            let current = toNumArray(wire.get("data." + fieldName));
+                            let idx = current.indexOf(region);
+                            if (idx > -1) {
+                                current.splice(idx, 1);
+                            } else {
+                                current.push(region);
+                            }
+
+                            if (fieldName === "massage_regions" && current.length > 0) {
+                                if (typeof wire.set === "function") {
+                                    wire.set("data.packages", [], false);
                                 }
-                                component.set("data." + fieldName, current);
+                            } else if (fieldName === "cracking_regions" && current.length > 0) {
+                                if (typeof wire.set === "function") {
+                                    wire.set("data.cracking_type", "regions", false);
+                                }
+                            }
+
+                            if (typeof wire.set === "function") {
+                                wire.set("data." + fieldName, current, true);
                             }
                         }
                     };
                 }
             </script>
-        ';
+HTML;
+    }
+
+    public static function getSpecialistAssignedServices(callable $get, ?Visit $record = null): ?array
+    {
+        $user = auth()->user();
+        if (!$user || !in_array($user->type, ['specialist', 'sr.specialist'])) {
+            return null;
+        }
+
+        $empIds = SpecialistDayOffResource::getCurrentEmployeeIds();
+        if (empty($empIds)) {
+            return [];
+        }
+
+        $rawSessions = $get('Sessions');
+        if (empty($rawSessions)) {
+            if ($record) {
+                $rawSessions = $record->relationLoaded('sessions') ? $record->sessions : $record->sessions()->get();
+            } elseif ($get('id')) {
+                $rawSessions = \App\Models\Session::where('visit_id', $get('id'))->get();
+            }
+        }
+
+        if (empty($rawSessions)) {
+            return [];
+        }
+
+        $assignedSessions = collect($rawSessions)->filter(function ($s) use ($empIds) {
+            $sessionEmpId = is_array($s) ? ($s['employee_id'] ?? null) : ($s->employee_id ?? null);
+            return $sessionEmpId !== null && in_array((int)$sessionEmpId, $empIds);
+        });
+
+        if ($assignedSessions->isEmpty()) {
+            return [];
+        }
+
+        $allowed = [];
+        foreach ($assignedSessions as $s) {
+            $type = is_array($s) ? ($s['type'] ?? '') : ($s->type ?? '');
+
+            if (str_contains($type, 'مساج') || str_contains($type, 'تنشيط عضلي') || str_contains($type, 'تدليك')) {
+                $allowed['massage'] = true;
+            }
+            if (str_contains($type, 'كيروبراكتيك') || str_contains($type, 'تقويم') || str_contains($type, 'شيروث') || str_contains($type, 'توك سين') || str_contains($type, 'تصريف ليمفاوي') || str_contains($type, 'تمارين') || str_contains($type, 'ابرة') || str_contains($type, 'فحص')) {
+                $allowed['cracking'] = true;
+            }
+            if (str_contains($type, 'حجامة') || str_contains($type, 'ستون')) {
+                $allowed['hijama'] = true;
+            }
+            if (str_contains($type, 'تأهيل')) {
+                $allowed['rehab'] = true;
+            }
+        }
+
+        return array_keys($allowed);
     }
 
     public static function getEloquentQuery(): Builder

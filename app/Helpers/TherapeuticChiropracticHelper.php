@@ -293,6 +293,9 @@ class TherapeuticChiropracticHelper
         $totalCount = count($techniques);
         $totalMinutes = $calc['duration'];
         $totalPrice = number_format($calc['total_price'], 2);
+        $priceBadge = auth()->user()?->type === 'admin'
+            ? "<span style='background: #1e293b; color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>💰 {$totalPrice} ج.م</span>"
+            : "";
 
         return new \Illuminate\Support\HtmlString("
         <div style='direction: rtl; text-align: right; font-family: sans-serif; margin-top: 20px;'>
@@ -303,7 +306,7 @@ class TherapeuticChiropracticHelper
                 <div style='display: flex; gap: 8px; flex-wrap: wrap;'>
                     <span style='background: #1e293b; color: #ff9d42; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>🔢 {$totalCount} تكنيك</span>
                     <span style='background: #1e293b; color: #34d399; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>⏱️ {$totalMinutes} دقيقة</span>
-                    <span style='background: #1e293b; color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid #334155;'>💰 {$totalPrice} ج.م</span>
+                    {$priceBadge}
                 </div>
             </div>
             <div style='overflow-x: auto;'>

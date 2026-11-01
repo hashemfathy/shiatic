@@ -231,7 +231,9 @@ class VisitsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('price')
                             ->readOnly()
                             ->numeric()
-                            ->prefix('EGP'),
+                            ->prefix('EGP')
+                            ->hidden(fn () => auth()->user()?->type !== 'admin')
+                            ->dehydrated(true),
                         Forms\Components\TextInput::make('improvement_percentage')
                             ->numeric()
                             ->prefix('%'),
