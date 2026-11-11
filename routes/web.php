@@ -38,6 +38,12 @@ Route::get('/booking/available-times', [\App\Http\Controllers\BookingController:
 Route::get('/booking/validate-time', [\App\Http\Controllers\BookingController::class, 'checkTimeAvailability'])->name('booking.validate-time');
 Route::get('/booking/validate-coupon', [\App\Http\Controllers\BookingController::class, 'validateCoupon'])->name('booking.validate-coupon');
 
+// Kashier Payment Routes
+Route::get('/payment/kashier/pay/{id}', [\App\Http\Controllers\KashierPaymentController::class, 'pay'])->name('payment.kashier.pay');
+Route::match(['get', 'post'], '/payment/kashier/callback', [\App\Http\Controllers\KashierPaymentController::class, 'callback'])->name('payment.kashier.callback');
+Route::post('/payment/kashier/webhook', [\App\Http\Controllers\KashierPaymentController::class, 'webhook'])->name('payment.kashier.webhook');
+Route::get('/payment/kashier/success/{id}', [\App\Http\Controllers\KashierPaymentController::class, 'successReceipt'])->name('payment.kashier.success');
+
 Route::get('/artisan-panel', function () {
     $key = env('ARTISAN_PANEL_KEY');
     if (!$key || request('key') !== $key) {

@@ -153,6 +153,32 @@ class RequestResource extends Resource
                     ->collapsed(false)
                     ->visible(fn (callable $get) => $get('booking_type') !== null),
 
+                Forms\Components\Section::make('💳 بيانات الدفع الإلكتروني (Kashier)')
+                    ->collapsible()
+                    ->collapsed(false)
+                    ->schema([
+                        Forms\Components\Select::make('payment_status')
+                            ->label('حالة السداد أونلاين')
+                            ->options([
+                                'unpaid' => 'غير مدفوع (Unpaid)',
+                                'paid' => 'مدفوع أونلاين (Paid)',
+                                'failed' => 'فشل الدفع (Failed)',
+                            ])
+                            ->default('unpaid'),
+                        Forms\Components\TextInput::make('transaction_id')
+                            ->label('رقم المعاملة (Transaction ID)'),
+                        Forms\Components\TextInput::make('paid_amount')
+                            ->label('المبلغ المسدد')
+                            ->numeric()
+                            ->suffix(' EGP'),
+                        Forms\Components\DateTimePicker::make('paid_at')
+                            ->label('تاريخ وتوقيت السداد'),
+                        Forms\Components\TextInput::make('payment_method')
+                            ->label('بوابة الدفع')
+                            ->default('kashier'),
+                    ])
+                    ->columns(2),
+
                 Forms\Components\Section::make('👨‍⚕️ تفاصيل موعد مع مختص (Specialist Consultation Details)')
                     ->collapsible()
                     ->collapsed(false)
@@ -676,6 +702,11 @@ class RequestResource extends Resource
                     'coupon_code',
                     'coupon_discount',
                     'created_at',
+                    'payment_status',
+                    'transaction_id',
+                    'payment_method',
+                    'paid_amount',
+                    'paid_at',
                 ]); 
             })
             ->recordClasses(fn (Model $record) => match (true) {
@@ -696,7 +727,6 @@ class RequestResource extends Resource
                         return null;
                     }),
                 Tables\Columns\TextColumn::make('phone')
-                    ->copyable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('time')
                     ->label('الساعة')
@@ -787,6 +817,29 @@ class RequestResource extends Resource
                     ->label('Created At')
                     ->dateTime('d-m-Y h:i A')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('حالة الدفع')
+                    ->badge()
+                    ->state(fn ($record) => match ($record->payment_status) {
+                        'paid' => 'مدفوع أونلاين',
+                        'failed' => 'فشل الدفع',
+                        default => 'غير مدفوع',
+                    })
+                    ->color(fn ($record) => match ($record->payment_status) {
+                        'paid' => 'success',
+                        'failed' => 'danger',
+                        default => 'warning',
+                    })
+                    ->icon(fn ($record) => match ($record->payment_status) {
+                        'paid' => 'heroicon-m-check-badge',
+                        'failed' => 'heroicon-m-x-circle',
+                        default => 'heroicon-m-clock',
+                    })
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('transaction_id')
+                    ->label('رقم العملية (Txn ID)')
+                    ->placeholder('—')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->sortable()
@@ -813,7 +866,14 @@ class RequestResource extends Resource
                                 $data['date'] ?? null,
                                 fn (Builder $query, $date): Builder => $query->whereDate('date', $date),
                             );
-                    })
+                    }),
+                Tables\Filters\SelectFilter::make('payment_status')
+                    ->label('حالة الدفع أونلاين')
+                    ->options([
+                        'paid' => 'مدفوع أونلاين (Paid)',
+                        'unpaid' => 'غير مدفوع (Unpaid)',
+                        'failed' => 'فشل الدفع (Failed)',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

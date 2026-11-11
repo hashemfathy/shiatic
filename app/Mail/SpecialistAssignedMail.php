@@ -34,7 +34,7 @@ class SpecialistAssignedMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $clientName = $this->visit->client?->name ?? 'عميل جديد';
+        $clientName = $this->visit->request?->name ?: ($this->visit->client?->name ?? 'عميل جديد');
         $visitDate = $this->visit->date;
         return new Envelope(
             subject: "موعد جلسة جديد - {$clientName} ({$visitDate})",

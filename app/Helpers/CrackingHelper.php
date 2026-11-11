@@ -34,14 +34,16 @@ class CrackingHelper
             return \App\Helpers\TherapeuticChiropracticHelper::renderChiropracticTechniquesTable($request);
         }
 
-        $isCracking = $request->cracking_type && $request->cracking_type !== 'none';
+        $parsed = \App\Filament\Resources\RequestResource::parseDescription($request->description ?? '');
+        $crackingType = $request->cracking_type ?? ($parsed['cracking_type'] ?? 'none');
+        $isCracking = ($crackingType !== 'none') || str_contains($request->service_type ?? '', 'تقويم') || str_contains($request->description ?? '', 'التقويم');
         if (!$isCracking) {
             return new \Illuminate\Support\HtmlString('هذا الحجز لا يحتوي على خدمة كيروبراكتيك.');
         }
 
         // Determine style
         $style = 'intensive';
-        $isFullBody = ($request->cracking_type === 'whole_body');
+        $isFullBody = ($crackingType === 'whole_body');
 
         // Check description or metadata for style
         $desc = $request->description ?? '';
@@ -49,9 +51,10 @@ class CrackingHelper
             $style = 'economy';
         }
 
-        // Try getting style from field if available in description parsing or request directly
         if (isset($request->cracking_style)) {
             $style = $request->cracking_style;
+        } elseif (!empty($parsed['cracking_style'])) {
+            $style = $parsed['cracking_style'];
         }
 
         // Get selected regions from database relation

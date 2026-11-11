@@ -867,8 +867,7 @@
                             <h6 class="fw-bold mb-3 text-dark" style="font-size: 1.05rem; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 0.5rem;">⚖️ الأحكام والشروط:</h6>
                             <ul class="mb-0 text-dark" style="list-style-type: none; padding-right: 0.5rem; font-size: 0.95rem; line-height: 1.8;">
                                 <li>
-                                    📌 يرجى ارسال قيمة حجز موعد المختص بالكامل (100%) = <strong class="text-warning" id="cs_deposit_amount">200</strong> جنيه 
-                                    و ارسال صورة التحويل على واتساب رقم <strong class="text-dark">01064344092</strong>
+                                    💳 <strong>سداد قيمة حجز موعد المختص:</strong> بقيمة <strong class="text-warning" id="cs_deposit_amount">209</strong> جنيه يتم سدادها أونلاين عبر بوابة <strong>كاشير (Kashier)</strong> فور الضغط على تأكيد الحجز (بطاقات بنكية ومحافظ إلكترونية).
                                 </li>
                                 <li>
                                     ⚠️ في حال التأخر عن الموعد أكثر من 10 دقائق يتم خصم 50 % من قيمة الحجز
@@ -901,7 +900,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn-submit mt-4" id="btn-submit-consultation">تأكيد حجز موعد المختص</button>
+                        <button type="submit" class="btn-submit mt-4" id="btn-submit-consultation">تأكيد الحجز والانتقال للدفع أونلاين (كاشير) 💳</button>
                     </div>
                 </div>
                 </form>
@@ -1017,8 +1016,7 @@
                             <h6 class="fw-bold mb-3 text-dark" style="font-size: 1.05rem; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 0.5rem;">⚖️ الأحكام والشروط:</h6>
                             <ul class="mb-0 text-dark" style="list-style-type: none; padding-right: 0.5rem; font-size: 0.95rem; line-height: 1.8;">
                                 <li>
-                                    📌 يرجى ارسال مقدم حجز بقيمة 40% من السعر الإجمالي = <strong class="text-warning" id="deposit_amount">0</strong> جنيه 
-                                    و ارسال صورة التحويل على واتساب رقم <strong class="text-dark">01064344092</strong>
+                                    💳 <strong>مقدم الحجز (40%):</strong> بقيمة <strong class="text-warning" id="deposit_amount">0</strong> جنيه يتم سداده أونلاين عبر بوابة <strong>كاشير (Kashier)</strong> فور الضغط على تأكيد الحجز لتثبيت وتأكيد موعدك فوراً.
                                 </li>
                                 <li>
                                     ⚠️ في حال التأخر عن الموعد أكثر من 10 دقائق يتم خصم 50 % من مقدم الحجز
@@ -1054,7 +1052,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn-submit">تأكيد حجز السيشن</button>
+                <button type="submit" class="btn-submit">تأكيد الحجز والانتقال للدفع أونلاين (كاشير) 💳</button>
             </div>
             </form>
 
@@ -1182,8 +1180,7 @@
                             <h6 class="fw-bold mb-3 text-dark" style="font-size: 1.05rem; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 0.5rem;">⚖️ الأحكام والشروط:</h6>
                             <ul class="mb-0 text-dark" style="list-style-type: none; padding-right: 0.5rem; font-size: 0.95rem; line-height: 1.8;">
                                 <li>
-                                    📌 يرجى ارسال مقدم حجز بقيمة 40% من السعر الإجمالي = <strong class="text-warning" id="th_deposit_amount">0</strong> جنيه 
-                                    و ارسال صورة التحويل على واتساب رقم <strong class="text-dark">01064344092</strong>
+                                    💳 <strong>مقدم الحجز (40%):</strong> بقيمة <strong class="text-warning" id="th_deposit_amount">0</strong> جنيه يتم سداده أونلاين عبر بوابة <strong>كاشير (Kashier)</strong> فور الضغط على تأكيد الحجز لتثبيت وتأكيد موعدك فوراً.
                                 </li>
                                 <li>
                                     ⚠️ في حال التأخر عن الموعد أكثر من 10 دقائق يتم خصم 50 % من مقدم الحجز
@@ -1216,7 +1213,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn-submit mt-4" id="btn-submit-therapeutic">تأكيد حجز السيشن</button>
+                        <button type="submit" class="btn-submit mt-4" id="btn-submit-therapeutic">تأكيد الحجز والانتقال للدفع أونلاين (كاشير) 💳</button>
                     </div>
                 </div>
                 </form>
@@ -1885,7 +1882,7 @@
                     <span>حساب الشخص رقم <span class="cs-attendee-number">{number}</span>:</span>
                     <span class="fw-bold text-dark">
                         الخدمة: <span class="text-primary">موعد مع مختص (استشارة)</span> | 
-                        السعر: <span class="text-danger">200.00</span> ج.م | 
+                        السعر: <span class="text-danger" id="cs_attendee_summary_price_{index}">209.00</span> ج.م | 
                         المدة: <span class="text-info">15</span> دقيقة
                     </span>
                 </div>
@@ -1895,6 +1892,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        window.kashierCommissionPercent = parseFloat('{{ $kashierCommissionPercent ?? 2.75 }}') || 2.75;
+        window.kashierCommissionFixed = parseFloat('{{ $kashierCommissionFixed ?? 3.0 }}') || 3.0;
+
+        window.calculateGrossKashierAmount = function(netAmount) {
+            if (netAmount <= 0) return 0;
+            if (window.kashierCommissionPercent <= 0 && window.kashierCommissionFixed <= 0) return Math.ceil(netAmount);
+            const rate = window.kashierCommissionPercent / 100;
+            if (rate >= 1) return Math.ceil(netAmount + window.kashierCommissionFixed);
+            return Math.ceil((netAmount + window.kashierCommissionFixed) / (1 - rate));
+        };
+        const calculateGrossKashierAmount = window.calculateGrossKashierAmount;
+
         document.addEventListener('DOMContentLoaded', function() {
             // Repetition definitions
             const regionRepetitionsIntensive = {
@@ -1965,6 +1974,8 @@
 
             const minBookingAmount = {{ $minBookingAmount }};
             const urgentBookingFee = {{ $urgentBookingFee }};
+            const kashierCommissionPercent = window.kashierCommissionPercent;
+            const kashierCommissionFixed = window.kashierCommissionFixed;
 
             let attendees = [];
             let nextAttendeeIndex = 0;
@@ -2607,13 +2618,13 @@
 
                 // Apply group level urgent fee if selected
                 const isUrgentChecked = document.getElementById('is_urgent') && document.getElementById('is_urgent').checked;
-                let grandTotal = grandTotalSessionsPrice - couponDiscount;
-                if (grandTotal < 0) grandTotal = 0;
+                let baseGrandTotal = grandTotalSessionsPrice - couponDiscount;
+                if (baseGrandTotal < 0) baseGrandTotal = 0;
                 
                 const urgentFeeRow = document.getElementById('urgent_fee_row');
 
                 if (isUrgentChecked) {
-                    grandTotal += urgentBookingFee;
+                    baseGrandTotal += urgentBookingFee;
                     if (urgentFeeRow) {
                         document.getElementById('summary_urgent_fee').innerText = urgentBookingFee;
                         urgentFeeRow.style.display = 'flex';
@@ -2640,7 +2651,13 @@
                     }
                 }
 
-                document.getElementById('summary_total_price').innerText = grandTotal.toFixed(2);
+                // Gross up deposit and total price with Kashier commission seamlessly
+                const netDeposit = Math.ceil(baseGrandTotal * 0.40);
+                const grossDeposit = calculateGrossKashierAmount(netDeposit);
+                const commissionDiff = grossDeposit - netDeposit;
+                const finalGrandTotal = baseGrandTotal + commissionDiff;
+
+                document.getElementById('summary_total_price').innerText = finalGrandTotal.toFixed(2);
                 document.getElementById('summary_total_duration').innerText = globalMaxGroupDuration.toFixed(1);
                 
                 const durationRow = document.getElementById('duration_row');
@@ -2654,8 +2671,8 @@
                     }
                 }
 
-                // Calculate deposit (40%)
-                document.getElementById('deposit_amount').innerText = Math.ceil(grandTotal * 0.40);
+                // Calculate gross deposit (seamlessly includes commission without details)
+                document.getElementById('deposit_amount').innerText = grossDeposit;
 
                 // Control submit button state
                 const submitBtn = document.querySelector('button[type="submit"]');
@@ -3795,8 +3812,11 @@
                 }
             }
 
-            const finalTotalPrice = Math.max(0, baseTotalPrice + urgentFee - thCouponDiscount);
-            const depositAmount = Math.ceil(finalTotalPrice * 0.40);
+            const baseCalculatedTotal = Math.max(0, baseTotalPrice + urgentFee - thCouponDiscount);
+            const netDeposit = Math.ceil(baseCalculatedTotal * 0.40);
+            const grossDeposit = calculateGrossKashierAmount(netDeposit);
+            const commissionDiff = grossDeposit - netDeposit;
+            const finalTotalPrice = baseCalculatedTotal + commissionDiff;
 
             const priceEl = document.getElementById('th_summary_total_price');
             const durEl = document.getElementById('th_summary_total_duration');
@@ -3804,7 +3824,7 @@
 
             if (priceEl) priceEl.textContent = finalTotalPrice.toFixed(2);
             if (durEl) durEl.textContent = maxGroupDuration;
-            if (depositEl) depositEl.textContent = depositAmount;
+            if (depositEl) depositEl.textContent = grossDeposit;
 
             const hiddenPrice = document.getElementById('th_submitted_total_price');
             const hiddenDuration = document.getElementById('th_submitted_total_duration');
@@ -4159,6 +4179,19 @@
                         alert('يجب الموافقة على شروط الحجز والمقدم المالي لتأكيد الحجز.');
                         return;
                     }
+                    if (this.dataset.submitting === 'true') {
+                        e.preventDefault();
+                        return;
+                    }
+                    this.dataset.submitting = 'true';
+                    const thBtn = document.getElementById('btn-submit-therapeutic');
+                    if (thBtn) {
+                        thBtn.disabled = true;
+                        thBtn.innerHTML = '⏳ جاري تأكيد الحجز وتحويلك لبوابة الدفع... يرجى الانتظار';
+                    }
+                    if (false) {
+                        return;
+                    }
                 });
             }
 
@@ -4249,16 +4282,35 @@
                 const urgentFee = isUrgent ? {{ $urgentBookingFee }} : 0;
 
                 let totalSessionsPrice = 0;
+                consultationAttendees.forEach((att) => {
+                    att.price = 200.0;
+                    att.duration = 15;
+                    totalSessionsPrice += att.price;
+                });
+
+                let baseGrandTotal = totalSessionsPrice + urgentFee;
+                if (csCouponDiscount > 0) {
+                    baseGrandTotal = Math.max(0, baseGrandTotal - csCouponDiscount);
+                }
+                const netDeposit = baseGrandTotal; // 100% deposit
+                const grossDeposit = window.calculateGrossKashierAmount(netDeposit);
+                const commissionDiff = grossDeposit - netDeposit;
+                const finalGrandTotal = baseGrandTotal + commissionDiff;
+
                 const tbody = document.getElementById('cs-group-summary-tbody');
                 if (tbody) tbody.innerHTML = '';
 
                 consultationAttendees.forEach((att, idx) => {
-                    att.price = 200.0;
-                    att.duration = 15;
-                    totalSessionsPrice += att.price;
+                    const isFirst = (idx === 0);
+                    const attGrossPrice = att.price + (isFirst ? commissionDiff : 0);
 
                     const nameInput = document.getElementById(`cs_name_${att.index}`);
                     const nameVal = nameInput ? (nameInput.value.trim() || `الشخص رقم (${idx + 1})`) : `الشخص رقم (${idx + 1})`;
+
+                    const cardPriceEl = document.getElementById(`cs_attendee_summary_price_${att.index}`);
+                    if (cardPriceEl) {
+                        cardPriceEl.textContent = attGrossPrice.toFixed(2);
+                    }
 
                     if (tbody) {
                         const row = document.createElement('tr');
@@ -4267,20 +4319,14 @@
                             <td class="fw-bold">${nameVal}</td>
                             <td>موعد مع مختص (استشارة)</td>
                             <td>15 دقيقة</td>
-                            <td class="text-warning fw-bold">200.00 ج.م</td>
+                            <td class="text-warning fw-bold">${attGrossPrice.toFixed(2)} ج.م</td>
                         `;
                         tbody.appendChild(row);
                     }
                 });
 
-                let grandTotal = totalSessionsPrice + urgentFee;
-                if (csCouponDiscount > 0) {
-                    grandTotal = Math.max(0, grandTotal - csCouponDiscount);
-                }
-                const depositAmount = grandTotal; // 100% deposit
-
                 const totalPriceEl = document.getElementById('cs_summary_total_price');
-                if (totalPriceEl) totalPriceEl.textContent = totalSessionsPrice.toFixed(2);
+                if (totalPriceEl) totalPriceEl.textContent = finalGrandTotal.toFixed(2);
 
                 const urgentFeeRow = document.getElementById('cs_urgent_fee_row');
                 const urgentFeeEl = document.getElementById('cs_summary_urgent_fee');
@@ -4305,7 +4351,7 @@
                 }
 
                 const depositAmountEl = document.getElementById('cs_deposit_amount');
-                if (depositAmountEl) depositAmountEl.textContent = depositAmount.toFixed(0);
+                if (depositAmountEl) depositAmountEl.textContent = grossDeposit.toFixed(0);
 
                 if (isUrgent) {
                     validateConsultationTimeSelection();
@@ -4564,6 +4610,53 @@
                     if (!csAgreeYes) {
                         e.preventDefault();
                         alert('يجب الموافقة على شروط الحجز ومقدم الجدية لتأكيد الحجز.');
+                        return;
+                    }
+                    if (this.dataset.submitting === 'true') {
+                        e.preventDefault();
+                        return;
+                    }
+                    this.dataset.submitting = 'true';
+                    const csBtn = document.getElementById('btn-submit-consultation');
+                    if (csBtn) {
+                        csBtn.disabled = true;
+                        csBtn.innerHTML = '⏳ جاري تأكيد الحجز وتحويلك لبوابة الدفع... يرجى الانتظار';
+                    }
+                });
+            }
+
+            const prevForm = document.getElementById('bookingFormPreventative');
+            if (prevForm) {
+                prevForm.addEventListener('submit', function(e) {
+                    if (this.dataset.submitting === 'true') {
+                        e.preventDefault();
+                        return;
+                    }
+                    this.dataset.submitting = 'true';
+                    const prevBtn = this.querySelector('button[type="submit"]');
+                    if (prevBtn) {
+                        prevBtn.disabled = true;
+                        prevBtn.innerHTML = '⏳ جاري تأكيد الحجز وتحويلك لبوابة الدفع... يرجى الانتظار';
+                    }
+                });
+            }
+
+            window.addEventListener('pageshow', function() {
+                ['bookingFormPreventative', 'bookingFormTherapeutic', 'bookingFormConsultation'].forEach(function(formId) {
+                    const f = document.getElementById(formId);
+                    if (f) {
+                        delete f.dataset.submitting;
+                        const btn = f.querySelector('button[type="submit"]');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = 'تأكيد الحجز والانتقال للدفع أونلاين (كاشير) 💳';
+                        }
+                    }
+                });
+            });
+
+            if (false) {
+                csForm.addEventListener('submit', function() { if (false) {
                         return;
                     }
                 });

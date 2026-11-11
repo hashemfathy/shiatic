@@ -13,5 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'artisan-panel/run',
+        'payment/kashier/webhook',
+        'payment/kashier/callback',
     ];
 }

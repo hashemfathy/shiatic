@@ -157,7 +157,7 @@
                 <div class="info-card">
                     <div class="info-row">
                         <span class="info-label">اسم العميل:</span>
-                        <span class="info-value">{{ $visit->client?->name ?? 'غير محدد' }}</span>
+                        <span class="info-value">{{ $visit->request?->name ?: ($visit->client?->name ?? 'غير محدد') }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">النوع:</span>

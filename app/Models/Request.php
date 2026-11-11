@@ -28,12 +28,20 @@ class Request extends Model
         'is_urgent',
         'coupon_code',
         'coupon_discount',
-        'numbness'
+        'numbness',
+        'payment_status',
+        'transaction_id',
+        'payment_method',
+        'paid_amount',
+        'paid_at',
+        'payment_meta',
     ];
 
     protected $casts = [
         'packages' => 'array',
         'is_urgent' => 'boolean',
+        'paid_at' => 'datetime',
+        'paid_amount' => 'float',
     ];
 
     public function regions()

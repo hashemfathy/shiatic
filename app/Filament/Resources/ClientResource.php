@@ -130,7 +130,6 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('gender')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
-                    ->copyable()
                     ->searchable()
                     ->visible(!in_array(auth()->user()?->type,['specialist'])),
                 Tables\Columns\TextColumn::make('code')

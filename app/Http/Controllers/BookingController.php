@@ -89,7 +89,18 @@ class BookingController extends Controller
             $massageConfig['techniqueCounts'][$pLevel][$bType][$wBracket] = $counts;
         }
 
-        return view('booking.form', compact('urgentBookingFee', 'minBookingAmount', 'chiroConfig', 'massageConfig'));
+        $kashierService = app(\App\Services\KashierService::class);
+        $kashierCommissionPercent = $kashierService->getCommissionPercent();
+        $kashierCommissionFixed = $kashierService->getCommissionFixed();
+
+        return view('booking.form', compact(
+            'urgentBookingFee',
+            'minBookingAmount',
+            'chiroConfig',
+            'massageConfig',
+            'kashierCommissionPercent',
+            'kashierCommissionFixed'
+        ));
     }
 
     // Store the booking request
@@ -306,7 +317,16 @@ class BookingController extends Controller
             }
         }
 
-        // 3. Concurrent Capacity Check for the entire group
+        // 3. Duplicate submission guard & Concurrent Capacity Check for the entire group
+        $lock = \Illuminate\Support\Facades\Cache::lock('booking_submit_' . md5(($processedAttendees[0]['phone'] ?? '') . '_' . $bookingDate), 10);
+        $lock->block(5);
+        try {
+            if ($existingBooking = $this->findRecentDuplicateBooking($processedAttendees, $bookingDate, $bookingTime, $processedAttendees[0]['booking_type'] ?? 'وقائية')) {
+                return redirect()->route('payment.kashier.pay', ['id' => $existingBooking->id]);
+            }
+        } finally {
+            optional($lock)->release();
+        }
         $startMin = $this->timeToMinutes($bookingTime);
         if (!$this->isSlotAvailable($bookingDate, $groupGendersAndDurations, $startMin)) {
             return redirect()->back()->withInput()->withErrors(['time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة لمجموعتكم.']);
@@ -328,6 +348,22 @@ class BookingController extends Controller
 
         // 4. Save requests to database
         $parentBooking = null;
+
+        // Calculate total net deposit across all attendees to determine group gross commission
+        $totalNetDeposit = 0;
+        foreach ($processedAttendees as $index => $att) {
+            $isFirst = ($index === 0);
+            $indPrice = $att['total_price'] + ($isFirst ? $urgentFee : 0);
+            if ($isFirst && $couponDiscount > 0) {
+                $indPrice = max(0, $indPrice - $couponDiscount);
+            }
+            $totalNetDeposit += (int) ceil($indPrice * 0.40);
+        }
+
+        $kashierService = app(\App\Services\KashierService::class);
+        $totalGrossDeposit = (int) $kashierService->calculateGrossAmount($totalNetDeposit);
+        $commissionDiff = $totalGrossDeposit - $totalNetDeposit;
+
         foreach ($processedAttendees as $index => $att) {
             $isFirst = ($index === 0);
 
@@ -339,7 +375,13 @@ class BookingController extends Controller
                 $individualPrice = max(0, $individualPrice - $couponDiscount);
             }
             
-            $deposit = ceil($individualPrice * 0.40);
+            $deposit = (int) ceil($individualPrice * 0.40);
+
+            // Add commission difference to parent booking total_price and deposit
+            if ($isFirst && $commissionDiff > 0) {
+                $individualPrice += $commissionDiff;
+                $deposit += $commissionDiff;
+            }
 
             $booking = BookingRequest::create([
                 'parent_id' => $isFirst ? null : $parentBooking->id,
@@ -360,6 +402,8 @@ class BookingController extends Controller
                 'is_urgent' => $isUrgent,
                 'coupon_code' => $isFirst && $coupon ? $coupon->code : null,
                 'coupon_discount' => $isFirst ? $couponDiscount : 0,
+                'payment_status' => 'unpaid',
+                'payment_method' => 'kashier',
             ]);
 
             if ($isFirst) {
@@ -397,7 +441,7 @@ class BookingController extends Controller
             \Illuminate\Support\Facades\Log::error('Failed to send group request email notification: ' . $e->getMessage());
         }
 
-        return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب الحجز بنجاح وسنتواصل معك قريباً!');
+        return redirect()->route('payment.kashier.pay', ['id' => $parentBooking->id]);
     }
 
     protected function storeTherapeutic(Request $request)
@@ -592,7 +636,16 @@ class BookingController extends Controller
             }
         }
 
-        // Capacity check for all group attendees
+        // Duplicate submission guard & Capacity check for all group attendees
+        $lock = \Illuminate\Support\Facades\Cache::lock('booking_submit_' . md5(($processedAttendees[0]['phone'] ?? '') . '_' . $bookingDate), 10);
+        $lock->block(5);
+        try {
+            if ($existingBooking = $this->findRecentDuplicateBooking($processedAttendees, $bookingDate, $bookingTime, 'علاجية')) {
+                return redirect()->route('payment.kashier.pay', ['id' => $existingBooking->id]);
+            }
+        } finally {
+            optional($lock)->release();
+        }
         $startMin = $this->timeToMinutes($bookingTime);
         if (!$this->isSlotAvailable($bookingDate, $groupGendersAndDurations, $startMin)) {
             return redirect()->back()->withInput()->withErrors(['therapeutic_time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة لمجموعتكم.']);
@@ -614,6 +667,22 @@ class BookingController extends Controller
 
         // Save requests to database (parent + children)
         $parentBooking = null;
+
+        // Calculate total net deposit across all attendees to determine group gross commission
+        $totalNetDeposit = 0;
+        foreach ($processedAttendees as $index => $att) {
+            $isFirst = ($index === 0);
+            $indPrice = $att['total_price'] + ($isFirst ? $urgentFee : 0);
+            if ($isFirst && $couponDiscount > 0) {
+                $indPrice = max(0, $indPrice - $couponDiscount);
+            }
+            $totalNetDeposit += (int) ceil($indPrice * 0.40);
+        }
+
+        $kashierService = app(\App\Services\KashierService::class);
+        $totalGrossDeposit = (int) $kashierService->calculateGrossAmount($totalNetDeposit);
+        $commissionDiff = $totalGrossDeposit - $totalNetDeposit;
+
         foreach ($processedAttendees as $index => $att) {
             $isFirst = ($index === 0);
 
@@ -621,7 +690,13 @@ class BookingController extends Controller
             if ($isFirst && $couponDiscount > 0) {
                 $individualPrice = max(0, $individualPrice - $couponDiscount);
             }
-            $deposit = ceil($individualPrice * 0.40);
+            $deposit = (int) ceil($individualPrice * 0.40);
+
+            // Add commission difference to parent booking
+            if ($isFirst && $commissionDiff > 0) {
+                $individualPrice += $commissionDiff;
+                $deposit += $commissionDiff;
+            }
 
             $bookingDesc = $att['description'];
             if ($isFirst && $isUrgent) {
@@ -651,6 +726,8 @@ class BookingController extends Controller
                 'is_urgent' => $isUrgent,
                 'coupon_code' => $isFirst && $coupon ? $coupon->code : null,
                 'coupon_discount' => $isFirst ? $couponDiscount : 0,
+                'payment_status' => 'unpaid',
+                'payment_method' => 'kashier',
             ]);
 
             if ($isFirst) {
@@ -690,7 +767,7 @@ class BookingController extends Controller
             \Illuminate\Support\Facades\Log::error('Failed to send therapeutic request email notification: ' . $e->getMessage());
         }
 
-        return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب الحجز بنجاح وسنتواصل معك قريباً!');
+        return redirect()->route('payment.kashier.pay', ['id' => $parentBooking->id]);
     }
 
     // Store Consultation (موعد مع مختص)
@@ -826,7 +903,16 @@ class BookingController extends Controller
             }
         }
 
-        // Capacity check
+        // Duplicate submission guard & Capacity check
+        $lock = \Illuminate\Support\Facades\Cache::lock('booking_submit_' . md5(($processedAttendees[0]['phone'] ?? '') . '_' . $bookingDate), 10);
+        $lock->block(5);
+        try {
+            if ($existingBooking = $this->findRecentDuplicateBooking($processedAttendees, $bookingDate, $bookingTime, 'موعد مع مختص')) {
+                return redirect()->route('payment.kashier.pay', ['id' => $existingBooking->id]);
+            }
+        } finally {
+            optional($lock)->release();
+        }
         $startMin = $this->timeToMinutes($bookingTime);
         if (!$this->isSlotAvailable($bookingDate, $groupGendersAndDurations, $startMin)) {
             return redirect()->back()->withInput()->withErrors(['consultation_time' => 'عذراً، هذا الوقت غير متاح لتجاوز الحد الأقصى للحجوزات المتزامنة لمجموعتكم.']);
@@ -848,6 +934,22 @@ class BookingController extends Controller
 
         // Save requests (parent + children)
         $parentBooking = null;
+
+        // Calculate total net deposit across all attendees to determine group gross commission
+        $totalNetDeposit = 0;
+        foreach ($processedAttendees as $index => $att) {
+            $isFirst = ($index === 0);
+            $indPrice = $att['total_price'] + ($isFirst ? $urgentFee : 0);
+            if ($isFirst && $couponDiscount > 0) {
+                $indPrice = max(0, $indPrice - $couponDiscount);
+            }
+            $totalNetDeposit += (int) $indPrice;
+        }
+
+        $kashierService = app(\App\Services\KashierService::class);
+        $totalGrossDeposit = (int) $kashierService->calculateGrossAmount($totalNetDeposit);
+        $commissionDiff = $totalGrossDeposit - $totalNetDeposit;
+
         foreach ($processedAttendees as $index => $att) {
             $isFirst = ($index === 0);
 
@@ -857,6 +959,11 @@ class BookingController extends Controller
             }
             // Deposit is 100% of the total price (200 EGP per person + urgent fee)
             $deposit = (int)$individualPrice;
+
+            if ($isFirst && $commissionDiff > 0) {
+                $individualPrice += $commissionDiff;
+                $deposit += $commissionDiff;
+            }
 
             $bookingDesc = $att['description'];
             if ($isFirst && $isUrgent) {
@@ -886,6 +993,8 @@ class BookingController extends Controller
                 'is_urgent' => $isUrgent,
                 'coupon_code' => $isFirst && $coupon ? $coupon->code : null,
                 'coupon_discount' => $isFirst ? $couponDiscount : 0,
+                'payment_status' => 'unpaid',
+                'payment_method' => 'kashier',
             ]);
 
             if ($isFirst) {
@@ -911,7 +1020,7 @@ class BookingController extends Controller
             \Illuminate\Support\Facades\Log::error('Failed to send consultation request email notification: ' . $e->getMessage());
         }
 
-        return redirect()->route('booking.form')->with('success', 'تم تسجيل طلب حجز الموعد مع المختص بنجاح وسنتواصل معك قريباً لتأكيد الموعد!');
+        return redirect()->route('payment.kashier.pay', ['id' => $parentBooking->id]);
     }
 
     // AJAX Endpoint to get available times for a date and duration
@@ -1574,5 +1683,24 @@ class BookingController extends Controller
         }
 
         return [$intervals, array_unique($handledRequestIds)];
+    }
+
+    protected function findRecentDuplicateBooking(array $processedAttendees, string $bookingDate, string $bookingTime, string $bookingType): ?BookingRequest
+    {
+        if (empty($processedAttendees)) {
+            return null;
+        }
+        $first = $processedAttendees[0];
+        return BookingRequest::whereNull('parent_id')
+            ->where('phone', trim($first['phone']))
+            ->where('name', trim($first['name']))
+            ->whereDate('date', $bookingDate)
+            ->where('time', $bookingTime)
+            ->where('booking_type', $bookingType)
+            ->where('payment_status', 'unpaid')
+            ->where('status', '!=', 'canceled')
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->latest('id')
+            ->first();
     }
 }

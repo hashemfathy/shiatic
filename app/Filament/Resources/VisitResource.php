@@ -32,7 +32,7 @@ class VisitResource extends Resource
                 Forms\Components\Section::make('بيانات العميل والزيارة الأساسية')
                     ->schema([
                         Forms\Components\Select::make('client_id')
-                            ->relationship(name: 'client', titleAttribute: 'name')
+                            ->relationship(name: 'client', titleAttribute: 'name')->getOptionLabelFromRecordUsing(fn ($record, ?Visit $visitRecord) => ($visitRecord?->request && $visitRecord->client_id == $record->id && !empty($visitRecord->request->name)) ? $visitRecord->request->name : $record->name)
                             ->required()
                             ->searchable()
                             ->reactive()
@@ -62,7 +62,7 @@ class VisitResource extends Resource
                             ->reactive()
                             ->afterStateHydrated(function ($state, callable $set, ?Visit $record) {
                                 if ($record && $record->client) {
-                                    $set('gender', $record->client->gender);
+                                    $set('gender', $record->request?->gender ?: $record->client->gender);
                                 }
                             }),
 
@@ -147,7 +147,7 @@ class VisitResource extends Resource
                                     $style = $isCurrent ? 'font-weight: bold; background: #3f3f46; border-right: 4px solid #ff9d42;' : 'background: #27272a; border-right: 4px solid #71717a;';
                                     $html .= "<div style=\"margin-bottom: 0.5rem; padding: 0.75rem; {$style} border-radius: 6px; color: #fff;\">";
                                     $priceText = auth()->user()?->type === 'admin' ? " | السعر: " . e($member->total_price) . " ج.م" : "";
-                                    $html .= " | الخدمة: " . e($member->service_type ?: 'غير محدد') . $priceText;
+                                    $html .= "👤 " . e($member->name) . " | الخدمة: " . e($member->service_type ?: 'غير محدد') . $priceText;
                                     if ($member->id === $leader->id) {
                                         $html .= " <span style=\"background: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;\">قائد المجموعة</span>";
                                     }
@@ -309,27 +309,32 @@ class VisitResource extends Resource
 
                                 if (!$request) return 'لا توجد تفاصيل حجز.';
 
-                                $liveCrackingType = $get('cracking_type') ?? ($request->cracking_type ?? 'none');
-                                $liveCrackingRegions = (array)($get('cracking_regions') ?? []);
+                                $parsedDesc = \App\Filament\Resources\RequestResource::parseDescription($request->description ?? '');
+
+                                $liveCrackingType = $get('cracking_type') ?: ($parsedDesc['cracking_type'] ?? 'none');
+                                $liveCrackingStyle = $get('cracking_style') ?: ($parsedDesc['cracking_style'] ?? 'intensive');
+                                $liveCrackingRegions = (array)($get('cracking_regions') ?: ($parsedDesc['cracking_regions'] ?? []));
                                 if ($liveCrackingType === 'none' && !empty($liveCrackingRegions)) {
                                     $liveCrackingType = 'regions';
                                 }
 
-                                $liveMassageRegions = (array)($get('massage_regions') ?? []);
-                                $livePackages = (array)($get('packages') ?? $request->packages ?? []);
+                                $liveMassageRegions = (array)($get('massage_regions') ?: ($parsedDesc['massage_regions'] ?? []));
+                                $livePackages = (array)($get('packages') ?: ($request->packages ?? $parsedDesc['packages'] ?? []));
+                                $liveMassageStyle = $get('massage_style') ?: ($parsedDesc['massage_style'] ?? 'intensive');
+                                $liveMassageIntensity = $get('massage_intensity') ?: ($parsedDesc['massage_intensity'] ?? 'medium');
 
                                 $liveRecord = (object)[
                                     'booking_type' => 'وقائية',
                                     'packages' => $livePackages,
                                     'massage_regions' => $liveMassageRegions,
-                                    'massage_style' => $get('massage_style') ?? 'intensive',
-                                    'massage_intensity' => $get('massage_intensity') ?? 'medium',
+                                    'massage_style' => $liveMassageStyle,
+                                    'massage_intensity' => $liveMassageIntensity,
                                     'cracking_type' => $liveCrackingType,
-                                    'cracking_style' => $get('cracking_style') ?? 'intensive',
+                                    'cracking_style' => $liveCrackingStyle,
                                     'cracking_regions' => $liveCrackingRegions,
-                                    'hijama_type' => $get('hijama_type') ?? 'none',
-                                    'hijama_style' => $get('hijama_style') ?? 'intensive',
-                                    'hijama_regions' => $get('hijama_regions') ?? [],
+                                    'hijama_type' => $get('hijama_type') ?: ($parsedDesc['hijama_type'] ?? 'none'),
+                                    'hijama_style' => $get('hijama_style') ?: ($parsedDesc['hijama_style'] ?? 'intensive'),
+                                    'hijama_regions' => (array)($get('hijama_regions') ?: ($parsedDesc['hijama_regions'] ?? [])),
                                     'is_urgent' => (bool)($get('is_urgent') ?: ($request->is_urgent ?? false)),
                                 ];
 
@@ -454,15 +459,18 @@ class VisitResource extends Resource
                                 $showMassage = ($allowedServices === null || in_array('massage', $allowedServices));
                                 $showCracking = ($allowedServices === null || in_array('cracking', $allowedServices));
 
-                                if ($showMassage && $massagePrice > 0) {
-                                    $techniquesTable = \App\Helpers\MassageHelper::renderTechniquesTable($liveRecord);
+                                if ($showMassage && ($massagePrice > 0 || in_array('intensive', (array)$livePackages) || in_array('economy', (array)$livePackages) || !empty($liveMassageRegions) || str_contains($request->service_type ?? '', 'مساج') || str_contains($request->description ?? '', 'المساج'))) {
+                                    $mStyle = in_array('intensive', (array)$livePackages) ? 'intensive' : (in_array('economy', (array)$livePackages) ? 'economy' : $liveMassageStyle);
+                                    $mIsFullBody = in_array('intensive', (array)$livePackages) || in_array('economy', (array)$livePackages);
+                                    $techniquesTable = \App\Helpers\MassageHelper::generateTechniquesHtml($mStyle, $liveMassageIntensity, $liveMassageRegions, $mIsFullBody);
                                     $techniquesHtml .= $techniquesTable instanceof \Illuminate\Contracts\Support\Htmlable
                                         ? $techniquesTable->toHtml()
                                         : $techniquesTable;
                                 }
 
-                                if ($showCracking && $crackingPrice > 0) {
-                                    $crackingTable = \App\Helpers\CrackingHelper::renderTechniquesTable($liveRecord);
+                                if ($showCracking && ($crackingPrice > 0 || $liveCrackingType !== 'none' || str_contains($request->service_type ?? '', 'تقويم') || str_contains($request->description ?? '', 'التقويم'))) {
+                                    $cIsFullBody = ($liveCrackingType === 'whole_body');
+                                    $crackingTable = \App\Helpers\CrackingHelper::generateTechniquesHtml($liveCrackingStyle, $liveCrackingRegions, $cIsFullBody);
                                     $techniquesHtml .= $crackingTable instanceof \Illuminate\Contracts\Support\Htmlable
                                         ? $crackingTable->toHtml()
                                         : $crackingTable;
@@ -1418,6 +1426,7 @@ class VisitResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('الاسم')
+                    ->state(fn (Visit $record): ?string => $record->request?->name ?: $record->client?->name)
                     ->searchable()
                     ->sortable()
                     ->description(function (Visit $record) {
